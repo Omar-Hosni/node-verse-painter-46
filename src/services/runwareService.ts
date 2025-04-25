@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Define the parameters for image generation
@@ -32,7 +31,8 @@ export interface GeneratedImage {
 }
 
 export class RunwareService {
-  private apiKey: string;
+  // Changed from private to protected so it can be accessed by methods in the class
+  protected apiKey: string;
   
   constructor(apiKey: string) {
     this.apiKey = apiKey;

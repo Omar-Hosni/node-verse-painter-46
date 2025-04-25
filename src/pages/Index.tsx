@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
 import { Canvas } from '@/components/Canvas';
 import { LeftSidebar } from '@/components/LeftSidebar';
 import { RightSidebar } from '@/components/RightSidebar';
@@ -20,17 +19,15 @@ const Index = () => {
   }, [runwayApiKey]);
 
   return (
-    <ReactFlowProvider>
-      <div className="flex h-screen overflow-hidden">
-        <LeftSidebar onOpenApiKeyModal={() => setApiKeyModalOpen(true)} />
-        <Canvas />
-        {selectedNode && <RightSidebar />}
-        <ApiKeyModal 
-          open={apiKeyModalOpen} 
-          onOpenChange={setApiKeyModalOpen} 
-        />
-      </div>
-    </ReactFlowProvider>
+    <div className="flex h-screen overflow-hidden">
+      <LeftSidebar onOpenApiKeyModal={() => setApiKeyModalOpen(true)} />
+      <Canvas />
+      {selectedNode && <RightSidebar />}
+      <ApiKeyModal 
+        open={apiKeyModalOpen} 
+        onOpenChange={setApiKeyModalOpen} 
+      />
+    </div>
   );
 };
 
