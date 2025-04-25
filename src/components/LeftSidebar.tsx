@@ -14,10 +14,18 @@ export const LeftSidebar = ({ onOpenApiKeyModal }: LeftSidebarProps) => {
   const reactFlowInstance = useReactFlow();
   
   const handleAddNode = (nodeType: any) => {
-    const position = reactFlowInstance.project({ 
-      x: window.innerWidth / 2, 
-      y: window.innerHeight / 2 
+    // Instead of using project which doesn't exist, we'll use viewport and screenToFlowPosition
+    const center = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+    
+    // Convert screen coordinates to flow coordinates
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: center.x,
+      y: center.y
     });
+    
     addNode(nodeType, position);
   };
 

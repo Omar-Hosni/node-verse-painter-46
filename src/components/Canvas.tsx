@@ -62,7 +62,7 @@ export const Canvas = () => {
           color="#444444"
           gap={16}
           size={1}
-          variant="dots" 
+          variant={BackgroundVariant.DOTS}
         />
         <Controls
           className="bg-sidebar border border-field rounded-md overflow-hidden"
