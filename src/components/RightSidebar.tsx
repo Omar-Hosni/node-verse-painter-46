@@ -37,7 +37,7 @@ export const RightSidebar = () => {
               <Input
                 type="number"
                 placeholder="Width"
-                value={selectedNode.data.width || 512}
+                value={Number(selectedNode.data.width) || 512}
                 onChange={(e) => updateNodeData(selectedNode.id, { width: parseInt(e.target.value) })}
                 className="mb-2"
               />
@@ -73,7 +73,7 @@ export const RightSidebar = () => {
                 <label className="block text-sm text-gray-400 mb-1">Display Name</label>
                 <Input
                   type="text"
-                  value={selectedNode.data.displayName || ''}
+                  value={(selectedNode.data.displayName as string) || ''}
                   onChange={(e) => handleStyleChange('displayName', e.target.value)}
                   className="w-full bg-field text-white border-none focus:ring-primary"
                 />
@@ -83,7 +83,7 @@ export const RightSidebar = () => {
                 <label className="block text-sm text-gray-400 mb-1">Emoji</label>
                 <Input
                   type="text"
-                  value={selectedNode.data.emoji || ''}
+                  value={(selectedNode.data.emoji as string) || ''}
                   onChange={(e) => handleStyleChange('emoji', e.target.value)}
                   className="w-full bg-field text-white border-none focus:ring-primary"
                   placeholder="Enter an emoji"
@@ -95,13 +95,13 @@ export const RightSidebar = () => {
                 <div className="flex gap-2">
                   <Input
                     type="color"
-                    value={selectedNode.data.color || '#ff69b4'}
+                    value={(selectedNode.data.color as string) || '#ff69b4'}
                     onChange={(e) => handleStyleChange('color', e.target.value)}
                     className="w-12 h-8 p-1 bg-field border-none focus:ring-primary"
                   />
                   <Input
                     type="text"
-                    value={selectedNode.data.color || '#ff69b4'}
+                    value={(selectedNode.data.color as string) || '#ff69b4'}
                     onChange={(e) => handleStyleChange('color', e.target.value)}
                     className="flex-1 bg-field text-white border-none focus:ring-primary"
                   />
