@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -269,6 +268,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         CFGScale: Number(modelNode.data.cfgScale) || 7.5,
         scheduler: "EulerDiscreteScheduler",
         steps: Number(modelNode.data.steps) || 30,
+        // Don't include promptWeighting as "none" - only send valid values
         lora: loraArray.length ? loraArray : undefined,
         controlnet: controlnetArray.length ? controlnetArray : undefined,
       };

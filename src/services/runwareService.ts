@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 // Define the parameters for image generation
@@ -13,7 +14,7 @@ export interface GenerateImageParams {
   scheduler?: string;
   steps?: number;
   strength?: number;
-  promptWeighting?: "none" | "compel" | "sdEmbeds";
+  promptWeighting?: "compel" | "sdEmbeds";
   seed?: number | null;
   lora?: {
     name: string;
@@ -66,9 +67,13 @@ export class RunwareService {
         scheduler: params.scheduler || "EulerDiscreteScheduler",
         steps: params.steps || 30,
         strength: params.strength || 0.8,
-        promptWeighting: params.promptWeighting || "none",
         lora: params.lora || []
       };
+      
+      // Only add promptWeighting if it's a valid value
+      if (params.promptWeighting === "compel" || params.promptWeighting === "sdEmbeds") {
+        Object.assign(imageTask, { promptWeighting: params.promptWeighting });
+      }
       
       // Remove seed if not provided
       if (params.seed) {
@@ -86,6 +91,8 @@ export class RunwareService {
         });
       }
       
+      console.log("Sending request to Runware API:", [authTask, imageTask]);
+      
       const response = await fetch("https://api.runware.ai/v1", {
         method: "POST",
         headers: {
@@ -94,12 +101,15 @@ export class RunwareService {
         body: JSON.stringify([authTask, imageTask])
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate image');
-      }
-      
       const data = await response.json();
+      
+      if (!response.ok || data.errors) {
+        console.error("Error response from API:", data);
+        const errorMessage = data.errors && data.errors.length > 0 
+          ? data.errors[0].message 
+          : 'Failed to generate image';
+        throw new Error(errorMessage);
+      }
       
       // Extract the image generation result
       const result = data.data.find((item: any) => item.taskType === "imageInference" && item.taskUUID === taskUUID);
