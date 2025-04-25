@@ -154,7 +154,7 @@ export const RightSidebar = () => {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-gray-400">Type</Label>
-                  <div className="text-white py-2">{selectedNode.data.type}</div>
+                  <div className="text-white py-2">{selectedNode.data.type as string}</div>
                 </div>
                 
                 <div>
