@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Define the parameters for image generation
@@ -12,10 +11,14 @@ export interface GenerateImageParams {
   outputFormat?: string;
   CFGScale?: number;
   scheduler?: string;
+  steps?: number;
   strength?: number;
   promptWeighting?: "none" | "compel" | "sdEmbeds";
   seed?: number | null;
-  lora?: string[];
+  lora?: {
+    name: string;
+    strength: number;
+  }[];
   controlnet?: {
     type: string;
     imageUrl: string;
@@ -61,6 +64,7 @@ export class RunwareService {
         outputFormat: params.outputFormat || "WEBP",
         CFGScale: params.CFGScale || 7.5,
         scheduler: params.scheduler || "EulerDiscreteScheduler",
+        steps: params.steps || 30,
         strength: params.strength || 0.8,
         promptWeighting: params.promptWeighting || "none",
         lora: params.lora || []

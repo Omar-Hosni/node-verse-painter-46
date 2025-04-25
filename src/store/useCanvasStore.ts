@@ -243,27 +243,27 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     try {
       toast.info("Generating image...");
       
-      // Create lora array for the API
+      // Create lora array for the API with type assertions
       const loraArray = loraNodes.map(n => ({
-        name: n.data.loraName,
-        strength: n.data.strength
+        name: n.data.loraName as string,
+        strength: n.data.strength as number
       })).filter(lora => lora.name); // Filter out empty lora names
       
-      // Create controlnet array for the API
+      // Create controlnet array for the API with type assertions
       const controlnetArray = controlNetNodes.map(n => ({
-        type: n.data.type,
-        imageUrl: n.data.image,
-        strength: n.data.strength
+        type: n.data.type as string,
+        imageUrl: n.data.image as string,
+        strength: n.data.strength as number
       })).filter(cn => cn.imageUrl); // Filter out controlnets without images
       
       // Initialize the Runware service with the API key
       const runwareService = getRunwareService(runwayApiKey);
       
-      // Prepare the parameters for image generation
+      // Prepare the parameters for image generation with proper type assertions
       const params = {
-        positivePrompt: modelNode.data.prompt || "beautiful landscape",
-        negativePrompt: modelNode.data.negativePrompt || "",
-        model: modelNode.data.modelName || "runware:100@1",
+        positivePrompt: modelNode.data.prompt as string || "beautiful landscape",
+        negativePrompt: modelNode.data.negativePrompt as string || "",
+        model: modelNode.data.modelName as string || "runware:100@1",
         width: Number(modelNode.data.width) || 1024,
         height: Number(modelNode.data.height) || 1024,
         CFGScale: Number(modelNode.data.cfgScale) || 7.5,
