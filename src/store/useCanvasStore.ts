@@ -113,6 +113,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
             cfgScale: 7.5,
             prompt: "",
             negativePrompt: "",
+            displayName: "Model",
+            emoji: "🎨",
+            color: "#ff69b4"
           },
           className: 'node-model',
         };
@@ -125,6 +128,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           data: {
             loraName: "",
             strength: 0.8,
+            displayName: "LoRA",
+            emoji: "🔧",
+            color: "#8b5cf6"
           },
           className: 'node-lora',
         };
@@ -141,6 +147,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
             type: nodeType.replace('controlnet-', ''),
             image: null,
             strength: 0.8,
+            displayName: `${nodeType.replace('controlnet-', '')} Control`,
+            emoji: "🎯",
+            color: "#10b981"
           },
           className: 'node-controlnet',
         };
@@ -152,6 +161,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           position,
           data: {
             image: null,
+            displayName: "Preview",
+            emoji: "🖼️",
+            color: "#f59e0b"
           },
           className: 'node-preview',
         };

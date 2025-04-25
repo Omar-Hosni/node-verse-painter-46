@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef } from 'react';
 import {
   ReactFlow,
@@ -62,7 +61,7 @@ export const Canvas = () => {
           color="#444444"
           gap={16}
           size={1}
-          variant={BackgroundVariant.DOTS}
+          variant={BackgroundVariant.Dots}
         />
         <Controls
           className="bg-sidebar border border-field rounded-md overflow-hidden"

@@ -1,50 +1,31 @@
 
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { useCanvasStore } from '@/store/useCanvasStore';
-import { Button } from "@/components/ui/button";
-import { Image as ImageIcon } from 'lucide-react';
 
 interface PreviewNodeProps {
   id: string;
   data: {
     image: string | null;
+    // New style properties
+    displayName: string;
+    emoji: string;
+    color: string;
   };
   selected: boolean;
 }
 
-export const PreviewNode = ({ id, data, selected }: PreviewNodeProps) => {
-  const generateImage = useCanvasStore(state => state.generateImageFromNodes);
-  
-  const handleGenerateClick = () => {
-    generateImage();
-  };
-
+export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
   return (
-    <div className={`min-w-[250px] max-w-[250px] ${selected ? 'ring-2 ring-blue-500' : ''}`}>
-      <div className="node-header">Preview</div>
-      <div className="node-content">
-        {data.image ? (
-          <div className="mb-4">
-            <img 
-              src={data.image} 
-              alt="Generated preview" 
-              className="w-full h-52 object-cover rounded-md"
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-52 border-2 border-dashed border-gray-600 rounded-md bg-gray-800 mb-4">
-            <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-            <span className="text-sm text-gray-400">Image will appear here</span>
-          </div>
-        )}
-        
-        <Button 
-          onClick={handleGenerateClick} 
-          className="w-full bg-primary hover:bg-blue-600 text-white"
-        >
-          Generate Image
-        </Button>
+    <div 
+      className={`relative flex items-center gap-3 px-4 py-2 rounded-full 
+        ${selected ? 'ring-2 ring-blue-500' : ''}`}
+      style={{ backgroundColor: data.color || '#f59e0b' }} // Default to amber if no color set
+    >
+      <span className="text-lg font-medium text-white">
+        {data.displayName || 'Preview'}
+      </span>
+      <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+        <span className="text-xl">{data.emoji || '🖼️'}</span>
       </div>
 
       {/* Handle */}
@@ -52,7 +33,7 @@ export const PreviewNode = ({ id, data, selected }: PreviewNodeProps) => {
         type="target"
         position={Position.Top}
         id="preview-in"
-        style={{ top: -6 }}
+        className="!bg-white !border-none w-3 h-3 !-top-1"
       />
     </div>
   );
