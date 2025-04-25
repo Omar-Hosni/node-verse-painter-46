@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { ReactFlow } from '@xyflow/react';
+import { useReactFlow } from '@xyflow/react';
 import { Settings, Cpu, Layers, Image as ImageIcon, Key } from 'lucide-react';
 
 interface LeftSidebarProps {
@@ -11,7 +11,7 @@ interface LeftSidebarProps {
 
 export const LeftSidebar = ({ onOpenApiKeyModal }: LeftSidebarProps) => {
   const addNode = useCanvasStore(state => state.addNode);
-  const reactFlowInstance = ReactFlow.useReactFlow();
+  const reactFlowInstance = useReactFlow();
   
   const handleAddNode = (nodeType: any) => {
     const position = reactFlowInstance.project({ 

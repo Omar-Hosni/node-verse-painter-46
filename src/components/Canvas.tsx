@@ -1,11 +1,13 @@
 
 import React, { useCallback, useRef } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   MiniMap,
   NodeTypes,
   EdgeTypes,
+  BackgroundVariant,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -60,7 +62,7 @@ export const Canvas = () => {
           color="#444444"
           gap={16}
           size={1}
-          variant="dots"
+          variant="dots" 
         />
         <Controls
           className="bg-sidebar border border-field rounded-md overflow-hidden"
