@@ -13,6 +13,8 @@ import {
   applyNodeChanges, 
   applyEdgeChanges,
 } from '@xyflow/react';
+import { getRunwareService } from '@/services/runwareService';
+import { toast } from 'sonner';
 
 export type NodeType = 
   | 'model' 
@@ -216,12 +218,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     // Find the model node, which should be the starting point
     const modelNode = nodes.find(n => n.type === 'modelNode');
     if (!modelNode) {
-      console.error("No model node found!");
+      toast.error("No model node found! Please add a model node to your canvas.");
       return;
     }
 
     if (!runwayApiKey) {
-      console.error("Runware API key not set!");
+      toast.error("Runware API key not set! Please set your API key in the settings.");
       return;
     }
 
@@ -233,22 +235,61 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     
     // Find the preview node
     const previewNode = nodes.find(n => n.type === 'previewNode');
-    
-    // TODO: Implement actual API call to Runware
-    console.log("Generating image with:", {
-      modelNode: modelNode.data,
-      loraNodes: loraNodes.map(n => n.data),
-      controlNetNodes: controlNetNodes.map(n => n.data),
-    });
-
-    // For now, let's simulate a response
-    const mockImageUrl = "https://images.unsplash.com/photo-1617296538902-887900d9b592?q=80&w=2080";
-    
-    // Update the preview node with the "generated" image
-    if (previewNode) {
-      get().updateNodeData(previewNode.id, { image: mockImageUrl });
+    if (!previewNode) {
+      toast.error("No preview node found! Please add a preview node to your canvas.");
+      return;
     }
 
-    // TODO: Implement the actual API integration with Runware
+    try {
+      toast.info("Generating image...");
+      
+      // Create lora array for the API
+      const loraArray = loraNodes.map(n => ({
+        name: n.data.loraName,
+        strength: n.data.strength
+      })).filter(lora => lora.name); // Filter out empty lora names
+      
+      // Create controlnet array for the API
+      const controlnetArray = controlNetNodes.map(n => ({
+        type: n.data.type,
+        imageUrl: n.data.image,
+        strength: n.data.strength
+      })).filter(cn => cn.imageUrl); // Filter out controlnets without images
+      
+      // Initialize the Runware service with the API key
+      const runwareService = getRunwareService(runwayApiKey);
+      
+      // Prepare the parameters for image generation
+      const params = {
+        positivePrompt: modelNode.data.prompt || "beautiful landscape",
+        negativePrompt: modelNode.data.negativePrompt || "",
+        model: modelNode.data.modelName || "runware:100@1",
+        width: Number(modelNode.data.width) || 1024,
+        height: Number(modelNode.data.height) || 1024,
+        CFGScale: Number(modelNode.data.cfgScale) || 7.5,
+        scheduler: "EulerDiscreteScheduler",
+        steps: Number(modelNode.data.steps) || 30,
+        lora: loraArray.length ? loraArray : undefined,
+        controlnet: controlnetArray.length ? controlnetArray : undefined,
+      };
+      
+      console.log("Generating image with params:", params);
+      
+      // Call the API to generate the image
+      const generatedImage = await runwareService.generateImage(params);
+      
+      console.log("Generated image:", generatedImage);
+      
+      // Update the preview node with the generated image
+      if (generatedImage && generatedImage.imageURL) {
+        get().updateNodeData(previewNode.id, { image: generatedImage.imageURL });
+        toast.success("Image generated successfully!");
+      } else {
+        toast.error("Failed to generate image. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error(`Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }));
