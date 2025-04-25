@@ -1,13 +1,36 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState, useEffect } from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
+import { Canvas } from '@/components/Canvas';
+import { LeftSidebar } from '@/components/LeftSidebar';
+import { RightSidebar } from '@/components/RightSidebar';
+import { ApiKeyModal } from '@/components/ApiKeyModal';
+import { useCanvasStore } from '@/store/useCanvasStore';
 
 const Index = () => {
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
+  const selectedNode = useCanvasStore(state => state.selectedNode);
+
+  useEffect(() => {
+    // Check if the API key is not set, open the modal
+    if (!runwayApiKey) {
+      setApiKeyModalOpen(true);
+    }
+  }, [runwayApiKey]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <ReactFlowProvider>
+      <div className="flex h-screen overflow-hidden">
+        <LeftSidebar onOpenApiKeyModal={() => setApiKeyModalOpen(true)} />
+        <Canvas />
+        {selectedNode && <RightSidebar />}
+        <ApiKeyModal 
+          open={apiKeyModalOpen} 
+          onOpenChange={setApiKeyModalOpen} 
+        />
       </div>
-    </div>
+    </ReactFlowProvider>
   );
 };
 

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,6 +97,83 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-canvas text-foreground;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* React Flow Custom Styling */
+  .react-flow__node {
+    @apply rounded-md shadow-md;
+  }
+
+  .react-flow__handle {
+    @apply bg-primary border-2 border-white;
+    width: 10px;
+    height: 10px;
+  }
+
+  .react-flow__edge-path {
+    @apply stroke-primary;
+    stroke-width: 2;
+  }
+
+  .react-flow__controls-button {
+    @apply bg-sidebar text-white border-field;
+  }
+
+  .react-flow__attribution {
+    display: none;
+  }
+
+  .node-header {
+    @apply py-2 px-3 font-medium text-white rounded-t-md;
+  }
+
+  .node-content {
+    @apply p-3 bg-secondary rounded-b-md;
+  }
+
+  .node-model {
+    .node-header {
+      @apply bg-blue-600;
+    }
+  }
+
+  .node-lora {
+    .node-header {
+      @apply bg-purple-600;
+    }
+  }
+
+  .node-controlnet {
+    .node-header {
+      @apply bg-green-600;
+    }
+  }
+
+  .node-preview {
+    .node-header {
+      @apply bg-amber-600;
+    }
+  }
+
+  .sidebar-section-title {
+    @apply text-sm font-medium text-gray-300 pb-2 border-b border-gray-700 mb-3;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-sidebar;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-field rounded-full;
   }
 }
