@@ -243,22 +243,26 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       toast.info("Generating image...");
       
       // Create lora array for the API with type assertions
-      const loraArray = loraNodes.map(n => ({
-        name: n.data.loraName as string,
-        strength: n.data.strength as number
-      })).filter(lora => lora.name); // Filter out empty lora names
+      const loraArray = loraNodes
+        .filter(n => n.data.loraName) // Filter out empty lora names
+        .map(n => ({
+          name: n.data.loraName as string,
+          strength: Number(n.data.strength) as number
+        }));
       
       // Create controlnet array for the API with type assertions
-      const controlnetArray = controlNetNodes.map(n => ({
-        type: n.data.type as string,
-        imageUrl: n.data.image as string,
-        strength: n.data.strength as number
-      })).filter(cn => cn.imageUrl); // Filter out controlnets without images
+      const controlnetArray = controlNetNodes
+        .filter(n => n.data.image) // Filter out controlnets without images
+        .map(n => ({
+          type: n.data.type as string,
+          imageUrl: n.data.image as string,
+          strength: Number(n.data.strength) as number
+        }));
       
       // Initialize the Runware service with the API key
       const runwareService = getRunwareService(runwayApiKey);
       
-      // Prepare the parameters for image generation with proper type assertions
+      // Prepare the parameters for image generation
       const params = {
         positivePrompt: modelNode.data.prompt as string || "beautiful landscape",
         negativePrompt: modelNode.data.negativePrompt as string || "",
@@ -269,8 +273,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         scheduler: "EulerDiscreteScheduler",
         steps: Number(modelNode.data.steps) || 30,
         // Don't include promptWeighting as "none" - only send valid values
-        lora: loraArray.length ? loraArray : undefined,
-        controlnet: controlnetArray.length ? controlnetArray : undefined,
+        lora: loraArray.length > 0 ? loraArray : undefined,
+        controlnet: controlnetArray.length > 0 ? controlnetArray : undefined,
       };
       
       console.log("Generating image with params:", params);

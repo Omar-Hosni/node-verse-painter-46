@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { X, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,14 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { toast } from 'sonner';
+import { getRunwareService } from '@/services/runwareService';
 
 export const RightSidebar = () => {
   const selectedNode = useCanvasStore(state => state.selectedNode);
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
+  const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   if (!selectedNode) {
     return null;
@@ -23,6 +27,41 @@ export const RightSidebar = () => {
 
   const handleStyleChange = (property: string, value: string) => {
     updateNodeData(selectedNode.id, { [property]: value });
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+
+    const file = event.target.files[0];
+    
+    try {
+      toast.info("Uploading image...");
+      
+      if (!runwayApiKey) {
+        toast.error("API key not set! Please set your API key in the settings.");
+        return;
+      }
+      
+      // Get instance of the service
+      const runwareService = getRunwareService(runwayApiKey);
+      
+      // Convert file to data URL
+      const dataUrl = await runwareService.fileToDataURL(file);
+      
+      // Update the node data with the image
+      updateNodeData(selectedNode.id, { image: dataUrl });
+      toast.success("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const renderNodeSpecificControls = () => {
@@ -159,6 +198,13 @@ export const RightSidebar = () => {
                 
                 <div>
                   <Label className="text-sm text-gray-400">Upload Image</Label>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
                   <div className="mt-2">
                     {selectedNode.data.image ? (
                       <div className="relative">
@@ -180,12 +226,7 @@ export const RightSidebar = () => {
                       <Button 
                         variant="outline" 
                         className="w-full bg-field text-white border-none focus:ring-primary flex gap-2"
-                        onClick={() => {
-                          // In a real app, this would open a file picker
-                          // For now, we'll use a placeholder image URL
-                          const placeholderUrl = "https://images.unsplash.com/photo-1617296538902-887900d9b592?q=80&w=2080";
-                          updateNodeData(selectedNode.id, { image: placeholderUrl });
-                        }}
+                        onClick={() => fileInputRef.current?.click()}
                       >
                         <Upload className="h-4 w-4" />
                         Upload Image

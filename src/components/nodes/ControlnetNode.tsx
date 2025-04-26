@@ -19,16 +19,31 @@ interface ControlnetNodeProps {
 export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
   return (
     <div 
-      className={`relative flex items-center gap-3 px-4 py-2 rounded-full 
+      className={`relative flex flex-col items-center gap-2 rounded-lg 
         ${selected ? 'ring-2 ring-blue-500' : ''}`}
       style={{ backgroundColor: data.color || '#10b981' }} // Default to green if no color set
     >
-      <span className="text-lg font-medium text-white">
-        {data.displayName || `${data.type} Control`}
-      </span>
-      <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
-        <span className="text-xl">{data.emoji || '🎯'}</span>
+      <div className="flex items-center gap-2 px-4 py-2">
+        <span className="text-lg font-medium text-white">
+          {data.displayName || `${data.type} Control`}
+        </span>
+        <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+          <span className="text-xl">{data.emoji || '🎯'}</span>
+        </div>
       </div>
+
+      {/* Display the image thumbnail if it exists */}
+      {data.image && (
+        <div className="px-2 pb-2 w-full">
+          <div className="w-full h-24 overflow-hidden rounded-md border border-white">
+            <img 
+              src={data.image} 
+              alt={`${data.type} control image`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Handles */}
       <Handle
