@@ -24,6 +24,7 @@ export interface GenerateImageParams {
     type: string;
     imageUrl: string;
     strength: number;
+    model?: string; // Added model parameter for ControlNet
   }[];
 }
 
@@ -86,7 +87,8 @@ export class RunwareService {
           controlNet: params.controlnet.map(cn => ({
             type: cn.type,
             imageUrl: cn.imageUrl,
-            strength: cn.strength
+            strength: cn.strength,
+            model: "runware-controlnet:1@1" // Add the default ControlNet model
           }))
         });
       }
