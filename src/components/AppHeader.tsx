@@ -5,7 +5,7 @@ export const AppHeader = () => {
       <div className="flex items-center">
         <img src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png" alt="App Logo" className="h-8 w-auto" />
       </div>
-      <Button className="rounded-full bg-primary hover:bg-primary/90 text-white px-6">
+      <Button className="rounded-full bg-primary hover:bg-primary/90 text-white px-6 text-sm">
         Generate Image
       </Button>
     </header>;
