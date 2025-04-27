@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { hand, "mouse-pointer", "zoom-in", "zoom-out" } from 'lucide-react';
+import { Hand, MousePointer, ZoomIn, ZoomOut } from 'lucide-react';
 
 export const Toolbar = () => {
   return (
@@ -11,28 +11,28 @@ export const Toolbar = () => {
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <hand className="h-4 w-4" />
+        <Hand className="h-4 w-4" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <mouse-pointer className="h-4 w-4" />
+        <MousePointer className="h-4 w-4" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <zoom-in className="h-4 w-4" />
+        <ZoomIn className="h-4 w-4" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <zoom-out className="h-4 w-4" />
+        <ZoomOut className="h-4 w-4" />
       </Button>
     </div>
   );
