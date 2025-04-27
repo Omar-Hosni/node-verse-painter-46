@@ -1,12 +1,8 @@
+
 import React, { useCallback, useRef } from 'react';
 import {
   ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
   NodeTypes,
-  EdgeTypes,
-  BackgroundVariant,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -56,36 +52,7 @@ export const Canvas = () => {
         nodeTypes={nodeTypes}
         fitView
         className="bg-canvas"
-      >
-        <Background
-          color="#444444"
-          gap={16}
-          size={1}
-          variant={BackgroundVariant.Dots}
-        />
-        <Controls
-          className="bg-sidebar border border-field rounded-md overflow-hidden"
-          showInteractive={false}
-        />
-        <MiniMap
-          nodeColor={(node) => {
-            switch (node.type) {
-              case 'modelNode':
-                return '#3b82f6';
-              case 'loraNode':
-                return '#8b5cf6';
-              case 'controlnetNode':
-                return '#10b981';
-              case 'previewNode':
-                return '#f59e0b';
-              default:
-                return '#64748b';
-            }
-          }}
-          maskColor="rgba(0, 0, 0, 0.3)"
-          className="bg-sidebar border border-field rounded-md overflow-hidden"
-        />
-      </ReactFlow>
+      />
     </div>
   );
 };
