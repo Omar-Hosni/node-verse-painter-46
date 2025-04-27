@@ -88,7 +88,8 @@ export class RunwareService {
             type: cn.type,
             imageUrl: cn.imageUrl,
             strength: cn.strength,
-            model: "runware-controlnet:1@1" // Add the default ControlNet model
+            // Using the proper AIR format for the ControlNet model
+            model: cn.model || "control-v1:1@1" // Using the generic control-v1 model as default
           }))
         });
       }
