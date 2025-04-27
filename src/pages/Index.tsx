@@ -10,14 +10,12 @@ import { Toolbar } from '@/components/Toolbar';
 
 const Index = () => {
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
-  const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
-  const selectedNode = useCanvasStore(state => state.selectedNode);
-
+  const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
+  
+  // Set the API key on component mount
   useEffect(() => {
-    if (!runwayApiKey) {
-      setApiKeyModalOpen(true);
-    }
-  }, [runwayApiKey]);
+    setRunwayApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
+  }, [setRunwayApiKey]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -25,15 +23,11 @@ const Index = () => {
       <div className="flex flex-1 relative">
         <LeftSidebar onOpenApiKeyModal={() => setApiKeyModalOpen(true)} />
         <div className="flex-1 relative">
-          <Toolbar />
           <Canvas />
         </div>
-        {selectedNode && <RightSidebar />}
+        <RightSidebar />
       </div>
-      <ApiKeyModal 
-        open={apiKeyModalOpen} 
-        onOpenChange={setApiKeyModalOpen} 
-      />
+      <Toolbar />
     </div>
   );
 };

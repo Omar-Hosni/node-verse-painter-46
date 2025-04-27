@@ -5,7 +5,7 @@ import { Hand, MousePointer, ZoomIn, ZoomOut } from 'lucide-react';
 
 export const Toolbar = () => {
   return (
-    <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1">
+    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-10">
       <Button 
         size="icon" 
         variant="ghost" 
