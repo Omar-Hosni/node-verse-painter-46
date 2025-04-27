@@ -253,11 +253,36 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       // Create controlnet array for the API with type assertions
       const controlnetArray = controlNetNodes
         .filter(n => n.data.image) // Filter out controlnets without images
-        .map(n => ({
-          type: n.data.type as string,
-          imageUrl: n.data.image as string,
-          strength: Number(n.data.strength) as number
-        }));
+        .map(n => {
+          // Get the specific controlnet type from the node data
+          const type = n.data.type as string;
+          
+          // Construct the appropriate model identifier based on the controlnet type
+          let modelId = "";
+          switch (type) {
+            case 'canny':
+              modelId = "controlnet-canny:1@1";
+              break;
+            case 'depth':
+              modelId = "controlnet-depth:1@1";
+              break;
+            case 'pose':
+              modelId = "controlnet-pose:1@1";
+              break;
+            case 'segment':
+              modelId = "controlnet-segment:1@1";
+              break;
+            default:
+              modelId = "controlnet-canny:1@1"; // Default fallback
+          }
+          
+          return {
+            type: type,
+            imageUrl: n.data.image as string,
+            strength: Number(n.data.strength) as number,
+            model: modelId
+          };
+        });
       
       // Initialize the Runware service with the API key
       const runwareService = getRunwareService(runwayApiKey);

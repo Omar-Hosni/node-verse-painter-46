@@ -84,13 +84,37 @@ export class RunwareService {
       // Add ControlNet if available
       if (params.controlnet && params.controlnet.length > 0) {
         Object.assign(imageTask, {
-          controlNet: params.controlnet.map(cn => ({
-            type: cn.type,
-            imageUrl: cn.imageUrl,
-            strength: cn.strength,
-            // Using the proper AIR format for the ControlNet model
-            model: cn.model || "control-v1:1@1" // Using the generic control-v1 model as default
-          }))
+          controlNet: params.controlnet.map(cn => {
+            // Map each controlnet configuration
+            const controlnetConfig: any = {
+              type: cn.type,
+              imageUrl: cn.imageUrl,
+              strength: cn.strength
+            };
+            
+            // Add model using the correct AIR identifier format
+            // For ControlNet, the format typically follows: controlnet-{type}:version@provider
+            // Default to a valid AIR format for the specific controlnet type
+            switch (cn.type) {
+              case 'canny':
+                controlnetConfig.model = cn.model || "controlnet-canny:1@1";
+                break;
+              case 'depth':
+                controlnetConfig.model = cn.model || "controlnet-depth:1@1";
+                break;
+              case 'pose':
+                controlnetConfig.model = cn.model || "controlnet-pose:1@1";
+                break;
+              case 'segment':
+                controlnetConfig.model = cn.model || "controlnet-segment:1@1";
+                break;
+              default:
+                // Fallback to a generic format if type is unknown
+                controlnetConfig.model = cn.model || "controlnet-canny:1@1";
+            }
+            
+            return controlnetConfig;
+          })
         });
       }
       
