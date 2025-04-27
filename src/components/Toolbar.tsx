@@ -11,28 +11,28 @@ export const Toolbar = () => {
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <Hand className="h-4 w-4" />
+        <Hand className="h-4 w-4 text-white" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <MousePointer className="h-4 w-4" />
+        <MousePointer className="h-4 w-4 text-white" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <ZoomIn className="h-4 w-4" />
+        <ZoomIn className="h-4 w-4 text-white" />
       </Button>
       <Button 
         size="icon" 
         variant="ghost" 
         className="rounded-full hover:bg-gray-700"
       >
-        <ZoomOut className="h-4 w-4" />
+        <ZoomOut className="h-4 w-4 text-white" />
       </Button>
     </div>
   );
