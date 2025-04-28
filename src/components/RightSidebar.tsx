@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getRunwareService } from '@/services/runwareService';
+
 export const RightSidebar = () => {
   const selectedNode = useCanvasStore(state => state.selectedNode);
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
+  const uploadControlNetImage = useCanvasStore(state => state.uploadControlNetImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleStyleChange = (property: string, value: string) => {
     if (selectedNode) {
       updateNodeData(selectedNode.id, {
@@ -20,13 +23,15 @@ export const RightSidebar = () => {
       });
     }
   };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedNode || !event.target.files || event.target.files.length === 0) {
       return;
     }
+
     const file = event.target.files[0];
     try {
-      toast.info("Uploading image...");
+      toast.info("Processing image...");
       if (!runwayApiKey) {
         toast.error("API key not set! Please set your API key in the settings.");
         return;
@@ -38,14 +43,19 @@ export const RightSidebar = () => {
       // Convert file to data URL
       const dataUrl = await runwareService.fileToDataURL(file);
 
-      // Update the node data with the image
+      // First update the node with the local image for preview
       updateNodeData(selectedNode.id, {
         image: dataUrl
       });
-      toast.success("Image uploaded successfully!");
+
+      // If this is a ControlNet node, also upload the image to the server
+      if (selectedNode.type === 'controlnetNode') {
+        await uploadControlNetImage(selectedNode.id, dataUrl);
+      }
+
     } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error processing image:", error);
+      toast.error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     // Reset file input
@@ -53,6 +63,7 @@ export const RightSidebar = () => {
       fileInputRef.current.value = '';
     }
   };
+
   const renderNodeSpecificControls = () => {
     if (!selectedNode) return null;
     switch (selectedNode.type) {
@@ -193,7 +204,6 @@ export const RightSidebar = () => {
     }
   };
 
-  // Style properties section - always visible
   const renderStyleProperties = () => {
     if (!selectedNode) return null;
     return <div className="space-y-3 py-2">
@@ -216,6 +226,7 @@ export const RightSidebar = () => {
         </div>
       </div>;
   };
+
   return <div className="w-80 h-screen bg-sidebar border-l border-field overflow-y-auto">
       <div>
         <div className="p-4 border-b border-field">

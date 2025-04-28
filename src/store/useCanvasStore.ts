@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -12,7 +13,7 @@ import {
   applyNodeChanges, 
   applyEdgeChanges,
 } from '@xyflow/react';
-import { getRunwareService } from '@/services/runwareService';
+import { getRunwareService, UploadedImage } from '@/services/runwareService';
 import { toast } from 'sonner';
 
 export type NodeType = 
@@ -39,6 +40,8 @@ export interface LoraSettings {
 
 export interface ControlNetSettings {
   image: string | null;
+  imageId?: string; // Added to store the uploaded image UUID
+  uploading?: boolean; // Added to track upload status
   strength: number;
 }
 
@@ -55,6 +58,7 @@ export interface CanvasState {
   setSelectedNode: (node: Node | null) => void;
   setRunwayApiKey: (apiKey: string) => void;
   generateImageFromNodes: () => Promise<void>;
+  uploadControlNetImage: (nodeId: string, imageData: string) => Promise<void>;
 }
 
 let nodeIdCounter = 1;
@@ -144,6 +148,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           data: {
             type: nodeType.replace('controlnet-', ''),
             image: null,
+            imageId: null,
+            uploading: false,
             strength: 0.8,
             displayName: `${nodeType.replace('controlnet-', '')} Control`,
             emoji: "🎯",
@@ -207,6 +213,41 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ runwayApiKey: apiKey });
   },
 
+  uploadControlNetImage: async (nodeId: string, imageData: string) => {
+    const { runwayApiKey } = get();
+    
+    if (!runwayApiKey) {
+      toast.error("API key not set! Please set your API key in the settings.");
+      return;
+    }
+
+    try {
+      // Set uploading flag to true
+      get().updateNodeData(nodeId, { 
+        uploading: true 
+      });
+
+      // Get the RunwareService instance
+      const runwareService = getRunwareService(runwayApiKey);
+      
+      // Upload the image
+      const uploadedImage = await runwareService.uploadImage(imageData);
+      console.log("Image uploaded successfully:", uploadedImage);
+      
+      // Update the node with the uploaded image ID
+      get().updateNodeData(nodeId, { 
+        imageId: uploadedImage.imageUUID,
+        uploading: false 
+      });
+      
+      toast.success("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading ControlNet image:", error);
+      get().updateNodeData(nodeId, { uploading: false });
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
   generateImageFromNodes: async () => {
     const { nodes, edges, runwayApiKey } = get();
     
@@ -230,6 +271,43 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
 
     try {
+      toast.info("Preparing image generation...");
+      
+      // Get RunwareService instance
+      const runwareService = getRunwareService(runwayApiKey);
+      
+      // Check if all ControlNet nodes with images have their images already uploaded
+      for (const node of controlNetNodes) {
+        if (node.data.image && !node.data.imageId) {
+          // We need to upload this image first
+          toast.info(`Uploading ${node.data.type} control image...`);
+          
+          // Set uploading flag
+          get().updateNodeData(node.id, { uploading: true });
+          
+          try {
+            const uploadedImage = await runwareService.uploadImage(node.data.image);
+            console.log(`${node.data.type} image uploaded:`, uploadedImage);
+            
+            // Update node with the uploaded image ID
+            get().updateNodeData(node.id, {
+              imageId: uploadedImage.imageUUID,
+              uploading: false
+            });
+          } catch (error) {
+            console.error(`Error uploading ${node.data.type} image:`, error);
+            
+            // Reset uploading flag
+            get().updateNodeData(node.id, { uploading: false });
+            
+            // Show error and abort generation
+            toast.error(`Failed to upload ${node.data.type} control image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            return;
+          }
+        }
+      }
+
+      // All ControlNet images are uploaded, proceed with image generation
       toast.info("Generating image...");
       
       const loraArray = loraNodes
@@ -240,16 +318,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         }));
       
       const controlnetArray = controlNetNodes
-        .filter(n => n.data.image)
+        .filter(n => n.data.image && n.data.imageId)
         .map(n => {
           return {
             type: n.data.type as string,
-            imageUrl: n.data.image as string,
+            imageUrl: n.data.imageId as string, // Use the uploaded image ID
             strength: Number(n.data.strength) as number
           };
         });
-      
-      const runwareService = getRunwareService(runwayApiKey);
       
       const params = {
         positivePrompt: modelNode.data.prompt as string || "beautiful landscape",

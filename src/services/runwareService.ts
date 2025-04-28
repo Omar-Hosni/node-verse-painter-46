@@ -24,7 +24,7 @@ export interface GenerateImageParams {
     type: string;
     imageUrl: string;
     strength: number;
-    model?: string; // Added model parameter for ControlNet
+    model?: string;
   }[];
 }
 
@@ -36,12 +36,72 @@ export interface GeneratedImage {
   NSFWContent: boolean;
 }
 
+// Interface for uploaded image response
+export interface UploadedImage {
+  imageUUID: string;
+  imageURL: string;
+}
+
 export class RunwareService {
   // Making apiKey accessible to class methods
   apiKey: string;
   
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+  
+  // New method to upload an image to Runware API
+  async uploadImage(imageData: string): Promise<UploadedImage> {
+    try {
+      const authTask = {
+        taskType: "authentication",
+        apiKey: this.apiKey
+      };
+      
+      const taskUUID = crypto.randomUUID();
+      
+      const uploadTask = {
+        taskType: "imageUpload",
+        taskUUID,
+        image: imageData
+      };
+      
+      console.log("Sending image upload request to Runware API");
+      
+      const response = await fetch("https://api.runware.ai/v1", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify([authTask, uploadTask])
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || data.errors) {
+        console.error("Error response from API:", data);
+        const errorMessage = data.errors && data.errors.length > 0 
+          ? data.errors[0].message 
+          : 'Failed to upload image';
+        throw new Error(errorMessage);
+      }
+      
+      // Extract the image upload result
+      const result = data.data.find((item: any) => item.taskType === "imageUpload" && item.taskUUID === taskUUID);
+      
+      if (!result) {
+        throw new Error('No image upload result found in the response');
+      }
+      
+      return {
+        imageUUID: result.imageUUID,
+        imageURL: result.imageURL
+      };
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
   }
   
   // Method to generate an image using the Runware API
@@ -88,7 +148,7 @@ export class RunwareService {
             // Map each controlnet configuration
             const controlnetConfig: any = {
               type: cn.type,
-              imageUrl: cn.imageUrl,
+              guideImage: cn.imageUrl, // Use guideImage parameter instead of imageUrl
               strength: cn.strength
             };
             
@@ -105,8 +165,8 @@ export class RunwareService {
                 controlnetConfig.model = "runware:29@1"; // FLUX.1 pose model
                 break;
               case 'segment':
-                // For segment, we'll default to a generic type since it's not explicitly listed
-                controlnetConfig.model = "runware:25@1"; // Using canny as fallback
+                // For segment, we'll use tile as a fallback since it's not explicitly listed
+                controlnetConfig.model = "runware:26@1"; // Using tile as fallback
                 break;
               default:
                 // Fallback to canny model if type is unknown
