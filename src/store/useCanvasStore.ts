@@ -70,15 +70,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodes: applyNodeChanges(changes, get().nodes),
     });
     
-    // If a node is selected, update the selected node
     const selectedNode = get().selectedNode;
     if (selectedNode) {
       const updatedNode = get().nodes.find(n => n.id === selectedNode.id);
       if (!updatedNode) {
-        // Node was deleted
         set({ selectedNode: null });
       } else if (JSON.stringify(updatedNode) !== JSON.stringify(selectedNode)) {
-        // Node was changed
         set({ selectedNode: updatedNode });
       }
     }
@@ -191,7 +188,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
             },
           };
           
-          // If this is the selected node, update it in the state
           if (get().selectedNode?.id === nodeId) {
             set({ selectedNode: updatedNode });
           }
@@ -214,7 +210,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   generateImageFromNodes: async () => {
     const { nodes, edges, runwayApiKey } = get();
     
-    // Find the model node, which should be the starting point
     const modelNode = nodes.find(n => n.type === 'modelNode');
     if (!modelNode) {
       toast.error("No model node found! Please add a model node to your canvas.");
@@ -226,13 +221,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       return;
     }
 
-    // Find all connected lora nodes
     const loraNodes = nodes.filter(n => n.type === 'loraNode');
-    
-    // Find all connected controlnet nodes
     const controlNetNodes = nodes.filter(n => n.type === 'controlnetNode');
-    
-    // Find the preview node
     const previewNode = nodes.find(n => n.type === 'previewNode');
     if (!previewNode) {
       toast.error("No preview node found! Please add a preview node to your canvas.");
@@ -242,52 +232,25 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     try {
       toast.info("Generating image...");
       
-      // Create lora array for the API with type assertions
       const loraArray = loraNodes
-        .filter(n => n.data.loraName) // Filter out empty lora names
+        .filter(n => n.data.loraName)
         .map(n => ({
           name: n.data.loraName as string,
           strength: Number(n.data.strength) as number
         }));
       
-      // Create controlnet array for the API with type assertions
       const controlnetArray = controlNetNodes
-        .filter(n => n.data.image) // Filter out controlnets without images
+        .filter(n => n.data.image)
         .map(n => {
-          // Get the specific controlnet type from the node data
-          const type = n.data.type as string;
-          
-          // Construct the appropriate model identifier based on the controlnet type
-          let modelId = "";
-          switch (type) {
-            case 'canny':
-              modelId = "controlnet-canny:1@1";
-              break;
-            case 'depth':
-              modelId = "controlnet-depth:1@1";
-              break;
-            case 'pose':
-              modelId = "controlnet-pose:1@1";
-              break;
-            case 'segment':
-              modelId = "controlnet-segment:1@1";
-              break;
-            default:
-              modelId = "controlnet-canny:1@1"; // Default fallback
-          }
-          
           return {
-            type: type,
+            type: n.data.type as string,
             imageUrl: n.data.image as string,
-            strength: Number(n.data.strength) as number,
-            model: modelId
+            strength: Number(n.data.strength) as number
           };
         });
       
-      // Initialize the Runware service with the API key
       const runwareService = getRunwareService(runwayApiKey);
       
-      // Prepare the parameters for image generation
       const params = {
         positivePrompt: modelNode.data.prompt as string || "beautiful landscape",
         negativePrompt: modelNode.data.negativePrompt as string || "",
@@ -297,19 +260,16 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         CFGScale: Number(modelNode.data.cfgScale) || 7.5,
         scheduler: "EulerDiscreteScheduler",
         steps: Number(modelNode.data.steps) || 30,
-        // Don't include promptWeighting as "none" - only send valid values
         lora: loraArray.length > 0 ? loraArray : undefined,
         controlnet: controlnetArray.length > 0 ? controlnetArray : undefined,
       };
       
       console.log("Generating image with params:", params);
       
-      // Call the API to generate the image
       const generatedImage = await runwareService.generateImage(params);
       
       console.log("Generated image:", generatedImage);
       
-      // Update the preview node with the generated image
       if (generatedImage && generatedImage.imageURL) {
         get().updateNodeData(previewNode.id, { image: generatedImage.imageURL });
         toast.success("Image generated successfully!");

@@ -92,25 +92,25 @@ export class RunwareService {
               strength: cn.strength
             };
             
-            // Add model using the correct AIR identifier format
-            // For ControlNet, the format typically follows: controlnet-{type}:version@provider
-            // Default to a valid AIR format for the specific controlnet type
+            // Map the correct AIR identifier based on controlnet type
+            // Using the values from the documentation provided
             switch (cn.type) {
               case 'canny':
-                controlnetConfig.model = cn.model || "controlnet-canny:1@1";
+                controlnetConfig.model = "runware:25@1"; // FLUX.1 canny model
                 break;
               case 'depth':
-                controlnetConfig.model = cn.model || "controlnet-depth:1@1";
+                controlnetConfig.model = "runware:27@1"; // FLUX.1 depth model
                 break;
               case 'pose':
-                controlnetConfig.model = cn.model || "controlnet-pose:1@1";
+                controlnetConfig.model = "runware:29@1"; // FLUX.1 pose model
                 break;
               case 'segment':
-                controlnetConfig.model = cn.model || "controlnet-segment:1@1";
+                // For segment, we'll default to a generic type since it's not explicitly listed
+                controlnetConfig.model = "runware:25@1"; // Using canny as fallback
                 break;
               default:
-                // Fallback to a generic format if type is unknown
-                controlnetConfig.model = cn.model || "controlnet-canny:1@1";
+                // Fallback to canny model if type is unknown
+                controlnetConfig.model = "runware:25@1";
             }
             
             return controlnetConfig;
