@@ -286,7 +286,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           get().updateNodeData(node.id, { uploading: true });
           
           try {
-            const uploadedImage = await runwareService.uploadImage(node.data.image);
+            // Fix: Ensure we're passing a string to uploadImage
+            const imageData = node.data.image as string;
+            const uploadedImage = await runwareService.uploadImage(imageData);
             console.log(`${node.data.type} image uploaded:`, uploadedImage);
             
             // Update node with the uploaded image ID
