@@ -153,20 +153,29 @@ export class RunwareService {
             };
             
             // Map the correct AIR identifier based on controlnet type
-            // Using the values from the documentation provided
+            // Using the values from the FLUX.1 controlnet AIR identifiers from the image
             switch (cn.type) {
               case 'canny':
                 controlnetConfig.model = "runware:25@1"; // FLUX.1 canny model
                 break;
+              case 'tile':
+                controlnetConfig.model = "runware:26@1"; // FLUX.1 tile model
+                break;
               case 'depth':
                 controlnetConfig.model = "runware:27@1"; // FLUX.1 depth model
+                break;
+              case 'blur':
+                controlnetConfig.model = "runware:28@1"; // FLUX.1 blur model
                 break;
               case 'pose':
                 controlnetConfig.model = "runware:29@1"; // FLUX.1 pose model
                 break;
+              case 'gray':
+                controlnetConfig.model = "runware:30@1"; // FLUX.1 gray model
+                break;
               case 'segment':
-                // For segment, we'll use tile as a fallback since it's not explicitly listed
-                controlnetConfig.model = "runware:26@1"; // Using tile as fallback
+                // For segment, we'll use low quality as it's closest to segment
+                controlnetConfig.model = "runware:31@1"; // FLUX.1 low quality model
                 break;
               default:
                 // Fallback to canny model if type is unknown
