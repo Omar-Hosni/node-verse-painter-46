@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -45,11 +44,20 @@ export interface ControlNetSettings {
   strength: number;
 }
 
+// History interface for undo/redo functionality
+interface HistoryState {
+  nodes: Node[];
+  edges: Edge[];
+}
+
 export interface CanvasState {
   nodes: Node[];
   edges: Edge[];
   selectedNode: Node | null;
   runwayApiKey: string | null;
+  clipboard: Node | null; // For clipboard operations
+  history: HistoryState[]; // For undo functionality
+  historyIndex: number; // Current position in history
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -59,6 +67,16 @@ export interface CanvasState {
   setRunwayApiKey: (apiKey: string) => void;
   generateImageFromNodes: () => Promise<void>;
   uploadControlNetImage: (nodeId: string, imageData: string) => Promise<void>;
+  // New clipboard functions
+  copySelectedNode: () => void;
+  cutSelectedNode: () => void;
+  pasteNodes: (position: { x: number; y: number }) => void;
+  deleteSelectedNode: () => void;
+  // Undo/redo functions
+  undo: () => void;
+  redo: () => void;
+  // Internal function to save current state to history
+  saveToHistory: () => void;
 }
 
 let nodeIdCounter = 1;
@@ -68,8 +86,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   edges: [],
   selectedNode: null,
   runwayApiKey: null,
+  clipboard: null,
+  history: [], // Initialize empty history
+  historyIndex: -1, // No history item selected initially
 
   onNodesChange: (changes: NodeChange[]) => {
+    // Save state before making changes
+    get().saveToHistory();
+    
     set({
       nodes: applyNodeChanges(changes, get().nodes),
     });
@@ -86,18 +110,27 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   onEdgesChange: (changes: EdgeChange[]) => {
+    // Save state before making changes to edges
+    get().saveToHistory();
+    
     set({
       edges: applyEdgeChanges(changes, get().edges),
     });
   },
 
   onConnect: (connection: Connection) => {
+    // Save state before connecting
+    get().saveToHistory();
+    
     set({
       edges: addEdge({ ...connection, animated: true }, get().edges),
     });
   },
 
   addNode: (nodeType: NodeType, position: { x: number; y: number }) => {
+    // Save state before adding node
+    get().saveToHistory();
+    
     const id = `${nodeType}-${nodeIdCounter++}`;
     let newNode: Node;
     
@@ -183,6 +216,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   updateNodeData: (nodeId: string, newData: any) => {
+    // Save state before updating node data
+    get().saveToHistory();
+    
     set({
       nodes: get().nodes.map(node => {
         if (node.id === nodeId) {
@@ -358,5 +394,128 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       console.error("Error generating image:", error);
       toast.error(`Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }
+  },
+  
+  // New clipboard functions
+  copySelectedNode: () => {
+    const { selectedNode } = get();
+    if (selectedNode) {
+      set({ clipboard: JSON.parse(JSON.stringify(selectedNode)) });
+    }
+  },
+  
+  cutSelectedNode: () => {
+    const { selectedNode } = get();
+    if (selectedNode) {
+      // First save to history
+      get().saveToHistory();
+      
+      // Copy to clipboard
+      set({ clipboard: JSON.parse(JSON.stringify(selectedNode)) });
+      
+      // Remove the node
+      set({ 
+        nodes: get().nodes.filter(n => n.id !== selectedNode.id),
+        // Also remove any connected edges
+        edges: get().edges.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id),
+        selectedNode: null,
+      });
+    }
+  },
+  
+  pasteNodes: (position) => {
+    const { clipboard } = get();
+    if (clipboard) {
+      // Save current state to history before pasting
+      get().saveToHistory();
+      
+      // Create a new ID for the pasted node
+      const id = `${clipboard.type}-${nodeIdCounter++}`;
+      
+      // Create a deep copy of the clipboard node with the new ID and position
+      const newNode = {
+        ...JSON.parse(JSON.stringify(clipboard)),
+        id,
+        position,
+      };
+      
+      set({ 
+        nodes: [...get().nodes, newNode],
+        selectedNode: newNode,
+      });
+    }
+  },
+  
+  deleteSelectedNode: () => {
+    const { selectedNode } = get();
+    if (selectedNode) {
+      // Save current state to history before deleting
+      get().saveToHistory();
+      
+      set({ 
+        nodes: get().nodes.filter(n => n.id !== selectedNode.id),
+        // Also remove any connected edges
+        edges: get().edges.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id),
+        selectedNode: null,
+      });
+    }
+  },
+  
+  // History management functions
+  saveToHistory: () => {
+    const { nodes, edges, history, historyIndex } = get();
+    
+    // Create a deep copy of current state
+    const currentState = {
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    };
+    
+    // If we're not at the end of the history,
+    // remove all future states before adding the new one
+    const newHistory = historyIndex < history.length - 1 
+      ? history.slice(0, historyIndex + 1) 
+      : history;
+    
+    // Add current state to history
+    // Limit history to 30 states to avoid memory issues
+    const limitedHistory = [...newHistory, currentState].slice(-30);
+    
+    set({ 
+      history: limitedHistory,
+      historyIndex: limitedHistory.length - 1,
+    });
+  },
+  
+  undo: () => {
+    const { historyIndex, history } = get();
+    
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const previousState = history[newIndex];
+      
+      set({
+        nodes: previousState.nodes,
+        edges: previousState.edges,
+        historyIndex: newIndex,
+        selectedNode: null, // Clear selection when undoing
+      });
+    }
+  },
+  
+  redo: () => {
+    const { historyIndex, history } = get();
+    
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const nextState = history[newIndex];
+      
+      set({
+        nodes: nextState.nodes,
+        edges: nextState.edges,
+        historyIndex: newIndex,
+        selectedNode: null, // Clear selection when redoing
+      });
+    }
+  },
 }));
