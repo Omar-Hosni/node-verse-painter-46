@@ -11,7 +11,6 @@ import { LoraNode } from './nodes/LoraNode';
 import { ControlnetNode } from './nodes/ControlnetNode';
 import { PreviewNode } from './nodes/PreviewNode';
 import { toast } from 'sonner';
-import { Clipboard, Undo, Redo, Trash } from 'lucide-react';
 
 import '@xyflow/react/dist/style.css';
 
@@ -128,16 +127,6 @@ export const Canvas = () => {
         fitView
         className="bg-canvas"
       />
-      <div className="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-border">
-        <div className="text-xs text-muted-foreground">
-          <div className="flex items-center gap-1"><Clipboard size={12} /> <span>Copy: Ctrl/Cmd+C</span></div>
-          <div className="flex items-center gap-1"><Clipboard size={12} /> <span>Cut: Ctrl/Cmd+X</span></div>
-          <div className="flex items-center gap-1"><Clipboard size={12} /> <span>Paste: Ctrl/Cmd+V</span></div>
-          <div className="flex items-center gap-1"><Trash size={12} /> <span>Delete: Delete/Backspace</span></div>
-          <div className="flex items-center gap-1"><Undo size={12} /> <span>Undo: Ctrl/Cmd+Z</span></div>
-          <div className="flex items-center gap-1"><Redo size={12} /> <span>Redo: Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z</span></div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Upload } from 'lucide-react';
@@ -235,21 +236,27 @@ export const RightSidebar = () => {
           <h2 className="text-white text-sm font-medium">Node Properties</h2>
         </div>
         
-        <ScrollArea className="flex-1 px-4">
-          <div className="py-4">
-            {/* Style Preferences Section */}
-            <div className="border-b border-field pb-4 mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Style Preferences</h3>
-              {renderStyleProperties()}
+        {/* Fix: Use proper height to ensure scrolling works */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full px-4">
+            <div className="py-4">
+              {/* Style Preferences Section */}
+              <div className="border-b border-field pb-4 mb-4">
+                <h3 className="text-sm font-medium text-gray-400 mb-3">Style Preferences</h3>
+                {renderStyleProperties()}
+              </div>
+              
+              {/* Node-specific settings section */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-400 mb-3">Node Settings</h3>
+                {renderNodeSpecificControls()}
+              </div>
+              
+              {/* Add padding at the bottom to ensure all content is scrollable */}
+              <div className="pb-8"></div>
             </div>
-            
-            {/* Node-specific settings section */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Node Settings</h3>
-              {renderNodeSpecificControls()}
-            </div>
-          </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );
