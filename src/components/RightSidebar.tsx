@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getRunwareService } from '@/services/runwareService';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const RightSidebar = () => {
   const selectedNode = useCanvasStore(state => state.selectedNode);
@@ -227,25 +228,29 @@ export const RightSidebar = () => {
       </div>;
   };
 
-  return <div className="w-80 h-screen bg-sidebar border-l border-field overflow-y-auto">
-      <div>
+  return (
+    <div className="w-80 h-screen bg-sidebar border-l border-field">
+      <div className="flex flex-col h-full">
         <div className="p-4 border-b border-field">
           <h2 className="text-white text-sm font-medium">Node Properties</h2>
         </div>
         
-        <div className="p-4">
-          {/* Style Preferences Section - Always visible */}
-          <div className="border-b border-field pb-4 mb-4">
-            <h3 className="text-sm font-medium text-gray-400 mb-3">Style Preferences</h3>
-            {renderStyleProperties()}
+        <ScrollArea className="flex-1 px-4">
+          <div className="py-4">
+            {/* Style Preferences Section */}
+            <div className="border-b border-field pb-4 mb-4">
+              <h3 className="text-sm font-medium text-gray-400 mb-3">Style Preferences</h3>
+              {renderStyleProperties()}
+            </div>
+            
+            {/* Node-specific settings section */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-400 mb-3">Node Settings</h3>
+              {renderNodeSpecificControls()}
+            </div>
           </div>
-          
-          {/* Node-specific settings section - Always visible */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-400 mb-3">Node Settings</h3>
-            {renderNodeSpecificControls()}
-          </div>
-        </div>
+        </ScrollArea>
       </div>
-    </div>;
+    </div>
+  );
 };
