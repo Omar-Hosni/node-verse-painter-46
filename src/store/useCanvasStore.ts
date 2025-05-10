@@ -50,6 +50,19 @@ interface HistoryState {
   edges: Edge[];
 }
 
+// Define the workflow JSON schema
+export interface WorkflowJsonNode {
+  inputs: Record<string, any>;
+  class_type: string;
+  _meta: {
+    title: string;
+  };
+}
+
+export interface WorkflowJson {
+  [key: string]: WorkflowJsonNode;
+}
+
 export interface CanvasState {
   nodes: Node[];
   edges: Edge[];
@@ -77,6 +90,8 @@ export interface CanvasState {
   redo: () => void;
   // Internal function to save current state to history
   saveToHistory: () => void;
+  // Export workflow as JSON
+  exportWorkflowAsJson: () => WorkflowJson;
 }
 
 let nodeIdCounter = 1;
@@ -319,7 +334,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           toast.info(`Uploading ${node.data.type} control image...`);
           
           // Set uploading flag
-          get().updateNodeData(node.id, { uploading: true });
+          get().updateNodeData(node.id, { 
+            uploading: true 
+          });
           
           try {
             // Fix: Ensure we're passing a string to uploadImage
@@ -517,5 +534,98 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         selectedNode: null, // Clear selection when redoing
       });
     }
+  },
+  
+  // New function to export workflow as JSON
+  exportWorkflowAsJson: () => {
+    const { nodes, edges } = get();
+    const workflowJson: WorkflowJson = {};
+    
+    // Create a counter for node IDs in the JSON
+    let idCounter = 1;
+    
+    // Map to store React Flow node ID to JSON node ID mapping
+    const nodeIdMap = new Map<string, string>();
+    
+    // First pass: create node entries without connections
+    nodes.forEach((node) => {
+      const jsonNodeId = idCounter.toString();
+      nodeIdMap.set(node.id, jsonNodeId);
+      idCounter++;
+      
+      // Define the node structure based on node type
+      switch (node.type) {
+        case 'modelNode':
+          workflowJson[jsonNodeId] = {
+            inputs: {
+              modelName: node.data.modelName || "runware:100@1",
+              width: node.data.width || 512,
+              height: node.data.height || 512,
+              steps: node.data.steps || 30,
+              cfgScale: node.data.cfgScale || 7.5,
+              prompt: node.data.prompt || "",
+              negativePrompt: node.data.negativePrompt || "",
+            },
+            class_type: "ModelNode",
+            _meta: {
+              title: node.data.displayName || "Model"
+            }
+          };
+          break;
+        case 'loraNode':
+          workflowJson[jsonNodeId] = {
+            inputs: {
+              loraName: node.data.loraName || "",
+              strength: node.data.strength || 0.8
+            },
+            class_type: "LoraNode",
+            _meta: {
+              title: node.data.displayName || "LoRA"
+            }
+          };
+          break;
+        case 'controlnetNode':
+          workflowJson[jsonNodeId] = {
+            inputs: {
+              type: node.data.type || "canny",
+              imageId: node.data.imageId || null,
+              strength: node.data.strength || 0.8
+            },
+            class_type: "ControlnetNode",
+            _meta: {
+              title: node.data.displayName || `${node.data.type} Control`
+            }
+          };
+          break;
+        case 'previewNode':
+          workflowJson[jsonNodeId] = {
+            inputs: {
+              image: node.data.image || null
+            },
+            class_type: "PreviewNode",
+            _meta: {
+              title: node.data.displayName || "Preview"
+            }
+          };
+          break;
+      }
+    });
+    
+    // Second pass: add connections to the node inputs
+    edges.forEach((edge) => {
+      const sourceNodeJsonId = nodeIdMap.get(edge.source);
+      const targetNodeJsonId = nodeIdMap.get(edge.target);
+      
+      if (sourceNodeJsonId && targetNodeJsonId && workflowJson[targetNodeJsonId]) {
+        // Add connection to the target node's inputs
+        if (!workflowJson[targetNodeJsonId].inputs.connections) {
+          workflowJson[targetNodeJsonId].inputs.connections = [];
+        }
+        
+        workflowJson[targetNodeJsonId].inputs.connections.push([sourceNodeJsonId, 0]);
+      }
+    });
+    
+    return workflowJson;
   },
 }));

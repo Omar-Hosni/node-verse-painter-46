@@ -8,10 +8,10 @@ interface ControlnetNodeProps {
   data: {
     type: string;
     image: string | null;
-    imageId?: string; // Added imageId to store the uploaded image UUID
-    uploading?: boolean; // Added uploading status flag
+    imageId?: string;
+    uploading?: boolean;
     strength: number;
-    // New style properties
+    // Style properties
     displayName: string;
     emoji: string;
     color: string;
@@ -27,12 +27,12 @@ export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
       style={{ backgroundColor: data.color || '#10b981' }} // Default to green if no color set
     >
       <div className="flex items-center gap-2 px-4 py-2">
-        <span className="text-lg font-medium text-white">
-          {data.displayName || `${data.type} Control`}
-        </span>
         <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
           <span className="text-xl">{data.emoji || '🎯'}</span>
         </div>
+        <span className="text-lg font-medium text-white">
+          {data.displayName || `${data.type} Control`}
+        </span>
       </div>
 
       {/* Display the image thumbnail if it exists, with loading indicator */}
@@ -53,18 +53,18 @@ export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
         </div>
       )}
 
-      {/* Handles */}
+      {/* Horizontal handles */}
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         id="controlnet-in"
-        className="!bg-white !border-none w-3 h-3 !-top-1"
+        className="!bg-white !border-none w-3 h-3 !-left-1"
       />
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         id="controlnet-out"
-        className="!bg-white !border-none w-3 h-3 !-bottom-1"
+        className="!bg-white !border-none w-3 h-3 !-right-1"
       />
     </div>
   );

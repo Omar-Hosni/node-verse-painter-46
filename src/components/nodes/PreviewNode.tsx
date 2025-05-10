@@ -6,7 +6,7 @@ interface PreviewNodeProps {
   id: string;
   data: {
     image: string | null;
-    // New style properties
+    // Style properties
     displayName: string;
     emoji: string;
     color: string;
@@ -22,12 +22,12 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
       style={{ backgroundColor: data.color || '#f59e0b' }} // Default to amber if no color set
     >
       <div className="flex items-center gap-2">
-        <span className="text-lg font-medium text-white">
-          {data.displayName || 'Preview'}
-        </span>
         <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
           <span className="text-xl">{data.emoji || '🖼️'}</span>
         </div>
+        <span className="text-lg font-medium text-white">
+          {data.displayName || 'Preview'}
+        </span>
       </div>
       
       {/* Display the image if it exists */}
@@ -41,12 +41,12 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
         </div>
       )}
 
-      {/* Handle */}
+      {/* Horizontal handle */}
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         id="preview-in"
-        className="!bg-white !border-none w-3 h-3 !-top-1"
+        className="!bg-white !border-none w-3 h-3 !-left-1"
       />
     </div>
   );

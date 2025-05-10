@@ -4,6 +4,10 @@ import {
   ReactFlow,
   NodeTypes,
   useReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  Panel,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -11,6 +15,7 @@ import { LoraNode } from './nodes/LoraNode';
 import { ControlnetNode } from './nodes/ControlnetNode';
 import { PreviewNode } from './nodes/PreviewNode';
 import { toast } from 'sonner';
+import { Button } from './ui/button';
 
 import '@xyflow/react/dist/style.css';
 
@@ -35,6 +40,7 @@ export const Canvas = () => {
     deleteSelectedNode,
     undo,
     redo,
+    exportWorkflowAsJson,
   } = useCanvasStore();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -113,6 +119,24 @@ export const Canvas = () => {
     };
   }, [handleKeyDown]);
 
+  const handleExportWorkflow = () => {
+    const json = exportWorkflowAsJson();
+    console.log("Workflow JSON:", json);
+    
+    // Create a blob and download the JSON file
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'workflow.json';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    toast.success('Workflow exported as JSON');
+  };
+
   return (
     <div className="flex-1 h-screen" ref={reactFlowWrapper}>
       <ReactFlow
@@ -125,8 +149,22 @@ export const Canvas = () => {
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
+        defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
         className="bg-canvas"
-      />
+      >
+        <MiniMap />
+        <Controls />
+        <Background />
+        <Panel position="top-right">
+          <Button 
+            onClick={handleExportWorkflow}
+            variant="outline"
+            className="bg-white text-black hover:bg-gray-100"
+          >
+            Export Workflow
+          </Button>
+        </Panel>
+      </ReactFlow>
     </div>
   );
 };
