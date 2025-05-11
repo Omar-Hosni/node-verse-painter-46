@@ -130,13 +130,15 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
         type="target"
         position={Position.Left}
         id="input-in"
-        className="!bg-white !border-2 !border-blue-300 w-4 h-4 !-left-2"
+        className="!bg-white !border-2 !border-blue-300 w-4 h-4"
+        style={{ left: -8, zIndex: 100 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="input-out"
-        className="!bg-white !border-2 !border-blue-300 w-4 h-4 !-right-2"
+        className="!bg-white !border-2 !border-blue-300 w-4 h-4"
+        style={{ right: -8, zIndex: 100 }}
       />
     </div>
   );

@@ -108,7 +108,8 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
         type="target"
         position={Position.Left}
         id="preview-in"
-        className="!bg-white !border-2 !border-blue-500 w-4 h-4 !-left-2"
+        className="!bg-white !border-2 !border-blue-500 w-4 h-4"
+        style={{ left: -8, zIndex: 100 }}
       />
     </div>
   );

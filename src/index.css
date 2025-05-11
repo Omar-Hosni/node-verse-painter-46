@@ -122,13 +122,13 @@
 
 /* Make right handle position completely outside the node */
 .react-flow__handle-right {
-  right: -12px;
+  right: -8px;
   transform: translateX(0);
 }
 
 /* Make left handle position completely outside the node */
 .react-flow__handle-left {
-  left: -12px;
+  left: -8px;
   transform: translateX(0);
 }
 

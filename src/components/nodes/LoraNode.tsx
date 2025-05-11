@@ -97,13 +97,15 @@ export const LoraNode = ({ data, selected }: LoraNodeProps) => {
         type="target"
         position={Position.Left}
         id="lora-in"
-        className="!bg-white !border-2 !border-purple-500 w-4 h-4 !-left-2"
+        className="!bg-white !border-2 !border-purple-500 w-4 h-4"
+        style={{ left: -8, zIndex: 100 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="lora-out"
-        className="!bg-white !border-2 !border-purple-500 w-4 h-4 !-right-2"
+        className="!bg-white !border-2 !border-purple-500 w-4 h-4"
+        style={{ right: -8, zIndex: 100 }}
       />
     </div>
   );
