@@ -109,7 +109,7 @@
 /* Node styling */
 .react-flow__handle {
   opacity: 1;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, transform 0.2s;
   width: 14px;
   height: 14px;
   border-radius: 50%;

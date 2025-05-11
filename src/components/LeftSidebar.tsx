@@ -14,9 +14,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { NodeType } from '@/store/types';
 
 type NodeOption = {
-  type: string;
+  type: NodeType;
   label: string;
   icon: React.ElementType;
   description: string;
@@ -150,7 +151,7 @@ export const LeftSidebar = () => {
     }
   ];
 
-  const handleAddNode = (nodeType: string) => {
+  const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
     const center = {
       x: window.innerWidth / 2,

@@ -97,12 +97,20 @@ export const ModelNode = ({ data, selected }: ModelNodeProps) => {
         />
       </div>
       
-      {/* Only source handle (output) for model nodes - Improved visibility */}
+      {/* Handles with improved visibility - positioned outside the node */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="model-in"
+        className="!bg-white !border-2 !border-blue-500 w-4 h-4"
+        style={{ left: -8, zIndex: 100 }}
+      />
       <Handle
         type="source"
         position={Position.Right}
         id="model-out"
-        className="!bg-white !border-2 !border-blue-500 w-4 h-4 !-right-2"
+        className="!bg-white !border-2 !border-blue-500 w-4 h-4"
+        style={{ right: -8, zIndex: 100 }}
       />
     </div>
   );
