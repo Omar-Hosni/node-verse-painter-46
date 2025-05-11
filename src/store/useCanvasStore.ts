@@ -33,7 +33,6 @@ import {
 
 import {
   saveProject as saveProjectToDb,
-  updateProject,
   loadProject as loadProjectFromDb,
   fetchUserCredits as fetchCredits,
   fetchUserSubscription as fetchSubscription,

@@ -97,18 +97,12 @@ export const ModelNode = ({ data, selected }: ModelNodeProps) => {
         />
       </div>
       
-      {/* Horizontal handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="model-in"
-        className="!bg-white !border-none w-3 h-3 !-left-1"
-      />
+      {/* Only source handle (output) for model nodes */}
       <Handle
         type="source"
         position={Position.Right}
         id="model-out"
-        className="!bg-white !border-none w-3 h-3 !-right-1"
+        className="!bg-white !border-none w-3 h-3 !-right-1.5"
       />
     </div>
   );

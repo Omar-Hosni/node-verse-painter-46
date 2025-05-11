@@ -108,8 +108,19 @@
 
 /* Node styling */
 .react-flow__handle {
-  opacity: 0.5;
+  opacity: 0.8;
   transition: opacity 0.3s;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.react-flow__handle-right {
+  right: -5px;
+}
+
+.react-flow__handle-left {
+  left: -5px;
 }
 
 .react-flow__node:hover .react-flow__handle {
@@ -120,3 +131,10 @@
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 3;
 }
+
+/* Edge interaction */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #ff69b4;
+  stroke-width: 3;
+}
+

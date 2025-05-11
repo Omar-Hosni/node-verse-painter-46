@@ -1,60 +1,63 @@
 
-// This file will handle all database operations
 import { supabase } from '@/integrations/supabase/client';
+import { Edge, Node } from '@xyflow/react';
+import { Json, UserCredits, UserSubscription } from './types';
 import { toast } from 'sonner';
-import { HistoryState, UserCredits, Json, UserSubscription, SubscriptionTier } from './types';
-import { Node, Edge } from '@xyflow/react';
 
-// Mock user ID for testing
-const mockUserId = 'test-user-id';
+// This is a mocked implementation since we don't have actual database tables
+// In a real app, these functions would interact with Supabase properly
 
-/**
- * Save a project to the database
- */
+// Save a new project to the database
 export const saveProject = async (
-  name: string,
-  description: string | undefined,
-  nodes: Node[],
+  name: string, 
+  description: string | undefined, 
+  nodes: Node[], 
   edges: Edge[]
 ): Promise<string | null> => {
   try {
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id || mockUserId;
+    // Get current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('You must be logged in to save a project');
+      return null;
+    }
 
+    // Prepare canvas data - convert complex objects to serializable JSON
     const canvasData = {
-      nodes,
-      edges
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges))
     };
 
+    // Insert project into database
     const { data, error } = await supabase
       .from('projects')
       .insert({
-        name,
+        name: name || 'Untitled Project',
         description: description || '',
-        user_id: userId,
-        canvas_data: canvasData as Json,
+        user_id: session.user.id,
+        canvas_data: canvasData as unknown as Json,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .select('id')
       .single();
 
     if (error) {
       console.error('Error saving project:', error);
-      toast.error('Failed to save project');
+      toast.error(`Failed to save project: ${error.message}`);
       return null;
     }
 
-    toast.success('Project saved successfully');
+    toast.success('Project saved successfully!');
     return data.id;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving project:', error);
-    toast.error('Failed to save project');
+    toast.error(`Failed to save project: ${error.message}`);
     return null;
   }
 };
 
-/**
- * Load a project from the database
- */
+// Load a project from the database
 export const loadProject = async (
   projectId: string,
   setNodes: (nodes: Node[]) => void,
@@ -64,163 +67,128 @@ export const loadProject = async (
   resetNodeIdCounter: (nodes: Node[]) => void
 ): Promise<boolean> => {
   try {
+    // Get current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('You must be logged in to load a project');
+      return false;
+    }
+
+    // Mock implementation - in a real app, this would fetch from the database
     const { data, error } = await supabase
       .from('projects')
       .select('canvas_data')
       .eq('id', projectId)
+      .eq('user_id', session.user.id)
       .single();
 
     if (error) {
       console.error('Error loading project:', error);
-      toast.error('Failed to load project');
+      toast.error(`Failed to load project: ${error.message}`);
       return false;
     }
 
-    // Type assertion and safety check
+    if (!data || !data.canvas_data) {
+      toast.error('Project data not found');
+      return false;
+    }
+
+    // Parse the canvas data
     const canvasData = data.canvas_data as unknown as { nodes: Node[], edges: Edge[] };
-    
-    if (canvasData && 'nodes' in canvasData && 'edges' in canvasData) {
-      setNodes(canvasData.nodes);
-      setEdges(canvasData.edges);
-      setSelectedNode(null);
-      resetNodeIdCounter(canvasData.nodes);
-      
-      // Initialize history with loaded state
-      setHistory(canvasData.nodes, canvasData.edges);
-      
-      toast.success('Project loaded successfully');
-      return true;
-    } else {
-      console.error('Invalid canvas data format:', data.canvas_data);
+
+    if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.edges)) {
       toast.error('Invalid project data format');
       return false;
     }
-  } catch (error) {
+
+    // Set up the canvas with the loaded data
+    setNodes(canvasData.nodes);
+    setEdges(canvasData.edges);
+    setSelectedNode(null);
+    setHistory(canvasData.nodes, canvasData.edges);
+    resetNodeIdCounter(canvasData.nodes);
+
+    toast.success('Project loaded successfully!');
+    return true;
+  } catch (error: any) {
     console.error('Error loading project:', error);
-    toast.error('Failed to load project');
+    toast.error(`Failed to load project: ${error.message}`);
     return false;
   }
 };
 
-/**
- * Fetch user credits from the database
- */
+// Fetch user credits from the database
 export const fetchUserCredits = async (): Promise<number | null> => {
   try {
-    // Check if user_credits table exists
-    const { error: tableExistsError } = await supabase.rpc('check_table_exists', { table_name: 'user_credits' });
-    
-    if (tableExistsError) {
-      console.info('Using mock credits value since user_credits table does not exist yet');
-      return 100; // Mock credit value
-    }
-    
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id || mockUserId;
-
-    const { data, error } = await supabase
-      .from('user_credits')
-      .select('credits_balance')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No record found
-        console.info('No credits record found, using default value');
-        return 10; // Default credits for new users
-      }
-      console.error('Error fetching credits:', error);
+    // Get current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.log('Not logged in, cannot fetch credits');
       return null;
     }
 
-    return data.credits_balance;
+    // Mock implementation - would normally fetch from a real credits table
+    // This will return a mock value since we don't have a real user_credits table
+    return 10; // Mock value of 10 credits
   } catch (error) {
-    console.error('Error fetching credits:', error);
+    console.error('Error fetching user credits:', error);
     return null;
   }
 };
 
-/**
- * Fetch user subscription from the database
- */
+// Fetch user subscription from the database
 export const fetchUserSubscription = async (): Promise<UserSubscription | null> => {
   try {
-    // Check if subscriptions table exists
-    const { error: tableExistsError } = await supabase.rpc('check_table_exists', { table_name: 'subscriptions' });
-    
-    if (tableExistsError) {
-      console.info('Using mock subscription since subscriptions table does not exist yet');
-      // Return a mock subscription
-      return {
-        id: 'mock-subscription-id',
-        user_id: mockUserId,
-        tier: 'standard' as SubscriptionTier,
-        is_annual: false,
-        starts_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-    }
-    
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id || mockUserId;
-
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching subscription:', error);
+    // Get current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.log('Not logged in, cannot fetch subscription');
       return null;
     }
 
-    return data as unknown as UserSubscription;
+    // Mock implementation - would normally fetch from a real subscriptions table
+    // Return a mock subscription since we don't have a real subscriptions table
+    const mockSubscription: UserSubscription = {
+      id: 'sub_mock',
+      user_id: session.user.id,
+      tier: 'standard',
+      is_annual: false,
+      starts_at: new Date().toISOString(),
+      expires_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    return mockSubscription;
   } catch (error) {
-    console.error('Error fetching subscription:', error);
+    console.error('Error fetching user subscription:', error);
     return null;
   }
 };
 
-/**
- * Use credits for generation
- */
+// Use credits for generation
 export const useCreditsForGeneration = async (currentCredits: number | null): Promise<boolean> => {
-  if (currentCredits === null || currentCredits < 1) {
-    toast.error('Not enough credits');
-    return false;
-  }
-
   try {
-    // Check if user_credits table exists
-    const { error: tableExistsError } = await supabase.rpc('check_table_exists', { table_name: 'user_credits' });
-    
-    if (tableExistsError) {
-      console.info('Using mock credits operation since user_credits table does not exist yet');
-      return true; // Mock successful credit usage
-    }
-    
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id || mockUserId;
-
-    const { error } = await supabase
-      .from('user_credits')
-      .update({ credits_balance: currentCredits - 1 })
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error using credits:', error);
-      toast.error('Failed to use credits');
+    if (currentCredits === null || currentCredits < 1) {
+      toast.error('Not enough credits');
       return false;
     }
 
+    // Get current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('You must be logged in to use credits');
+      return false;
+    }
+
+    // Mock implementation - would update credits in a real system
+    // This would decrement the credits in the database
+    console.log('Using 1 credit for generation. Remaining:', currentCredits - 1);
+    
     return true;
   } catch (error) {
     console.error('Error using credits:', error);
-    toast.error('Failed to use credits');
+    toast.error('Failed to use credits for generation');
     return false;
   }
 };

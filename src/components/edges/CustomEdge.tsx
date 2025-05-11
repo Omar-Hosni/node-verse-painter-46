@@ -26,9 +26,9 @@ const CustomEdge: React.FC<EdgeProps> = ({
     sourceX,
     sourceY,
     sourcePosition,
+    targetPosition,
     targetX,
     targetY,
-    targetPosition,
   });
 
   // Delete edge when clicking the remove button
@@ -39,7 +39,7 @@ const CustomEdge: React.FC<EdgeProps> = ({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style}} />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style, strokeWidth: 2}} />
       
       {/* Edge control button */}
       <EdgeLabelRenderer>
@@ -48,14 +48,15 @@ const CustomEdge: React.FC<EdgeProps> = ({
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
+            zIndex: 10,
           }}
           className="nodrag nopan"
         >
           <button
-            className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition-colors border border-gray-300"
+            className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition-colors border border-gray-300"
             onClick={onEdgeClick}
           >
-            <X size={12} />
+            <X size={14} />
           </button>
         </div>
       </EdgeLabelRenderer>
