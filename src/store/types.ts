@@ -1,15 +1,23 @@
 
 import { Connection, Edge, EdgeChange, Node, NodeChange, OnConnect, OnEdgesChange, OnNodesChange } from '@xyflow/react';
-import { Json } from '@supabase/supabase-js';
+
+export type JsonValue = string | number | boolean | { [key: string]: JsonValue } | JsonValue[];
+export type Json = JsonValue | null;
 
 export type NodeType = 
-  | 'model' 
-  | 'lora' 
+  | 'model-sdxl'
+  | 'model-flux' 
+  | 'model-hidream'
+  | 'lora-realistic'
+  | 'lora-cartoon'
+  | 'lora-character'
   | 'controlnet-canny' 
   | 'controlnet-depth' 
   | 'controlnet-pose' 
-  | 'controlnet-segment' 
-  | 'preview';
+  | 'controlnet-segment'
+  | 'input-text'
+  | 'input-image' 
+  | 'output-preview';
 
 export interface ModelSettings {
   modelName: string;
@@ -22,6 +30,7 @@ export interface ModelSettings {
 export interface LoraSettings {
   loraName: string;
   strength: number;
+  loraType: string;
 }
 
 export interface ControlNetSettings {
@@ -29,6 +38,15 @@ export interface ControlNetSettings {
   imageId?: string;
   uploading?: boolean;
   strength: number;
+  controlNetType: string;
+}
+
+export interface InputSettings {
+  text?: string;
+  image?: string | null;
+  imageId?: string;
+  uploading?: boolean;
+  inputType: string;
 }
 
 // History interface for undo/redo functionality
@@ -77,6 +95,7 @@ export interface CanvasState {
   nodes: Node[];
   edges: Edge[];
   selectedNode: Node | null;
+  selectedEdge: Edge | null;
   runwayApiKey: string | null;
   credits: number | null;
   subscription: UserSubscription | null;
@@ -89,13 +108,16 @@ export interface CanvasState {
   addNode: (nodeType: NodeType, position: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, newData: any) => void;
   setSelectedNode: (node: Node | null) => void;
+  setSelectedEdge: (edge: Edge | null) => void;
   setRunwayApiKey: (apiKey: string) => void;
   generateImageFromNodes: () => Promise<void>;
   uploadControlNetImage: (nodeId: string, imageData: string) => Promise<void>;
+  uploadInputImage: (nodeId: string, imageData: string) => Promise<void>;
   copySelectedNode: () => void;
   cutSelectedNode: () => void;
   pasteNodes: (position: { x: number; y: number }) => void;
   deleteSelectedNode: () => void;
+  deleteEdge: (edgeId: string) => void;
   undo: () => void;
   redo: () => void;
   saveToHistory: () => void;

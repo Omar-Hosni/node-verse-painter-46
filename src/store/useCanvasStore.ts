@@ -12,14 +12,17 @@ import {
 import { 
   CanvasState,
   HistoryState,
-  WorkflowJson
+  WorkflowJson,
+  JsonValue,
+  Json
 } from './types';
 
 import { 
   createNode, 
   handleNodesChange, 
   updateNodeDataHelper,
-  resetNodeIdCounter 
+  resetNodeIdCounter,
+  deleteEdgeHelper
 } from './nodeActions';
 
 import { 
@@ -45,6 +48,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNode: null,
+  selectedEdge: null,
   runwayApiKey: null,
   credits: null,
   subscription: null,
@@ -75,6 +79,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     
     set({
       edges: applyEdgeChanges(changes, get().edges),
+      // Clear selected edge if it was deleted
+      selectedEdge: get().selectedEdge && 
+        !changes.find(
+          c => c.type === 'remove' && c.id === get().selectedEdge?.id
+        )
+          ? get().selectedEdge
+          : null
     });
   },
 
@@ -82,8 +93,19 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     // Save state before connecting
     get().saveToHistory();
     
+    // Create a unique edge ID
+    const id = `edge-${get().edges.length + 1}`;
+    
     set({
-      edges: addEdge({ ...connection, animated: true }, get().edges),
+      edges: addEdge(
+        { 
+          ...connection, 
+          id, 
+          animated: true,
+          type: 'custom'
+        }, 
+        get().edges
+      ),
     });
   },
   
@@ -120,11 +142,25 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ selectedNode: node });
   },
 
+  setSelectedEdge: (edge) => {
+    set({ selectedEdge: edge });
+  },
+
   setRunwayApiKey: (apiKey) => {
     set({ runwayApiKey: apiKey });
   },
 
   uploadControlNetImage: async (nodeId, imageData) => {
+    await uploadImage(
+      nodeId, 
+      imageData, 
+      get().runwayApiKey, 
+      get().updateNodeData
+    );
+  },
+
+  uploadInputImage: async (nodeId, imageData) => {
+    // Reuse the same upload function for input images
     await uploadImage(
       nodeId, 
       imageData, 
@@ -198,6 +234,16 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
+  deleteEdge: (edgeId) => {
+    // Save current state to history before deleting
+    get().saveToHistory();
+    
+    set({
+      edges: deleteEdgeHelper(edgeId, get().edges),
+      selectedEdge: null,
+    });
+  },
+  
   // History operations
   saveToHistory: () => {
     const { nodes, edges, history, historyIndex } = get();
@@ -236,6 +282,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         edges: previousState.edges,
         historyIndex: newIndex,
         selectedNode: null, // Clear selection when undoing
+        selectedEdge: null,
       });
     }
   },
@@ -252,6 +299,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         edges: nextState.edges,
         historyIndex: newIndex,
         selectedNode: null, // Clear selection when redoing
+        selectedEdge: null,
       });
     }
   },

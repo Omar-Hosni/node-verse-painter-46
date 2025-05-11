@@ -3,6 +3,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   NodeTypes,
+  EdgeTypes,
   useReactFlow,
   MiniMap,
   Controls,
@@ -14,6 +15,8 @@ import { ModelNode } from './nodes/ModelNode';
 import { LoraNode } from './nodes/LoraNode';
 import { ControlnetNode } from './nodes/ControlnetNode';
 import { PreviewNode } from './nodes/PreviewNode';
+import { InputNode } from './nodes/InputNode';
+import CustomEdge from './edges/CustomEdge';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 
@@ -24,6 +27,11 @@ const nodeTypes: NodeTypes = {
   loraNode: LoraNode,
   controlnetNode: ControlnetNode,
   previewNode: PreviewNode,
+  inputNode: InputNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  custom: CustomEdge,
 };
 
 export const Canvas = () => {
@@ -34,10 +42,12 @@ export const Canvas = () => {
     onEdgesChange, 
     onConnect,
     setSelectedNode,
+    setSelectedEdge,
     copySelectedNode,
     pasteNodes,
     cutSelectedNode,
     deleteSelectedNode,
+    deleteEdge,
     undo,
     redo,
     exportWorkflowAsJson,
@@ -52,11 +62,18 @@ export const Canvas = () => {
   
   const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
-  }, [setSelectedNode]);
+    setSelectedEdge(null);
+  }, [setSelectedNode, setSelectedEdge]);
+
+  const onEdgeClick = useCallback((event: React.MouseEvent, edge: any) => {
+    setSelectedNode(null);
+    setSelectedEdge(edge);
+  }, [setSelectedNode, setSelectedEdge]);
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
-  }, [setSelectedNode]);
+    setSelectedEdge(null);
+  }, [setSelectedNode, setSelectedEdge]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -182,6 +199,12 @@ export const Canvas = () => {
     }
   };
 
+  const defaultEdgeOptions = {
+    type: 'custom',
+    animated: true,
+    style: { strokeWidth: 2, stroke: '#666' }
+  };
+
   return (
     <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
       <ReactFlow
@@ -191,10 +214,12 @@ export const Canvas = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
         fitView
-        defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
         className="bg-[#151515]"
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />

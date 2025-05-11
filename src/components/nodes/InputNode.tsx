@@ -5,15 +5,14 @@ import { Loader2, HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-interface ControlnetNodeProps {
+interface InputNodeProps {
   id: string;
   data: {
-    type: string;
-    controlNetType?: string;
-    image: string | null;
+    inputType: string;
+    text?: string;
+    image?: string | null;
     imageId?: string;
     uploading?: boolean;
-    strength: number;
     // Style properties
     displayName: string;
     emoji: string;
@@ -24,22 +23,60 @@ interface ControlnetNodeProps {
   selected: boolean;
 }
 
-export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
+export const InputNode = ({ id, data, selected }: InputNodeProps) => {
   const [showTutorial, setShowTutorial] = useState(false);
-  
+
+  const renderContent = () => {
+    if (data.inputType === 'text') {
+      return (
+        <div className="w-full p-2">
+          <textarea 
+            className="w-full h-20 p-2 bg-sidebar-accent rounded-md text-white resize-none"
+            placeholder="Enter your prompt here..."
+            value={data.text || ''}
+            onChange={(e) => console.log('Text changed:', e.target.value)}
+          />
+        </div>
+      );
+    } else if (data.inputType === 'image') {
+      return (
+        <div className="w-full p-2">
+          {data.image ? (
+            <div className="w-full h-24 overflow-hidden rounded-md border border-white relative">
+              {data.uploading && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                </div>
+              )}
+              <img 
+                src={data.image} 
+                alt="Input image"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-24 flex items-center justify-center border border-dashed border-white rounded-md bg-sidebar-accent text-white">
+              <span>Click to upload image</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+  };
+
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 rounded-lg 
+      className={`relative flex flex-col items-center gap-2 rounded-lg overflow-hidden
         ${selected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: data.color || '#10b981', minWidth: '200px' }}
+      style={{ backgroundColor: data.color || '#3498db', minWidth: '200px' }}
     >
       <div className="flex items-center w-full px-4 py-2 justify-between">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
-            <span className="text-xl">{data.emoji || '🎯'}</span>
+            <span className="text-xl">{data.emoji || '📝'}</span>
           </div>
           <span className="text-lg font-medium text-white">
-            {data.displayName || `${data.type} Control`}
+            {data.displayName || 'Input'}
           </span>
         </div>
         
@@ -82,35 +119,13 @@ export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
         </TooltipProvider>
       </div>
 
-      {/* Display the image thumbnail if it exists, with loading indicator */}
-      {data.image && (
-        <div className="px-2 pb-2 w-full">
-          <div className="w-full h-24 overflow-hidden rounded-md border border-white relative">
-            {data.uploading && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              </div>
-            )}
-            <img 
-              src={data.image} 
-              alt={`${data.type} control image`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-      )}
+      {renderContent()}
 
       {/* Horizontal handles */}
       <Handle
-        type="target"
-        position={Position.Left}
-        id="controlnet-in"
-        className="!bg-white !border-none w-3 h-3 !-left-1"
-      />
-      <Handle
         type="source"
         position={Position.Right}
-        id="controlnet-out"
+        id="input-out"
         className="!bg-white !border-none w-3 h-3 !-right-1"
       />
     </div>
