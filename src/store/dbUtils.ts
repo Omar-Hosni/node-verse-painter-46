@@ -97,7 +97,7 @@ export const loadProject = async (
   setNodes: (nodes: Node[]) => void,
   setEdges: (edges: Edge[]) => void,
   setSelectedNode: (node: Node | null) => void,
-  resetHistoryState: () => void,
+  resetHistoryState: (nodes: Node[], edges: Edge[]) => void,
   resetNodeIdCounter: (nodes: Node[]) => void
 ): Promise<boolean> => {
   try {
@@ -128,7 +128,7 @@ export const loadProject = async (
     }
 
     // Parse canvas data from JSON
-    const canvasData = data.canvas_data;
+    const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
     
     // Ensure we have nodes and edges
     if (!canvasData.nodes || !canvasData.edges) {
@@ -154,52 +154,48 @@ export const loadProject = async (
   }
 };
 
+// Mock implementation for fetchUserCredits since the table doesn't exist yet
 export const fetchUserCredits = async (): Promise<number | null> => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return null;
 
-    const { data, error } = await supabase
-      .from('user_credits')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (error) {
-      console.error('Error fetching credits:', error);
-      return null;
-    }
-
-    return data?.credits_balance || 0;
+    // Since we don't have a user_credits table yet, return a mock value
+    console.log('Using mock credits value since user_credits table does not exist yet');
+    return 100; // Mock credits value
   } catch (error) {
     console.error('Error fetching user credits:', error);
     return null;
   }
 };
 
+// Mock implementation for fetchUserSubscription since the table doesn't exist yet
 export const fetchUserSubscription = async (): Promise<UserSubscription | null> => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return null;
 
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (error) {
-      console.error('Error fetching subscription:', error);
-      return null;
-    }
-
-    return data as UserSubscription;
+    // Since we don't have a subscriptions table yet, return a mock value
+    console.log('Using mock subscription since subscriptions table does not exist yet');
+    
+    // Return a mock subscription object that matches the UserSubscription type
+    return {
+      id: 'mock-subscription-id',
+      user_id: session.user.id,
+      tier: 'standard',
+      is_annual: false,
+      starts_at: new Date().toISOString(),
+      expires_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   } catch (error) {
     console.error('Error fetching user subscription:', error);
     return null;
   }
 };
 
+// Mock implementation for useCreditsForGeneration since the table doesn't exist yet
 export const useCreditsForGeneration = async (credits: number | null): Promise<boolean> => {
   try {
     if (!credits || credits < 1) {
@@ -209,26 +205,8 @@ export const useCreditsForGeneration = async (credits: number | null): Promise<b
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
 
-    // Deduct 1 credit
-    const { error: updateError } = await supabase
-      .from('user_credits')
-      .update({ credits_balance: credits - 1 })
-      .eq('user_id', session.user.id);
-
-    if (updateError) {
-      console.error('Failed to update credits:', updateError);
-      return false;
-    }
-
-    // Record transaction
-    await supabase
-      .from('credits_transactions')
-      .insert({
-        user_id: session.user.id,
-        amount: -1,
-        description: 'Image generation'
-      });
-    
+    // Since we don't have the credits tables yet, just return true
+    console.log('Mock credit usage since credits tables do not exist yet');
     return true;
   } catch (error) {
     console.error('Error using credits:', error);
