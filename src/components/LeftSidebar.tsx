@@ -3,36 +3,155 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
-import { 
-  Cpu, 
-  Layers, 
-  Image as ImageIcon, 
-  ChevronDown, 
-  ChevronUp, 
-  FileText, 
-  Wand2, 
-  FlaskConical, 
-  Sparkles, 
-  Camera, 
-  Palette, 
-  User,
-  Compass 
-} from 'lucide-react';
-
+import { Cpu, Layers, Image as ImageIcon, Type, FileOutput, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
+type NodeOption = {
+  type: string;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+};
+
+type NodeCategory = {
+  name: string;
+  icon: React.ElementType;
+  options: NodeOption[];
+};
 
 export const LeftSidebar = () => {
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
+    'Inputs': true,
+    'Models': false,
+    'LoRAs': false,
+    'ControlNets': false,
+    'Output': false
+  });
+  
+  const nodeCategories: NodeCategory[] = [
+    { 
+      name: 'Inputs',
+      icon: Type,
+      options: [
+        { 
+          type: 'input-text', 
+          label: 'Text Input', 
+          icon: Type,
+          description: 'A node that allows entering text which can be used as prompts for models.' 
+        },
+        { 
+          type: 'input-image', 
+          label: 'Image Input', 
+          icon: ImageIcon,
+          description: 'A node that allows uploading images for use in ControlNet or as reference.' 
+        },
+      ]
+    },
+    {
+      name: 'Models',
+      icon: Cpu,
+      options: [
+        { 
+          type: 'model-sdxl', 
+          label: 'SDXL', 
+          icon: Cpu,
+          description: 'Stable Diffusion XL model that generates high-quality images from text prompts.' 
+        },
+        { 
+          type: 'model-flux', 
+          label: 'Flux Model', 
+          icon: Cpu,
+          description: 'Flux model specialized for dynamic and fluid-like image generation.' 
+        },
+        { 
+          type: 'model-hidream', 
+          label: 'HiDream Model', 
+          icon: Cpu,
+          description: 'HiDream model for highly detailed dream-like imagery.' 
+        },
+      ]
+    },
+    {
+      name: 'LoRAs',
+      icon: Layers,
+      options: [
+        { 
+          type: 'lora-realistic', 
+          label: 'Realistic LoRA', 
+          icon: Layers,
+          description: 'LoRA adapter that enhances realism in generated images.' 
+        },
+        { 
+          type: 'lora-cartoon', 
+          label: 'Cartoon LoRA', 
+          icon: Layers,
+          description: 'LoRA adapter that creates cartoon-style imagery.' 
+        },
+        { 
+          type: 'lora-character', 
+          label: 'Character X LoRA', 
+          icon: Layers,
+          description: 'LoRA adapter that specializes in consistent character generation.' 
+        },
+      ]
+    },
+    {
+      name: 'ControlNets',
+      icon: ImageIcon,
+      options: [
+        { 
+          type: 'controlnet-canny', 
+          label: 'Canny ControlNet', 
+          icon: ImageIcon,
+          description: 'ControlNet that uses edge detection to guide image generation.' 
+        },
+        { 
+          type: 'controlnet-depth', 
+          label: 'Depth ControlNet', 
+          icon: ImageIcon,
+          description: 'ControlNet that uses depth information to guide image generation.' 
+        },
+        { 
+          type: 'controlnet-pose', 
+          label: 'Pose ControlNet', 
+          icon: ImageIcon,
+          description: 'ControlNet that uses human pose information to guide image generation.' 
+        },
+        { 
+          type: 'controlnet-segment', 
+          label: 'Segment ControlNet', 
+          icon: ImageIcon,
+          description: 'ControlNet that uses segmentation maps to guide image generation.' 
+        },
+      ]
+    },
+    {
+      name: 'Output',
+      icon: FileOutput,
+      options: [
+        { 
+          type: 'output-preview', 
+          label: 'Preview', 
+          icon: FileOutput,
+          description: 'A node that displays the final generated image output.' 
+        },
+      ]
+    }
+  ];
 
-  const handleAddNode = (nodeType: any) => {
-    // Instead of using project which doesn't exist, we'll use viewport and screenToFlowPosition
+  const handleAddNode = (nodeType: string) => {
+    // Get the center of the viewport
     const center = {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2
@@ -43,247 +162,87 @@ export const LeftSidebar = () => {
       x: center.x,
       y: center.y
     });
+    
     addNode(nodeType, position);
   };
 
-  const toggleSection = (section: string) => {
-    if (expandedSection === section) {
-      setExpandedSection(null);
-    } else {
-      setExpandedSection(section);
-    }
+  const toggleCategory = (category: string) => {
+    setOpenCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
-
+  
   return (
-    <div className="w-16 lg:w-64 h-screen bg-sidebar border-r border-field flex flex-col overflow-hidden transition-all duration-200">
+    <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-field flex flex-col overflow-hidden transition-all duration-200">
       <div className="flex-1 overflow-y-auto p-2 lg:p-4">
-        <div className="grid grid-cols-1 gap-3 mb-6">
-          {/* Inputs Section */}
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              onClick={() => toggleSection('inputs')} 
-              className="flex items-center justify-between w-full bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg"
+        <div className="grid grid-cols-1 gap-2 mb-6">
+          {nodeCategories.map((category) => (
+            <Collapsible 
+              key={category.name}
+              open={openCategories[category.name]} 
+              onOpenChange={() => toggleCategory(category.name)}
+              className="w-full"
             >
               <div className="flex items-center">
-                <ImageIcon className="h-5 w-5 lg:mr-2" />
-                <span className="hidden lg:inline">Inputs</span>
-              </div>
-              {expandedSection === 'inputs' ? 
-                <ChevronUp className="h-4 w-4 hidden lg:block" /> : 
-                <ChevronDown className="h-4 w-4 hidden lg:block" />
-              }
-            </Button>
-            
-            {expandedSection === 'inputs' && (
-              <div className="pl-2 space-y-2 animate-fade-in">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('input-text')}
-                  className="flex items-center justify-start w-full bg-[#3498db] hover:bg-[#2980b9] border-none text-white h-10 rounded-md"
-                >
-                  <FileText className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Text</span>
-                </Button>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 flex items-center justify-center lg:justify-between bg-field hover:bg-gray-700 border-none text-white h-12 rounded-full w-full"
+                  >
+                    <div className="flex items-center">
+                      <category.icon className="h-5 w-5 lg:mr-2" />
+                      <span className="hidden lg:inline text-sm">{category.name}</span>
+                    </div>
+                    <div className="hidden lg:flex items-center">
+                      {openCategories[category.name] ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
+                      }
+                    </div>
+                  </Button>
+                </CollapsibleTrigger>
                 
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('input-image')}
-                  className="flex items-center justify-start w-full bg-[#2980b9] hover:bg-[#1f6da8] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Image</span>
-                </Button>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-2 text-white hover:bg-gray-600 rounded-full h-8 w-8"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-white">
+                    <div className="space-y-2">
+                      <h4 className="text-lg font-semibold">{category.name}</h4>
+                      <p className="text-sm text-gray-300">
+                        {category.name === 'Inputs' && 'Nodes for text and image inputs.'}
+                        {category.name === 'Models' && 'Different AI models for image generation.'}
+                        {category.name === 'LoRAs' && 'Low-Rank Adaptation models for specific styles.'}
+                        {category.name === 'ControlNets' && 'Controls for guiding image generation.'}
+                        {category.name === 'Output' && 'Nodes for displaying generated results.'}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               </div>
-            )}
-          </div>
-
-          {/* Models Section */}
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              onClick={() => toggleSection('models')} 
-              className="flex items-center justify-between w-full bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg"
-            >
-              <div className="flex items-center">
-                <Cpu className="h-5 w-5 lg:mr-2" />
-                <span className="hidden lg:inline">Models</span>
-              </div>
-              {expandedSection === 'models' ? 
-                <ChevronUp className="h-4 w-4 hidden lg:block" /> : 
-                <ChevronDown className="h-4 w-4 hidden lg:block" />
-              }
-            </Button>
-            
-            {expandedSection === 'models' && (
-              <div className="pl-2 space-y-2 animate-fade-in">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('model-sdxl')}
-                  className="flex items-center justify-start w-full bg-[#8000ff] hover:bg-[#6a00d9] border-none text-white h-10 rounded-md"
-                >
-                  <Wand2 className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">SDXL</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('model-flux')}
-                  className="flex items-center justify-start w-full bg-[#ff8c00] hover:bg-[#e67e00] border-none text-white h-10 rounded-md"
-                >
-                  <FlaskConical className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Flux</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('model-hidream')}
-                  className="flex items-center justify-start w-full bg-[#ff1493] hover:bg-[#e00f83] border-none text-white h-10 rounded-md"
-                >
-                  <Sparkles className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">HiDream</span>
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* LoRAs Section */}
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              onClick={() => toggleSection('loras')} 
-              className="flex items-center justify-between w-full bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg"
-            >
-              <div className="flex items-center">
-                <Layers className="h-5 w-5 lg:mr-2" />
-                <span className="hidden lg:inline">LoRAs</span>
-              </div>
-              {expandedSection === 'loras' ? 
-                <ChevronUp className="h-4 w-4 hidden lg:block" /> : 
-                <ChevronDown className="h-4 w-4 hidden lg:block" />
-              }
-            </Button>
-            
-            {expandedSection === 'loras' && (
-              <div className="pl-2 space-y-2 animate-fade-in">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('lora-realistic')}
-                  className="flex items-center justify-start w-full bg-[#4b0082] hover:bg-[#3a006a] border-none text-white h-10 rounded-md"
-                >
-                  <Camera className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Realistic</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('lora-cartoon')}
-                  className="flex items-center justify-start w-full bg-[#9370db] hover:bg-[#8560cc] border-none text-white h-10 rounded-md"
-                >
-                  <Palette className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Cartoon</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('lora-character')}
-                  className="flex items-center justify-start w-full bg-[#800080] hover:bg-[#700070] border-none text-white h-10 rounded-md"
-                >
-                  <User className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Character</span>
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* ControlNets Section */}
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              onClick={() => toggleSection('controlnets')} 
-              className="flex items-center justify-between w-full bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg"
-            >
-              <div className="flex items-center">
-                <Compass className="h-5 w-5 lg:mr-2" />
-                <span className="hidden lg:inline">ControlNets</span>
-              </div>
-              {expandedSection === 'controlnets' ? 
-                <ChevronUp className="h-4 w-4 hidden lg:block" /> : 
-                <ChevronDown className="h-4 w-4 hidden lg:block" />
-              }
-            </Button>
-            
-            {expandedSection === 'controlnets' && (
-              <div className="pl-2 space-y-2 animate-fade-in">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('controlnet-canny')}
-                  className="flex items-center justify-start w-full bg-[#10b981] hover:bg-[#0ea46f] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Canny</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('controlnet-depth')}
-                  className="flex items-center justify-start w-full bg-[#10b981] hover:bg-[#0ea46f] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Depth</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('controlnet-pose')}
-                  className="flex items-center justify-start w-full bg-[#10b981] hover:bg-[#0ea46f] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Pose</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('controlnet-segment')}
-                  className="flex items-center justify-start w-full bg-[#10b981] hover:bg-[#0ea46f] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Segment</span>
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Output Section */}
-          <div className="space-y-2">
-            <Button 
-              variant="outline" 
-              onClick={() => toggleSection('outputs')} 
-              className="flex items-center justify-between w-full bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg"
-            >
-              <div className="flex items-center">
-                <ImageIcon className="h-5 w-5 lg:mr-2" />
-                <span className="hidden lg:inline">Outputs</span>
-              </div>
-              {expandedSection === 'outputs' ? 
-                <ChevronUp className="h-4 w-4 hidden lg:block" /> : 
-                <ChevronDown className="h-4 w-4 hidden lg:block" />
-              }
-            </Button>
-            
-            {expandedSection === 'outputs' && (
-              <div className="pl-2 space-y-2 animate-fade-in">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleAddNode('output-preview')}
-                  className="flex items-center justify-start w-full bg-[#f59e0b] hover:bg-[#d97706] border-none text-white h-10 rounded-md"
-                >
-                  <ImageIcon className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline text-sm">Preview</span>
-                </Button>
-              </div>
-            )}
-          </div>
+              
+              <CollapsibleContent className="px-2 py-2 space-y-2">
+                {category.options.map((option) => (
+                  <Button 
+                    key={option.type}
+                    variant="ghost" 
+                    className="w-full flex items-center justify-start text-white hover:bg-gray-700 h-10 pl-8"
+                    onClick={() => handleAddNode(option.type)}
+                  >
+                    <option.icon className="h-4 w-4 mr-2" />
+                    <span className="text-sm">{option.label}</span>
+                  </Button>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
         </div>
       </div>
     </div>
