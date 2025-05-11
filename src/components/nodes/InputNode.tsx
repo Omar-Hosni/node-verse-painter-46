@@ -66,9 +66,13 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
 
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 rounded-lg overflow-hidden
+      className={`relative flex flex-col items-center gap-2 rounded-xl overflow-hidden
         ${selected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: data.color || '#3498db', minWidth: '200px' }}
+      style={{ 
+        backgroundColor: data.color || '#3498db', 
+        minWidth: '200px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }}
     >
       <div className="flex items-center w-full px-4 py-2 justify-between">
         <div className="flex items-center gap-2">
@@ -102,7 +106,7 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
               <div className="flex flex-col">
                 {data.tutorialVideo && (
                   <video 
-                    className="w-full h-40 object-cover" 
+                    className="w-full h-40 object-cover rounded-t-lg" 
                     src={data.tutorialVideo} 
                     autoPlay 
                     loop 
@@ -121,7 +125,13 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
 
       {renderContent()}
 
-      {/* Horizontal handles */}
+      {/* Horizontal handles - both input and output */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input-in"
+        className="!bg-white !border-none w-3 h-3 !-left-1"
+      />
       <Handle
         type="source"
         position={Position.Right}

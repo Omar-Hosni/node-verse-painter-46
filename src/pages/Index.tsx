@@ -17,10 +17,10 @@ const Index = () => {
     
     // Add some initial nodes in a horizontal layout
     // This demonstrates the horizontal flow
-    addNode('model', { x: 100, y: 250 });
-    addNode('lora', { x: 350, y: 250 });
+    addNode('model-sdxl', { x: 100, y: 250 });
+    addNode('lora-realistic', { x: 350, y: 250 });
     addNode('controlnet-canny', { x: 600, y: 250 });
-    addNode('preview', { x: 850, y: 250 });
+    addNode('output-preview', { x: 850, y: 250 });
     
   }, [setRunwayApiKey, addNode]);
 

@@ -31,57 +31,79 @@ export const ModelNode = ({ data, selected }: ModelNodeProps) => {
 
   return (
     <div 
-      className={`relative flex items-center gap-3 px-4 py-2 rounded-lg 
+      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl overflow-hidden
         ${selected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: data.color || '#ff69b4', minWidth: '200px' }}
+      style={{ 
+        backgroundColor: data.color || '#ff69b4', 
+        minWidth: '200px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }}
     >
-      <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
-        <span className="text-xl">{data.emoji || '🎨'}</span>
+      <div className="flex items-center w-full justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+            <span className="text-xl">{data.emoji || '🎨'}</span>
+          </div>
+          <span className="text-lg font-medium text-white">
+            {data.displayName || 'Model'}
+          </span>
+        </div>
+        
+        {/* Help tooltip/popover with tutorial video */}
+        <TooltipProvider>
+          <Popover open={showTutorial} onOpenChange={setShowTutorial}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                    aria-label="Show tutorial"
+                  >
+                    <HelpCircle className="h-5 w-5 text-white" />
+                  </button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Click for help</p>
+              </TooltipContent>
+            </Tooltip>
+            <PopoverContent className="w-80 p-0" side="right">
+              <div className="flex flex-col">
+                {data.tutorialVideo && (
+                  <video 
+                    className="w-full h-40 object-cover rounded-t-lg" 
+                    src={data.tutorialVideo} 
+                    autoPlay 
+                    loop 
+                    muted 
+                  />
+                )}
+                <div className="p-4">
+                  <h4 className="font-semibold mb-2">{data.displayName}</h4>
+                  <p className="text-sm text-muted-foreground">{data.description}</p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </TooltipProvider>
+      </div>
+
+      {/* Image placeholder */}
+      <div className="w-full h-24 rounded-lg overflow-hidden mb-2">
+        <img 
+          src="/placeholder.svg" 
+          alt="Model visualization"
+          className="w-full h-full object-cover"
+        />
       </div>
       
-      <span className="text-lg font-medium text-white">
-        {data.displayName || 'Model'}
-      </span>
-      
-      {/* Help tooltip/popover with tutorial video */}
-      <TooltipProvider>
-        <Popover open={showTutorial} onOpenChange={setShowTutorial}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <button 
-                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-                  aria-label="Show tutorial"
-                >
-                  <HelpCircle className="h-5 w-5 text-white" />
-                </button>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Click for help</p>
-            </TooltipContent>
-          </Tooltip>
-          <PopoverContent className="w-80 p-0" side="right">
-            <div className="flex flex-col">
-              {data.tutorialVideo && (
-                <video 
-                  className="w-full h-40 object-cover" 
-                  src={data.tutorialVideo} 
-                  autoPlay 
-                  loop 
-                  muted 
-                />
-              )}
-              <div className="p-4">
-                <h4 className="font-semibold mb-2">{data.displayName}</h4>
-                <p className="text-sm text-muted-foreground">{data.description}</p>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </TooltipProvider>
-      
-      {/* Horizontal handle */}
+      {/* Horizontal handles */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="model-in"
+        className="!bg-white !border-none w-3 h-3 !-left-1"
+      />
       <Handle
         type="source"
         position={Position.Right}

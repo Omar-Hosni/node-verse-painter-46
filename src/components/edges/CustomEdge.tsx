@@ -5,10 +5,12 @@ import {
   EdgeLabelRenderer,
   getBezierPath,
   useReactFlow,
+  EdgeProps,
 } from '@xyflow/react';
 import { X } from 'lucide-react';
 
-const CustomEdge = ({
+// Use EdgeProps type from @xyflow/react
+const CustomEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
   sourceY,
@@ -30,7 +32,7 @@ const CustomEdge = ({
   });
 
   // Delete edge when clicking the remove button
-  const onEdgeClick = (event) => {
+  const onEdgeClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setEdges((edges) => edges.filter((edge) => edge.id !== id));
   };

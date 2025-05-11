@@ -24,11 +24,16 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
   
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 px-4 py-2 rounded-lg 
+      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl overflow-hidden
         ${selected ? 'ring-2 ring-blue-500' : ''}`}
-      style={{ backgroundColor: data.color || '#1A1A1A', borderColor: '#333', minWidth: '200px' }}
+      style={{ 
+        backgroundColor: data.color || '#1A1A1A', 
+        borderColor: '#333', 
+        minWidth: '200px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }}
     >
-      <div className="flex items-center w-full justify-between">
+      <div className="flex items-center w-full justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-8 h-8 bg-[#252525] rounded-full">
             <span className="text-xl">{data.emoji || '🖼️'}</span>
@@ -60,7 +65,7 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
               <div className="flex flex-col">
                 {data.tutorialVideo && (
                   <video 
-                    className="w-full h-40 object-cover" 
+                    className="w-full h-40 object-cover rounded-t-lg" 
                     src={data.tutorialVideo} 
                     autoPlay 
                     loop 
@@ -83,14 +88,18 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
         <span>Uses 1 credit per generation</span>
       </div>
       
-      {/* Display the image if it exists */}
-      {data.image && (
-        <div className="mt-1 max-w-[200px] max-h-[200px] overflow-hidden rounded-md border-2 border-[#333]">
+      {/* Display the image if it exists, otherwise show placeholder */}
+      {data.image ? (
+        <div className="w-full h-32 overflow-hidden rounded-lg mb-2">
           <img 
             src={data.image} 
             alt="Generated" 
             className="w-full h-full object-cover"
           />
+        </div>
+      ) : (
+        <div className="w-full h-32 rounded-lg overflow-hidden mb-2 bg-[#252525] flex items-center justify-center">
+          <span className="text-gray-500">Generated image will appear here</span>
         </div>
       )}
 
