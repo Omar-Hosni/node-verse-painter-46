@@ -134,7 +134,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   clipboard: null,
   history: [],
   historyIndex: -1,
-
+  
   onNodesChange: (changes: NodeChange[]) => {
     // Save state before making changes
     get().saveToHistory();
@@ -171,7 +171,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       edges: addEdge({ ...connection, animated: true }, get().edges),
     });
   },
-
+  
   addNode: (nodeType: NodeType, position: { x: number; y: number }) => {
     // Save state before adding node
     get().saveToHistory();
@@ -294,7 +294,38 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ runwayApiKey: apiKey });
   },
 
-  // Modified: Check credits before generating and use useCreditsForGeneration
+  uploadControlNetImage: async (nodeId: string, imageData: string) => {
+    try {
+      const { runwayApiKey } = get();
+      if (!runwayApiKey) {
+        toast.error("API key not set! Please set your API key in the settings.");
+        return;
+      }
+
+      // Set uploading flag
+      get().updateNodeData(nodeId, { uploading: true });
+      
+      // Get RunwareService instance and upload image
+      const runwareService = getRunwareService(runwayApiKey);
+      const uploadedImage = await runwareService.uploadImage(imageData);
+      
+      // Update node with uploaded image ID
+      get().updateNodeData(nodeId, {
+        imageId: uploadedImage.imageUUID,
+        uploading: false
+      });
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      
+      // Reset uploading flag
+      get().updateNodeData(nodeId, { uploading: false });
+      
+      // Show error
+      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
   generateImageFromNodes: async () => {
     const { nodes, edges, runwayApiKey } = get();
     
@@ -423,7 +454,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
-  // New clipboard functions
   copySelectedNode: () => {
     const { selectedNode } = get();
     if (selectedNode) {
@@ -488,7 +518,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
-  // History management functions
   saveToHistory: () => {
     const { nodes, edges, history, historyIndex } = get();
     
@@ -546,7 +575,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
-  // Fix the TypeScript errors in exportWorkflowAsJson
   exportWorkflowAsJson: () => {
     const { nodes, edges } = get();
     const workflowJson: WorkflowJson = {};
@@ -639,7 +667,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return workflowJson;
   },
 
-  // New function to save the current canvas state as a project in Supabase
   saveProject: async (name: string, description: string = '') => {
     try {
       // Check if user is authenticated
@@ -685,7 +712,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
 
-  // New function to load a project from Supabase
   loadProject: async (projectId: string) => {
     try {
       // Check if user is authenticated
@@ -748,7 +774,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
-  // New method to fetch user credits
   fetchUserCredits: async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -765,13 +790,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return;
       }
 
-      set({ credits: data.credits_balance });
+      set({ credits: data?.credits_balance || null });
     } catch (error) {
       console.error('Error fetching user credits:', error);
     }
   },
 
-  // New method to fetch user subscription
   fetchUserSubscription: async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -788,13 +812,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return;
       }
 
-      set({ subscription: data });
+      set({ subscription: data as UserSubscription });
     } catch (error) {
       console.error('Error fetching user subscription:', error);
     }
   },
 
-  // New method to use credits for generation
   useCreditsForGeneration: async () => {
     try {
       // Fetch latest credits balance
@@ -839,7 +862,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
 
-  // New method to send workflow to local API
   sendWorkflowToAPI: async () => {
     try {
       const workflowJson = get().exportWorkflowAsJson();

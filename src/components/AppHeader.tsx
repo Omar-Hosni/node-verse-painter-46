@@ -27,7 +27,7 @@ export const AppHeader = ({
             variant="ghost" 
             size="sm" 
             onClick={onBackToDashboard}
-            className="gap-1 text-gray-400 hover:text-white hover:bg-[#2A2A2A]"
+            className="gap-1 text-gray-400 bg-transparent"
           >
             <ArrowLeft className="h-4 w-4" />
             Dashboard
@@ -48,7 +48,7 @@ export const AppHeader = ({
           <Button 
             variant="outline" 
             onClick={onLogout}
-            className="gap-1 border-[#333] bg-[#1A1A1A] hover:bg-[#2A2A2A] hover:border-[#444] text-gray-300"
+            className="gap-1 border-[#333] bg-[#1A1A1A] text-gray-300"
             size="sm"
           >
             <LogOut className="h-4 w-4" />
@@ -58,14 +58,14 @@ export const AppHeader = ({
         {onSave && (
           <Button 
             onClick={onSave}
-            className="gap-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 text-sm font-normal"
+            className="gap-1 rounded-full bg-blue-600 text-white px-6 text-sm font-normal"
           >
             <Save className="h-4 w-4" />
             Save Project
           </Button>
         )}
         {!onSave && (
-          <Button className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 text-sm font-normal">
+          <Button className="rounded-full bg-blue-600 text-white px-6 text-sm font-normal">
             Generate Image
           </Button>
         )}

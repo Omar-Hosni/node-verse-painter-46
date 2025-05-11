@@ -34,7 +34,7 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
       {/* Cost indicator */}
       <div className="flex items-center text-xs text-gray-300 mb-1">
         <CreditCard className="h-3 w-3 mr-1 text-blue-400" />
-        <span>Costs 1 credit to generate</span>
+        <span>Uses 1 credit per generation</span>
       </div>
       
       {/* Display the image if it exists */}

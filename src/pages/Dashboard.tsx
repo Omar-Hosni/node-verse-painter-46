@@ -94,9 +94,16 @@ const Dashboard = () => {
     }
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in to create a project');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('projects')
         .insert({
+          user_id: session.user.id,
           name: newProjectName.trim(),
           description: newProjectDescription.trim() || null,
           canvas_data: { nodes: [], edges: [] }
@@ -156,7 +163,6 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#121212] text-white">
       <AppHeader 
-        projectName="Dashboard" 
         showLogoutButton={true}
         onLogout={handleLogout}
       />
@@ -164,7 +170,7 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
             <p className="text-gray-400">Manage your projects and subscription</p>
           </div>
           
@@ -216,7 +222,7 @@ const Dashboard = () => {
         {/* Projects section */}
         <div className="mt-10">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Your Projects</h2>
+            <h2 className="text-2xl font-bold">Projects</h2>
             <Button 
               onClick={() => setShowNewProjectDialog(true)}
               className="gap-2 bg-blue-600 hover:bg-blue-700"
@@ -247,7 +253,7 @@ const Dashboard = () => {
               {projects.map(project => (
                 <div 
                   key={project.id} 
-                  className="bg-[#1A1A1A] rounded-lg border border-[#333] p-4 hover:border-[#444] transition-colors"
+                  className="bg-[#1A1A1A] rounded-lg border border-[#333] p-4"
                 >
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium truncate">{project.name}</h3>
@@ -277,7 +283,7 @@ const Dashboard = () => {
                     <Button 
                       size="sm"
                       onClick={() => navigate(`/editor/${project.id}`)}
-                      className="gap-1 bg-[#2A2A2A] hover:bg-[#333]"
+                      className="gap-1 bg-[#2A2A2A]"
                     >
                       <Edit className="h-3 w-3" />
                       Open
