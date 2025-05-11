@@ -26,20 +26,18 @@ export const LoraNode = ({ data, selected }: LoraNodeProps) => {
 
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl overflow-hidden
-        ${selected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`relative flex flex-col items-center rounded-xl overflow-hidden lora-node
+        ${selected ? 'selected' : ''}`}
       style={{ 
-        backgroundColor: data.color || '#8b5cf6', 
-        minWidth: '200px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        minWidth: '220px',
       }}
     >
-      <div className="flex items-center w-full justify-between mb-2">
+      <div className="node-header w-full justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+          <div className="node-icon-container">
             <span className="text-xl">{data.emoji || '🔧'}</span>
           </div>
-          <span className="text-lg font-medium text-white">
+          <span className="text-base font-semibold text-white tracking-wide">
             {data.displayName || 'LoRA'}
           </span>
         </div>
@@ -84,15 +82,17 @@ export const LoraNode = ({ data, selected }: LoraNodeProps) => {
       </div>
 
       {/* Image placeholder */}
-      <div className="w-full h-24 rounded-lg overflow-hidden mb-2">
-        <img 
-          src="/placeholder.svg" 
-          alt="LoRA visualization"
-          className="w-full h-full object-cover"
-        />
+      <div className="node-content w-full">
+        <div className="image-preview w-full h-24 flex items-center justify-center">
+          <img 
+            src="/placeholder.svg" 
+            alt="LoRA visualization"
+            className="w-full h-full object-contain"
+          />
+        </div>
       </div>
 
-      {/* Horizontal handles - Improved visibility */}
+      {/* Horizontal handles */}
       <Handle
         type="target"
         position={Position.Left}

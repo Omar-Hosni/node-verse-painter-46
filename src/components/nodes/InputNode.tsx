@@ -29,9 +29,9 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
   const renderContent = () => {
     if (data.inputType === 'text') {
       return (
-        <div className="w-full p-2">
+        <div className="w-full">
           <textarea 
-            className="w-full h-20 p-2 bg-sidebar-accent rounded-md text-white resize-none"
+            className="w-full h-20 p-2 bg-opacity-20 bg-black rounded-md text-white resize-none border border-gray-600 focus:border-blue-400 focus:outline-none"
             placeholder="Enter your prompt here..."
             value={data.text || ''}
             onChange={(e) => console.log('Text changed:', e.target.value)}
@@ -40,9 +40,9 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
       );
     } else if (data.inputType === 'image') {
       return (
-        <div className="w-full p-2">
+        <div className="w-full">
           {data.image ? (
-            <div className="w-full h-24 overflow-hidden rounded-md border border-white relative">
+            <div className="w-full h-24 overflow-hidden rounded-md border border-gray-600 relative">
               {data.uploading && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
                   <Loader2 className="h-8 w-8 text-white animate-spin" />
@@ -51,11 +51,11 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
               <img 
                 src={data.image} 
                 alt="Input image"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           ) : (
-            <div className="w-full h-24 flex items-center justify-center border border-dashed border-white rounded-md bg-sidebar-accent text-white">
+            <div className="w-full h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white">
               <span>Click to upload image</span>
             </div>
           )}
@@ -66,20 +66,18 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
 
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 rounded-xl overflow-hidden
-        ${selected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`relative flex flex-col items-center rounded-xl overflow-hidden input-node
+        ${selected ? 'selected' : ''}`}
       style={{ 
-        backgroundColor: data.color || '#3498db', 
-        minWidth: '200px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        minWidth: '220px',
       }}
     >
-      <div className="flex items-center w-full px-4 py-2 justify-between">
+      <div className="node-header w-full justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+          <div className="node-icon-container">
             <span className="text-xl">{data.emoji || '📝'}</span>
           </div>
-          <span className="text-lg font-medium text-white">
+          <span className="text-base font-semibold text-white tracking-wide">
             {data.displayName || 'Input'}
           </span>
         </div>
@@ -123,9 +121,11 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
         </TooltipProvider>
       </div>
 
-      {renderContent()}
+      <div className="node-content w-full">
+        {renderContent()}
+      </div>
 
-      {/* Horizontal handles - both input and output with improved visibility */}
+      {/* Horizontal handles - both input and output */}
       <Handle
         type="target"
         position={Position.Left}

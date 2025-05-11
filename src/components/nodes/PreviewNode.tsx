@@ -24,21 +24,18 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
   
   return (
     <div 
-      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl overflow-hidden
-        ${selected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`relative flex flex-col items-center rounded-xl overflow-hidden preview-node
+        ${selected ? 'selected' : ''}`}
       style={{ 
-        backgroundColor: data.color || '#1A1A1A', 
-        borderColor: '#333', 
-        minWidth: '200px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        minWidth: '220px',
       }}
     >
-      <div className="flex items-center w-full justify-between mb-2">
+      <div className="node-header w-full justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-[#252525] rounded-full">
+          <div className="node-icon-container">
             <span className="text-xl">{data.emoji || '🖼️'}</span>
           </div>
-          <span className="text-lg font-medium text-white">
+          <span className="text-base font-semibold text-white tracking-wide">
             {data.displayName || 'Preview'}
           </span>
         </div>
@@ -82,28 +79,30 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
         </TooltipProvider>
       </div>
       
-      {/* Cost indicator */}
-      <div className="flex items-center text-xs text-gray-300 mb-1 self-start">
-        <CreditCard className="h-3 w-3 mr-1 text-blue-400" />
-        <span>Uses 1 credit per generation</span>
+      <div className="node-content w-full">
+        {/* Cost indicator */}
+        <div className="flex items-center text-xs text-gray-300 mb-2 self-start">
+          <CreditCard className="h-3 w-3 mr-1 text-blue-400" />
+          <span>Uses 1 credit per generation</span>
+        </div>
+        
+        {/* Display the image if it exists, otherwise show placeholder */}
+        {data.image ? (
+          <div className="image-preview w-full h-32 flex items-center justify-center">
+            <img 
+              src={data.image} 
+              alt="Generated" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ) : (
+          <div className="image-preview w-full h-32 flex items-center justify-center">
+            <span className="text-gray-500">Generated image will appear here</span>
+          </div>
+        )}
       </div>
-      
-      {/* Display the image if it exists, otherwise show placeholder */}
-      {data.image ? (
-        <div className="w-full h-32 overflow-hidden rounded-lg mb-2">
-          <img 
-            src={data.image} 
-            alt="Generated" 
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className="w-full h-32 rounded-lg overflow-hidden mb-2 bg-[#252525] flex items-center justify-center">
-          <span className="text-gray-500">Generated image will appear here</span>
-        </div>
-      )}
 
-      {/* Horizontal handle - Improved visibility */}
+      {/* Horizontal handle */}
       <Handle
         type="target"
         position={Position.Left}

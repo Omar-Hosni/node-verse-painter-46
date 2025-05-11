@@ -102,26 +102,23 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
 
   return (
     <div 
-      className={`relative rounded-xl ${selected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`relative rounded-xl overflow-hidden controlnet-node ${selected ? 'selected' : ''}`}
       style={{ width: 220 }}
     >
-      <div 
-        className="p-3 flex items-center justify-between"
-        style={{ backgroundColor: data.color || '#10b981' }}
-      >
+      <div className="node-header w-full justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+          <div className="node-icon-container">
             <span className="text-xl">{data.emoji || '🎯'}</span>
           </div>
-          <span className="text-lg font-medium text-white">
+          <span className="text-base font-semibold text-white tracking-wide">
             {data.displayName || `${data.type} Control`}
           </span>
         </div>
 
         <HoverCard>
           <HoverCardTrigger asChild>
-            <button className="text-white hover:text-gray-200">
-              <HelpCircle className="h-5 w-5" />
+            <button className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
+              <HelpCircle className="h-5 w-5 text-white" />
             </button>
           </HoverCardTrigger>
           <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-white">
@@ -141,30 +138,30 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
       </div>
 
       {/* Display the image thumbnail if it exists, with loading indicator */}
-      <div 
-        className={`bg-gray-800 ${!isSegmentModel ? 'cursor-pointer' : ''}`}
-        onClick={!isSegmentModel ? handleImageClick : undefined}
-      >
-        {data.uploading ? (
-          <div className="w-full h-32 flex items-center justify-center">
-            <Loader2 className="h-10 w-10 text-white animate-spin" />
-          </div>
-        ) : data.image ? (
-          <div className="p-2">
-            <img 
-              src={data.image} 
-              alt={`${data.type} control`}
-              className="w-full h-auto object-cover rounded"
-              style={{ maxHeight: '120px' }}
-            />
-          </div>
-        ) : (
-          <div className="flex items-center justify-center p-4 border-t border-gray-700">
-            <div className="p-4">
+      <div className="node-content w-full">
+        <div 
+          className={`${!isSegmentModel ? 'cursor-pointer' : ''}`}
+          onClick={!isSegmentModel ? handleImageClick : undefined}
+        >
+          {data.uploading ? (
+            <div className="image-preview w-full h-32 flex items-center justify-center">
+              <Loader2 className="h-10 w-10 text-white animate-spin" />
+            </div>
+          ) : data.image ? (
+            <div className="image-preview">
+              <img 
+                src={data.image} 
+                alt={`${data.type} control`}
+                className="w-full h-auto object-contain"
+                style={{ maxHeight: '120px' }}
+              />
+            </div>
+          ) : (
+            <div className="image-preview flex flex-col items-center justify-center">
               <img 
                 src={controlnetImage}
                 alt={`${data.type} example`}
-                className="w-full h-auto rounded opacity-50"
+                className="w-full h-auto opacity-50"
                 style={{ maxHeight: '100px' }}
               />
               {!isSegmentModel ? (
@@ -173,17 +170,17 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
                 <p className="text-center text-gray-400 mt-2 text-sm">Segment model with preloaded image</p>
               )}
             </div>
-          </div>
-        )}
-        {!isSegmentModel && (
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-        )}
+          )}
+          {!isSegmentModel && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+          )}
+        </div>
       </div>
 
       {/* Horizontal handles with improved positioning */}
