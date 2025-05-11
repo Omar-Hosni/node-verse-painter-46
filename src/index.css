@@ -108,27 +108,33 @@
 
 /* Node styling */
 .react-flow__handle {
-  opacity: 1; /* Increased from 0.8 */
+  opacity: 1;
   transition: opacity 0.3s;
-  width: 12px; /* Increased from 10px */
-  height: 12px; /* Increased from 10px */
+  width: 14px; /* Increased from 12px */
+  height: 14px; /* Increased from 12px */
   border-radius: 50%;
   background-color: white;
-  border: 2px solid #333; /* Added border for better visibility */
-  box-shadow: 0 0 5px rgba(0,0,0,0.2); /* Added shadow for depth */
+  border: 2px solid #333;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  z-index: 10; /* Added to ensure visibility */
+  position: absolute; /* Ensure proper positioning */
 }
 
+/* Fixed right handle position to be fully visible */
 .react-flow__handle-right {
-  right: -8px; /* Adjusted to make it more visible */
+  right: -7px; /* Adjusted to be more visible but not too far out */
+  transform: translateX(0); /* Reset any transform that might be affecting it */
 }
 
+/* Fixed left handle position to be fully visible */
 .react-flow__handle-left {
-  left: -8px; /* Adjusted to make it more visible */
+  left: -7px; /* Adjusted to be more visible but not too far out */
+  transform: translateX(0); /* Reset any transform that might be affecting it */
 }
 
 .react-flow__node:hover .react-flow__handle {
   opacity: 1;
-  transform: scale(1.2); /* Added scale effect on hover */
+  transform: scale(1.2);
 }
 
 /* Edge hover effect */
@@ -147,3 +153,4 @@
   background-color: #ff69b4; /* Pink highlight on hover */
   transform: scale(1.5); /* More noticeable on hover */
 }
+

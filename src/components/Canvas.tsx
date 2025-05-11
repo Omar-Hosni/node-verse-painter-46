@@ -9,6 +9,7 @@ import {
   Controls,
   Background,
   Panel,
+  ConnectionLineType,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -221,10 +222,10 @@ export const Canvas = () => {
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         className="bg-[#151515]"
-        connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }} // Make connection line more visible
-        connectionLineType="smoothstep" // Use smooth step connection style
-        snapToGrid={true} // Enable snap to grid for better alignment
-        snapGrid={[15, 15]} // Set grid size
+        connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
+        connectionLineType={ConnectionLineType.SmoothStep} // Fixed the type here
+        snapToGrid={true}
+        snapGrid={[15, 15]}
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />
@@ -248,3 +249,4 @@ export const Canvas = () => {
     </div>
   );
 };
+
