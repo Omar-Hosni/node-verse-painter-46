@@ -14,6 +14,7 @@ import {
 } from '@xyflow/react';
 import { getRunwareService, UploadedImage } from '@/services/runwareService';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export type NodeType = 
   | 'model' 
@@ -92,6 +93,10 @@ export interface CanvasState {
   saveToHistory: () => void;
   // Export workflow as JSON
   exportWorkflowAsJson: () => WorkflowJson;
+  // Save project to Supabase
+  saveProject: (name: string, description?: string) => Promise<string | null>;
+  // Load project from Supabase
+  loadProject: (projectId: string) => Promise<boolean>;
 }
 
 let nodeIdCounter = 1;
@@ -536,7 +541,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
   },
   
-  // New function to export workflow as JSON
+  // Fix the TypeScript errors in exportWorkflowAsJson
   exportWorkflowAsJson: () => {
     const { nodes, edges } = get();
     const workflowJson: WorkflowJson = {};
@@ -558,53 +563,53 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         case 'modelNode':
           workflowJson[jsonNodeId] = {
             inputs: {
-              modelName: node.data.modelName || "runware:100@1",
-              width: node.data.width || 512,
-              height: node.data.height || 512,
-              steps: node.data.steps || 30,
-              cfgScale: node.data.cfgScale || 7.5,
-              prompt: node.data.prompt || "",
-              negativePrompt: node.data.negativePrompt || "",
+              modelName: node.data.modelName as string || "runware:100@1",
+              width: node.data.width as number || 512,
+              height: node.data.height as number || 512,
+              steps: node.data.steps as number || 30,
+              cfgScale: node.data.cfgScale as number || 7.5,
+              prompt: node.data.prompt as string || "",
+              negativePrompt: node.data.negativePrompt as string || "",
             },
             class_type: "ModelNode",
             _meta: {
-              title: node.data.displayName || "Model"
+              title: node.data.displayName as string || "Model"
             }
           };
           break;
         case 'loraNode':
           workflowJson[jsonNodeId] = {
             inputs: {
-              loraName: node.data.loraName || "",
-              strength: node.data.strength || 0.8
+              loraName: node.data.loraName as string || "",
+              strength: node.data.strength as number || 0.8
             },
             class_type: "LoraNode",
             _meta: {
-              title: node.data.displayName || "LoRA"
+              title: node.data.displayName as string || "LoRA"
             }
           };
           break;
         case 'controlnetNode':
           workflowJson[jsonNodeId] = {
             inputs: {
-              type: node.data.type || "canny",
-              imageId: node.data.imageId || null,
-              strength: node.data.strength || 0.8
+              type: node.data.type as string || "canny",
+              imageId: node.data.imageId as string || null,
+              strength: node.data.strength as number || 0.8
             },
             class_type: "ControlnetNode",
             _meta: {
-              title: node.data.displayName || `${node.data.type} Control`
+              title: node.data.displayName as string || `${node.data.type} Control`
             }
           };
           break;
         case 'previewNode':
           workflowJson[jsonNodeId] = {
             inputs: {
-              image: node.data.image || null
+              image: node.data.image as string || null
             },
             class_type: "PreviewNode",
             _meta: {
-              title: node.data.displayName || "Preview"
+              title: node.data.displayName as string || "Preview"
             }
           };
           break;
@@ -627,5 +632,100 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     });
     
     return workflowJson;
+  },
+
+  // New function to save the current canvas state as a project in Supabase
+  saveProject: async (name: string, description: string = '') => {
+    try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in to save a project');
+        return null;
+      }
+
+      // Get current canvas state
+      const { nodes, edges } = get();
+      const canvasData = { nodes, edges };
+
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: session.user.id,
+          name,
+          description,
+          canvas_data: canvasData,
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Error saving project:', error);
+        toast.error(`Failed to save project: ${error.message}`);
+        return null;
+      }
+
+      toast.success('Project saved successfully!');
+      return data.id;
+    } catch (error) {
+      console.error('Error saving project:', error);
+      toast.error(`Failed to save project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return null;
+    }
+  },
+
+  // New function to load a project from Supabase
+  loadProject: async (projectId: string) => {
+    try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in to load a project');
+        return false;
+      }
+
+      // Fetch project from Supabase
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading project:', error);
+        toast.error(`Failed to load project: ${error.message}`);
+        return false;
+      }
+
+      if (!data || !data.canvas_data) {
+        toast.error('Project data is invalid');
+        return false;
+      }
+
+      // Reset nodeIdCounter to avoid ID conflicts
+      const maxId = Math.max(...data.canvas_data.nodes.map((n: Node) => {
+        const match = n.id.match(/\d+$/);
+        return match ? parseInt(match[0]) : 0;
+      }));
+      nodeIdCounter = maxId + 1;
+
+      // Load canvas state
+      set({
+        nodes: data.canvas_data.nodes,
+        edges: data.canvas_data.edges,
+        selectedNode: null,
+        history: [{ nodes: data.canvas_data.nodes, edges: data.canvas_data.edges }],
+        historyIndex: 0,
+      });
+
+      toast.success('Project loaded successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error loading project:', error);
+      toast.error(`Failed to load project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
   },
 }));
