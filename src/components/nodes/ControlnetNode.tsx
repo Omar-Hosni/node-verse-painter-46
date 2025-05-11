@@ -40,13 +40,18 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
     controlnetImage = '/lovable-uploads/334c0c60-a16b-41af-8e36-3ce5c24b1205.png';
   }
 
+  // Segment model doesn't allow uploads; other types do
+  const isSegmentModel = data.type === 'segment';
+
   const handleImageClick = () => {
-    if (fileInputRef.current) {
+    if (!isSegmentModel && fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isSegmentModel) return;
+    
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -137,8 +142,8 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
 
       {/* Display the image thumbnail if it exists, with loading indicator */}
       <div 
-        className="bg-gray-800 cursor-pointer"
-        onClick={handleImageClick}
+        className={`bg-gray-800 ${!isSegmentModel ? 'cursor-pointer' : ''}`}
+        onClick={!isSegmentModel ? handleImageClick : undefined}
       >
         {data.uploading ? (
           <div className="w-full h-32 flex items-center justify-center">
@@ -162,17 +167,23 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
                 className="w-full h-auto rounded opacity-50"
                 style={{ maxHeight: '100px' }}
               />
-              <p className="text-center text-gray-400 mt-2 text-sm">Click to upload an image</p>
+              {!isSegmentModel ? (
+                <p className="text-center text-gray-400 mt-2 text-sm">Click to upload an image</p>
+              ) : (
+                <p className="text-center text-gray-400 mt-2 text-sm">Segment model with preloaded image</p>
+              )}
             </div>
           </div>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
+        {!isSegmentModel && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        )}
       </div>
 
       {/* Horizontal handles with improved positioning */}
@@ -181,14 +192,14 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
         position={Position.Left}
         id="controlnet-in"
         className="!bg-white !border-2 !border-green-500 w-4 h-4"
-        style={{ left: -12, zIndex: 100 }}
+        style={{ left: -8, zIndex: 100 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="controlnet-out"
         className="!bg-white !border-2 !border-green-500 w-4 h-4"
-        style={{ right: -12, zIndex: 100 }}
+        style={{ right: -8, zIndex: 100 }}
       />
     </div>
   );
