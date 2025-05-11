@@ -108,23 +108,27 @@
 
 /* Node styling */
 .react-flow__handle {
-  opacity: 0.8;
+  opacity: 1; /* Increased from 0.8 */
   transition: opacity 0.3s;
-  width: 10px;
-  height: 10px;
+  width: 12px; /* Increased from 10px */
+  height: 12px; /* Increased from 10px */
   border-radius: 50%;
+  background-color: white;
+  border: 2px solid #333; /* Added border for better visibility */
+  box-shadow: 0 0 5px rgba(0,0,0,0.2); /* Added shadow for depth */
 }
 
 .react-flow__handle-right {
-  right: -5px;
+  right: -8px; /* Adjusted to make it more visible */
 }
 
 .react-flow__handle-left {
-  left: -5px;
+  left: -8px; /* Adjusted to make it more visible */
 }
 
 .react-flow__node:hover .react-flow__handle {
   opacity: 1;
+  transform: scale(1.2); /* Added scale effect on hover */
 }
 
 /* Edge hover effect */
@@ -138,3 +142,8 @@
   stroke-width: 3;
 }
 
+/* Handle hover effect */
+.react-flow__handle:hover {
+  background-color: #ff69b4; /* Pink highlight on hover */
+  transform: scale(1.5); /* More noticeable on hover */
+}

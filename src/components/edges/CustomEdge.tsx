@@ -41,22 +41,22 @@ const CustomEdge: React.FC<EdgeProps> = ({
     <>
       <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style, strokeWidth: 2}} />
       
-      {/* Edge control button */}
+      {/* Edge control button - improved visibility */}
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
-            zIndex: 10,
+            zIndex: 1000, // Higher z-index to ensure visibility
           }}
           className="nodrag nopan"
         >
           <button
-            className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white transition-colors border border-gray-300"
+            className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors border-2 border-gray-300"
             onClick={onEdgeClick}
           >
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
       </EdgeLabelRenderer>

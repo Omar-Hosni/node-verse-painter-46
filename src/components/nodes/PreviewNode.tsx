@@ -103,12 +103,12 @@ export const PreviewNode = ({ data, selected }: PreviewNodeProps) => {
         </div>
       )}
 
-      {/* Horizontal handle */}
+      {/* Horizontal handle - Improved visibility */}
       <Handle
         type="target"
         position={Position.Left}
         id="preview-in"
-        className="!bg-blue-500 !border-none w-3 h-3 !-left-1"
+        className="!bg-white !border-2 !border-blue-500 w-4 h-4 !-left-2"
       />
     </div>
   );

@@ -221,6 +221,10 @@ export const Canvas = () => {
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         className="bg-[#151515]"
+        connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }} // Make connection line more visible
+        connectionLineType="smoothstep" // Use smooth step connection style
+        snapToGrid={true} // Enable snap to grid for better alignment
+        snapGrid={[15, 15]} // Set grid size
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />

@@ -92,18 +92,18 @@ export const LoraNode = ({ data, selected }: LoraNodeProps) => {
         />
       </div>
 
-      {/* Horizontal handles */}
+      {/* Horizontal handles - Improved visibility */}
       <Handle
         type="target"
         position={Position.Left}
         id="lora-in"
-        className="!bg-white !border-none w-3 h-3 !-left-1"
+        className="!bg-white !border-2 !border-purple-500 w-4 h-4 !-left-2"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="lora-out"
-        className="!bg-white !border-none w-3 h-3 !-right-1"
+        className="!bg-white !border-2 !border-purple-500 w-4 h-4 !-right-2"
       />
     </div>
   );

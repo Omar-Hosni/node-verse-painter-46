@@ -100,18 +100,18 @@ export const ControlnetNode = ({ data, selected }: ControlnetNodeProps) => {
         </div>
       )}
 
-      {/* Horizontal handles */}
+      {/* Horizontal handles - Improved visibility */}
       <Handle
         type="target"
         position={Position.Left}
         id="controlnet-in"
-        className="!bg-white !border-none w-3 h-3 !-left-1"
+        className="!bg-white !border-2 !border-green-500 w-4 h-4 !-left-2"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="controlnet-out"
-        className="!bg-white !border-none w-3 h-3 !-right-1"
+        className="!bg-white !border-2 !border-green-500 w-4 h-4 !-right-2"
       />
     </div>
   );

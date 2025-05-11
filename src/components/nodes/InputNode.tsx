@@ -125,18 +125,18 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
 
       {renderContent()}
 
-      {/* Horizontal handles - both input and output */}
+      {/* Horizontal handles - both input and output with improved visibility */}
       <Handle
         type="target"
         position={Position.Left}
         id="input-in"
-        className="!bg-white !border-none w-3 h-3 !-left-1"
+        className="!bg-white !border-2 !border-blue-300 w-4 h-4 !-left-2"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="input-out"
-        className="!bg-white !border-none w-3 h-3 !-right-1"
+        className="!bg-white !border-2 !border-blue-300 w-4 h-4 !-right-2"
       />
     </div>
   );

@@ -97,12 +97,12 @@ export const ModelNode = ({ data, selected }: ModelNodeProps) => {
         />
       </div>
       
-      {/* Only source handle (output) for model nodes */}
+      {/* Only source handle (output) for model nodes - Improved visibility */}
       <Handle
         type="source"
         position={Position.Right}
         id="model-out"
-        className="!bg-white !border-none w-3 h-3 !-right-1.5"
+        className="!bg-white !border-2 !border-blue-500 w-4 h-4 !-right-2"
       />
     </div>
   );
