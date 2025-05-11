@@ -30,7 +30,7 @@ export const AppHeader = ({
             className="gap-1 text-gray-400 bg-transparent"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard
+            Home
           </Button>
         )}
         <div className="flex items-center">

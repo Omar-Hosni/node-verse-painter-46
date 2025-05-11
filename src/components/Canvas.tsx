@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
@@ -203,14 +202,14 @@ export const Canvas = () => {
         <Panel position="top-right" className="flex gap-2">
           <Button 
             onClick={handleGenerateImage}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 text-white"
           >
             Generate Image ({credits !== null ? credits : '...'} credits)
           </Button>
           <Button 
             onClick={handleExportWorkflow}
             variant="outline"
-            className="bg-[#1A1A1A] text-gray-300 border-[#333] hover:bg-[#2A2A2A]"
+            className="bg-[#1A1A1A] text-gray-300 border-[#333]"
           >
             Export Workflow
           </Button>
