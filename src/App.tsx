@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Editor from "./pages/Editor";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 import { supabase } from "./integrations/supabase/client";
 
@@ -42,7 +43,9 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <div className="flex items-center justify-center h-screen bg-[#121212] text-white">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+    </div>;
   }
 
   return (
@@ -61,6 +64,7 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/editor" element={<Editor />} />
               <Route path="/editor/:projectId" element={<Editor />} />
+              <Route path="/subscription" element={<Subscription />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

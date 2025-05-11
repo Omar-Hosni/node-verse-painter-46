@@ -40,8 +40,8 @@ export interface LoraSettings {
 
 export interface ControlNetSettings {
   image: string | null;
-  imageId?: string; // Added to store the uploaded image UUID
-  uploading?: boolean; // Added to track upload status
+  imageId?: string;
+  uploading?: boolean;
   strength: number;
 }
 
@@ -64,14 +64,39 @@ export interface WorkflowJson {
   [key: string]: WorkflowJsonNode;
 }
 
+// User credits interface
+export interface UserCredits {
+  id: string;
+  user_id: string;
+  credits_balance: number;
+  updated_at: string;
+}
+
+// Subscription tier type
+export type SubscriptionTier = 'free' | 'standard' | 'premium';
+
+// Subscription interface
+export interface UserSubscription {
+  id: string;
+  user_id: string;
+  tier: SubscriptionTier;
+  is_annual: boolean;
+  starts_at: string;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CanvasState {
   nodes: Node[];
   edges: Edge[];
   selectedNode: Node | null;
   runwayApiKey: string | null;
-  clipboard: Node | null; // For clipboard operations
-  history: HistoryState[]; // For undo functionality
-  historyIndex: number; // Current position in history
+  credits: number | null;
+  subscription: UserSubscription | null;
+  clipboard: Node | null;
+  history: HistoryState[];
+  historyIndex: number;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -81,22 +106,20 @@ export interface CanvasState {
   setRunwayApiKey: (apiKey: string) => void;
   generateImageFromNodes: () => Promise<void>;
   uploadControlNetImage: (nodeId: string, imageData: string) => Promise<void>;
-  // New clipboard functions
   copySelectedNode: () => void;
   cutSelectedNode: () => void;
   pasteNodes: (position: { x: number; y: number }) => void;
   deleteSelectedNode: () => void;
-  // Undo/redo functions
   undo: () => void;
   redo: () => void;
-  // Internal function to save current state to history
   saveToHistory: () => void;
-  // Export workflow as JSON
   exportWorkflowAsJson: () => WorkflowJson;
-  // Save project to Supabase
   saveProject: (name: string, description?: string) => Promise<string | null>;
-  // Load project from Supabase
   loadProject: (projectId: string) => Promise<boolean>;
+  fetchUserCredits: () => Promise<void>;
+  fetchUserSubscription: () => Promise<void>;
+  useCreditsForGeneration: () => Promise<boolean>;
+  sendWorkflowToAPI: () => Promise<boolean>;
 }
 
 let nodeIdCounter = 1;
@@ -106,9 +129,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   edges: [],
   selectedNode: null,
   runwayApiKey: null,
+  credits: null,
+  subscription: null,
   clipboard: null,
-  history: [], // Initialize empty history
-  historyIndex: -1, // No history item selected initially
+  history: [],
+  historyIndex: -1,
 
   onNodesChange: (changes: NodeChange[]) => {
     // Save state before making changes
@@ -269,41 +294,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ runwayApiKey: apiKey });
   },
 
-  uploadControlNetImage: async (nodeId: string, imageData: string) => {
-    const { runwayApiKey } = get();
-    
-    if (!runwayApiKey) {
-      toast.error("API key not set! Please set your API key in the settings.");
-      return;
-    }
-
-    try {
-      // Set uploading flag to true
-      get().updateNodeData(nodeId, { 
-        uploading: true 
-      });
-
-      // Get the RunwareService instance
-      const runwareService = getRunwareService(runwayApiKey);
-      
-      // Upload the image
-      const uploadedImage = await runwareService.uploadImage(imageData);
-      console.log("Image uploaded successfully:", uploadedImage);
-      
-      // Update the node with the uploaded image ID
-      get().updateNodeData(nodeId, { 
-        imageId: uploadedImage.imageUUID,
-        uploading: false 
-      });
-      
-      toast.success("Image uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading ControlNet image:", error);
-      get().updateNodeData(nodeId, { uploading: false });
-      toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
-
+  // Modified: Check credits before generating and use useCreditsForGeneration
   generateImageFromNodes: async () => {
     const { nodes, edges, runwayApiKey } = get();
     
@@ -318,6 +309,20 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       return;
     }
 
+    // Check if user has enough credits
+    const hasEnoughCredits = await get().useCreditsForGeneration();
+    if (!hasEnoughCredits) {
+      toast.error("Not enough credits! Please purchase more credits to continue generating images.");
+      return;
+    }
+
+    // Use local API endpoint instead of Runware API
+    const hasAPIAccess = await get().sendWorkflowToAPI();
+    if (hasAPIAccess) {
+      toast.success("Image generation request sent to API successfully!");
+      return;
+    }
+    
     const loraNodes = nodes.filter(n => n.type === 'loraNode');
     const controlNetNodes = nodes.filter(n => n.type === 'controlnetNode');
     const previewNode = nodes.find(n => n.type === 'previewNode');
@@ -644,9 +649,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return null;
       }
 
-      // Get current canvas state
+      // Get current canvas state and convert to a format compatible with Supabase's JSON type
       const { nodes, edges } = get();
-      const canvasData = { nodes, edges };
+      
+      // Serializable canvas data that can be stored as JSON
+      const canvasData = {
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges))
+      };
 
       // Save to Supabase
       const { data, error } = await supabase
@@ -655,7 +665,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           user_id: session.user.id,
           name,
           description,
-          canvas_data: canvasData,
+          canvas_data: canvasData
         })
         .select('id')
         .single();
@@ -704,8 +714,17 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return false;
       }
 
+      // Parse canvas data from JSON
+      const canvasData = data.canvas_data;
+      
+      // Ensure we have nodes and edges
+      if (!canvasData.nodes || !canvasData.edges) {
+        toast.error('Project data is corrupted or invalid');
+        return false;
+      }
+
       // Reset nodeIdCounter to avoid ID conflicts
-      const maxId = Math.max(...data.canvas_data.nodes.map((n: Node) => {
+      const maxId = Math.max(...canvasData.nodes.map((n: Node) => {
         const match = n.id.match(/\d+$/);
         return match ? parseInt(match[0]) : 0;
       }));
@@ -713,10 +732,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
       // Load canvas state
       set({
-        nodes: data.canvas_data.nodes,
-        edges: data.canvas_data.edges,
+        nodes: canvasData.nodes,
+        edges: canvasData.edges,
         selectedNode: null,
-        history: [{ nodes: data.canvas_data.nodes, edges: data.canvas_data.edges }],
+        history: [{ nodes: canvasData.nodes, edges: canvasData.edges }],
         historyIndex: 0,
       });
 
@@ -728,4 +747,130 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       return false;
     }
   },
+  
+  // New method to fetch user credits
+  fetchUserCredits: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('user_credits')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching credits:', error);
+        return;
+      }
+
+      set({ credits: data.credits_balance });
+    } catch (error) {
+      console.error('Error fetching user credits:', error);
+    }
+  },
+
+  // New method to fetch user subscription
+  fetchUserSubscription: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching subscription:', error);
+        return;
+      }
+
+      set({ subscription: data });
+    } catch (error) {
+      console.error('Error fetching user subscription:', error);
+    }
+  },
+
+  // New method to use credits for generation
+  useCreditsForGeneration: async () => {
+    try {
+      // Fetch latest credits balance
+      await get().fetchUserCredits();
+      const { credits } = get();
+      
+      // Check credits
+      if (!credits || credits < 1) {
+        return false;
+      }
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return false;
+
+      // Deduct 1 credit
+      const { error: updateError } = await supabase
+        .from('user_credits')
+        .update({ credits_balance: credits - 1 })
+        .eq('user_id', session.user.id);
+
+      if (updateError) {
+        console.error('Failed to update credits:', updateError);
+        return false;
+      }
+
+      // Record transaction
+      await supabase
+        .from('credits_transactions')
+        .insert({
+          user_id: session.user.id,
+          amount: -1,
+          description: 'Image generation'
+        });
+
+      // Update local state
+      set({ credits: credits - 1 });
+      
+      return true;
+    } catch (error) {
+      console.error('Error using credits:', error);
+      return false;
+    }
+  },
+
+  // New method to send workflow to local API
+  sendWorkflowToAPI: async () => {
+    try {
+      const workflowJson = get().exportWorkflowAsJson();
+      
+      // Send to local API
+      const response = await fetch('http://localhost:8000/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ workflow: workflowJson }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'API request failed');
+      }
+
+      const result = await response.json();
+      
+      // Find preview node and update it with the result
+      const previewNode = get().nodes.find(n => n.type === 'previewNode');
+      if (previewNode && result.imageUrl) {
+        get().updateNodeData(previewNode.id, { image: result.imageUrl });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending workflow to API:', error);
+      toast.error(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  }
 }));

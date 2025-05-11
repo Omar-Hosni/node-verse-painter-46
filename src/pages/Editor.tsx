@@ -18,6 +18,8 @@ const Editor = () => {
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
   const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
+  const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
+  const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
   
   useEffect(() => {
     // Check authentication and redirect if not authenticated
@@ -33,11 +35,17 @@ const Editor = () => {
     
     // Set API key - this can later be moved to user settings
     setRunwayApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
-    
+
     // Load project if projectId is provided
     if (projectId) {
       loadProjectData();
+    } else {
+      setLoading(false);
     }
+    
+    // Fetch user credits and subscription info
+    fetchUserCredits();
+    fetchUserSubscription();
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -49,7 +57,7 @@ const Editor = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [projectId, navigate, setRunwayApiKey]);
+  }, [projectId, navigate, setRunwayApiKey, fetchUserCredits, fetchUserSubscription]);
 
   const loadProjectData = async () => {
     setLoading(true);
@@ -95,10 +103,16 @@ const Editor = () => {
 
         const { nodes, edges } = useCanvasStore.getState();
         
+        // Convert to serializable JSON
+        const canvasData = {
+          nodes: JSON.parse(JSON.stringify(nodes)),
+          edges: JSON.parse(JSON.stringify(edges))
+        };
+        
         const { error } = await supabase
           .from('projects')
           .update({
-            canvas_data: { nodes, edges },
+            canvas_data: canvasData,
             updated_at: new Date().toISOString(),
           })
           .eq('id', projectId);
@@ -125,16 +139,25 @@ const Editor = () => {
     navigate('/dashboard');
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading project...</div>;
+    return <div className="flex items-center justify-center h-screen bg-[#121212]">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+    </div>;
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#121212] text-white">
       <AppHeader 
         projectName={projectName} 
         onSave={handleSave} 
-        onBackToDashboard={handleBackToDashboard} 
+        onBackToDashboard={handleBackToDashboard}
+        showLogoutButton={true}
+        onLogout={handleLogout}
       />
       <div className="flex flex-1 relative">
         <LeftSidebar />

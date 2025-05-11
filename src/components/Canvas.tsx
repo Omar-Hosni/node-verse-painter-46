@@ -41,6 +41,10 @@ export const Canvas = () => {
     undo,
     redo,
     exportWorkflowAsJson,
+    credits,
+    fetchUserCredits,
+    useCreditsForGeneration,
+    sendWorkflowToAPI,
   } = useCanvasStore();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -119,6 +123,11 @@ export const Canvas = () => {
     };
   }, [handleKeyDown]);
 
+  // Fetch user credits
+  useEffect(() => {
+    fetchUserCredits();
+  }, [fetchUserCredits]);
+
   const handleExportWorkflow = () => {
     const json = exportWorkflowAsJson();
     console.log("Workflow JSON:", json);
@@ -137,8 +146,44 @@ export const Canvas = () => {
     toast.success('Workflow exported as JSON');
   };
 
+  const handleGenerateImage = async () => {
+    const previewNode = nodes.find(n => n.type === 'previewNode');
+    if (!previewNode) {
+      toast.error("No preview node found! Please add a preview node to your canvas.");
+      return;
+    }
+
+    if (credits === null || credits === undefined) {
+      await fetchUserCredits();
+      if (credits === null || credits === undefined) {
+        toast.error("Could not fetch your credits. Please try again.");
+        return;
+      }
+    }
+
+    if (credits < 1) {
+      toast.error("Not enough credits! Please purchase more credits to continue generating images.");
+      return;
+    }
+
+    try {
+      // Update button to loading state
+      toast.info("Sending request to generate image...");
+      
+      // Send to API
+      await sendWorkflowToAPI();
+      
+      // Use credits
+      await useCreditsForGeneration();
+      
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error(`Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   return (
-    <div className="flex-1 h-screen" ref={reactFlowWrapper}>
+    <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -150,16 +195,22 @@ export const Canvas = () => {
         nodeTypes={nodeTypes}
         fitView
         defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
-        className="bg-canvas"
+        className="bg-[#151515]"
       >
-        <MiniMap />
-        <Controls />
-        <Background />
-        <Panel position="top-right">
+        <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
+        <Controls className="bg-[#1A1A1A] border-[#333]" />
+        <Background color="#333333" gap={16} />
+        <Panel position="top-right" className="flex gap-2">
+          <Button 
+            onClick={handleGenerateImage}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Generate Image ({credits !== null ? credits : '...'} credits)
+          </Button>
           <Button 
             onClick={handleExportWorkflow}
             variant="outline"
-            className="bg-white text-black hover:bg-gray-100"
+            className="bg-[#1A1A1A] text-gray-300 border-[#333] hover:bg-[#2A2A2A]"
           >
             Export Workflow
           </Button>

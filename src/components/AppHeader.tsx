@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save, LogOut } from 'lucide-react';
+import { CreditsDisplay } from './CreditsDisplay';
 
 interface AppHeaderProps {
   projectName?: string;
@@ -19,14 +20,14 @@ export const AppHeader = ({
   onLogout
 }: AppHeaderProps) => {
   return (
-    <header className="flex items-center justify-between px-4 h-14 bg-sidebar border-b border-field py-[16px]">
+    <header className="flex items-center justify-between px-4 h-14 bg-[#111111] border-b border-[#2A2A2A] py-[16px]">
       <div className="flex items-center gap-2">
         {onBackToDashboard && (
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={onBackToDashboard}
-            className="gap-1"
+            className="gap-1 text-gray-400 hover:text-white hover:bg-[#2A2A2A]"
           >
             <ArrowLeft className="h-4 w-4" />
             Dashboard
@@ -35,17 +36,19 @@ export const AppHeader = ({
         <div className="flex items-center">
           <img src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png" alt="App Logo" className="h-4 w-auto" />
           {projectName && (
-            <span className="ml-2 text-sm font-medium">{projectName}</span>
+            <span className="ml-2 text-sm font-medium text-gray-200">{projectName}</span>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-3 items-center">
+        <CreditsDisplay />
+        
         {showLogoutButton && onLogout && (
           <Button 
             variant="outline" 
             onClick={onLogout}
-            className="gap-1"
+            className="gap-1 border-[#333] bg-[#1A1A1A] hover:bg-[#2A2A2A] hover:border-[#444] text-gray-300"
             size="sm"
           >
             <LogOut className="h-4 w-4" />
@@ -55,14 +58,14 @@ export const AppHeader = ({
         {onSave && (
           <Button 
             onClick={onSave}
-            className="gap-1 rounded-full bg-primary hover:bg-primary/90 text-white px-6 text-sm font-normal"
+            className="gap-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 text-sm font-normal"
           >
             <Save className="h-4 w-4" />
             Save Project
           </Button>
         )}
         {!onSave && (
-          <Button className="rounded-full bg-primary hover:bg-primary/90 text-white px-6 text-sm font-normal">
+          <Button className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-6 text-sm font-normal">
             Generate Image
           </Button>
         )}
