@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -30,6 +29,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { NodeType } from '@/store/types';
+import { Node, Edge } from '@xyflow/react';
 
 type NodeOption = {
   type: NodeType;
@@ -46,15 +46,20 @@ type NodeCategory = {
 
 // Define types for the workflow structure
 type Connection = {
-  edge: any;
+  edge: Edge;
   targetId?: string;
   sourceId?: string;
 };
 
 type NodeData = {
-  node: any;
+  node: Node;
   incoming: Connection[];
   outgoing: Connection[];
+};
+
+type WorkflowStructure = {
+  connections: Map<string, NodeData>;
+  startingNodeIds: string[];
 };
 
 export const LeftSidebar = () => {
@@ -217,7 +222,7 @@ export const LeftSidebar = () => {
       ]
     }
   ];
-
+  
   // Get workflow components and edges
   const { nodes, edges } = useCanvasStore(state => ({
     nodes: state.nodes,
@@ -225,7 +230,7 @@ export const LeftSidebar = () => {
   }));
   
   // Create a structured representation of the workflow
-  const workflowStructure = useMemo(() => {
+  const workflowStructure = useMemo<WorkflowStructure>(() => {
     // Create a map of connections
     const connectionsMap = new Map<string, NodeData>();
     
@@ -279,7 +284,7 @@ export const LeftSidebar = () => {
   };
   
   // Recursive component to render node and its connections
-  const RenderWorkflowNode = ({ nodeId, depth = 0 }: { nodeId: string, depth?: number }) => {
+  const RenderWorkflowNode = ({ nodeId, depth = 0 }: { nodeId: string, depth?: number }): React.ReactNode => {
     const nodeData = workflowStructure.connections.get(nodeId);
     if (!nodeData) return null;
     
@@ -298,7 +303,9 @@ export const LeftSidebar = () => {
               <div key={index} className="flex items-center text-xs text-gray-500 my-1">
                 <ArrowRight className="h-3 w-3 mr-1" />
                 {connection.targetId && (
-                  <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} />
+                  <React.Fragment>
+                    {RenderWorkflowNode({ nodeId: connection.targetId, depth: depth + 1 })}
+                  </React.Fragment>
                 )}
               </div>
             ))}
