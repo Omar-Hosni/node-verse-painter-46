@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -15,8 +16,7 @@ import {
   SquarePlus,
   FileImage,
   Shuffle,
-  CircuitBoard,
-  ArrowRight
+  CircuitBoard
 } from 'lucide-react';
 import {
   HoverCard,
@@ -42,24 +42,6 @@ type NodeCategory = {
   name: string;
   icon: React.ElementType;
   options: NodeOption[];
-};
-
-// Define types for the workflow structure
-type Connection = {
-  edge: Edge;
-  targetId?: string;
-  sourceId?: string;
-};
-
-type NodeData = {
-  node: Node;
-  incoming: Connection[];
-  outgoing: Connection[];
-};
-
-type WorkflowStructure = {
-  connections: Map<string, NodeData>;
-  startingNodeIds: string[];
 };
 
 export const LeftSidebar = () => {
@@ -229,51 +211,6 @@ export const LeftSidebar = () => {
     edges: state.edges
   }));
   
-  // Create a structured representation of the workflow
-  const workflowStructure = useMemo<WorkflowStructure>(() => {
-    // Create a map of connections
-    const connectionsMap = new Map<string, NodeData>();
-    
-    // Populate map with all nodes first
-    nodes.forEach(node => {
-      connectionsMap.set(node.id, {
-        node,
-        incoming: [],
-        outgoing: []
-      });
-    });
-    
-    // Add connections based on edges
-    edges.forEach(edge => {
-      const sourceNode = connectionsMap.get(edge.source);
-      const targetNode = connectionsMap.get(edge.target);
-      
-      if (sourceNode) {
-        sourceNode.outgoing.push({
-          edge,
-          targetId: edge.target
-        });
-      }
-      
-      if (targetNode) {
-        targetNode.incoming.push({
-          edge,
-          sourceId: edge.source
-        });
-      }
-    });
-    
-    // Find starting nodes (nodes without incoming connections)
-    const startingNodes = Array.from(connectionsMap.values())
-      .filter(item => item.incoming.length === 0)
-      .map(item => item.node.id);
-    
-    return {
-      connections: connectionsMap,
-      startingNodeIds: startingNodes
-    };
-  }, [nodes, edges]);
-  
   const getNodeIcon = (nodeType: string | undefined) => {
     if (nodeType?.includes('model')) return <Cpu className="h-4 w-4 text-blue-400" />;
     if (nodeType?.includes('lora')) return <Layers className="h-4 w-4 text-purple-400" />;
@@ -283,16 +220,13 @@ export const LeftSidebar = () => {
     return <CircuitBoard className="h-4 w-4 text-gray-400" />;
   };
   
-  // Simplified version without using the recursive RenderWorkflowNode component
-  const renderNodeItem = (nodeId: string) => {
-    const nodeData = workflowStructure.connections.get(nodeId);
-    if (!nodeData) return null;
-    
+  // Simple node rendering function that doesn't cause circular references
+  const renderNodeItem = (node: Node) => {
     return (
-      <div key={nodeId} className="p-2 bg-gray-800 rounded-md flex items-center mb-2">
-        {getNodeIcon(nodeData.node.type)}
+      <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center mb-2">
+        {getNodeIcon(node.type)}
         <span className="text-sm ml-2 truncate">
-          {nodeData.node.data?.displayName || nodeId}
+          {node.data?.displayName || node.id}
         </span>
       </div>
     );
@@ -365,7 +299,7 @@ export const LeftSidebar = () => {
             <div className="space-y-2">
               {nodes.length > 0 ? (
                 <div className="space-y-2">
-                  {nodes.map(node => renderNodeItem(node.id))}
+                  {nodes.map(node => renderNodeItem(node))}
                 </div>
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
