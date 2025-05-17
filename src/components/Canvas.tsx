@@ -20,6 +20,8 @@ import { InputNode } from './nodes/InputNode';
 import CustomEdge from './edges/CustomEdge';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
+import { useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 import '@xyflow/react/dist/style.css';
 
@@ -36,6 +38,7 @@ const edgeTypes: EdgeTypes = {
 };
 
 export const Canvas = () => {
+  const { projectId } = useParams<{ projectId: string }>();
   const { 
     nodes, 
     edges, 
@@ -56,11 +59,62 @@ export const Canvas = () => {
     fetchUserCredits,
     useCreditsForGeneration,
     sendWorkflowToAPI,
+    setExternalUpdateInProgress,
+    updateCanvasFromExternalSource,
   } = useCanvasStore();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   
+  // Add real-time subscriptions
+  useEffect(() => {
+    if (!projectId) return;
+
+    // Subscribe to project changes
+    const channel = supabase
+      .channel('project-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'projects',
+          filter: `id=eq.${projectId}`,
+        },
+        (payload) => {
+          // Skip updating if we're the ones who made the change
+          if (useCanvasStore.getState().isLocalUpdate) {
+            useCanvasStore.getState().setIsLocalUpdate(false);
+            return;
+          }
+          
+          const canvasData = payload.new.canvas_data;
+          
+          // Only update if we received valid canvas data and we're not currently updating
+          if (
+            canvasData && 
+            canvasData.nodes && 
+            canvasData.edges && 
+            !useCanvasStore.getState().externalUpdateInProgress
+          ) {
+            // Set flag to prevent infinite loops
+            setExternalUpdateInProgress(true);
+            
+            console.log('Received real-time update for canvas:', canvasData);
+            toast.info('Canvas updated by another user');
+            
+            // Update canvas with new data
+            updateCanvasFromExternalSource(canvasData.nodes, canvasData.edges);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, setExternalUpdateInProgress, updateCanvasFromExternalSource]);
+
   const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
     setSelectedEdge(null);
@@ -223,7 +277,7 @@ export const Canvas = () => {
         fitView
         className="bg-[#151515]"
         connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
-        connectionLineType={ConnectionLineType.SmoothStep} // Fixed the type here
+        connectionLineType={ConnectionLineType.SmoothStep}
         snapToGrid={true}
         snapGrid={[15, 15]}
       >
@@ -249,4 +303,3 @@ export const Canvas = () => {
     </div>
   );
 };
-

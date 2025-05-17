@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -54,6 +53,25 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   clipboard: null,
   history: [],
   historyIndex: -1,
+  isLocalUpdate: false,
+  externalUpdateInProgress: false,
+  
+  // Real-time collaboration helpers
+  setIsLocalUpdate: (isLocal: boolean) => {
+    set({ isLocalUpdate: isLocal });
+  },
+  
+  setExternalUpdateInProgress: (inProgress: boolean) => {
+    set({ externalUpdateInProgress: inProgress });
+  },
+  
+  updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => {
+    set({ 
+      nodes: newNodes,
+      edges: newEdges,
+      externalUpdateInProgress: false
+    });
+  },
   
   // Node operations
   onNodesChange: (changes) => {
@@ -310,6 +328,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   // Database operations
   saveProject: async (name, description) => {
+    // Set flag to ignore own updates
+    get().setIsLocalUpdate(true);
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
 

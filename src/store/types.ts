@@ -1,97 +1,46 @@
 
-import { Connection, Edge, EdgeChange, Node, NodeChange, OnConnect, OnEdgesChange, OnNodesChange } from '@xyflow/react';
+// This file contains type definitions for the canvas store
+import { Node, Edge } from '@xyflow/react';
 
-export type JsonValue = string | number | boolean | { [key: string]: JsonValue } | JsonValue[];
-export type Json = JsonValue | null;
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
-export type NodeType = 
-  | 'model-sdxl'
-  | 'model-flux' 
-  | 'model-hidream'
-  | 'lora-realistic'
-  | 'lora-cartoon'
-  | 'lora-character'
-  | 'controlnet-canny' 
-  | 'controlnet-depth' 
-  | 'controlnet-pose' 
-  | 'controlnet-segment'
-  | 'input-text'
-  | 'input-image' 
-  | 'output-preview';
+export type Json = {
+  [key: string]: JsonValue;
+};
 
-export interface ModelSettings {
-  modelName: string;
-  width: number;
-  height: number;
-  steps: number;
-  cfgScale: number;
-}
-
-export interface LoraSettings {
-  loraName: string;
-  strength: number;
-  loraType: string;
-}
-
-export interface ControlNetSettings {
-  image: string | null;
-  imageId?: string;
-  uploading?: boolean;
-  strength: number;
-  controlNetType: string;
-}
-
-export interface InputSettings {
-  text?: string;
-  image?: string | null;
-  imageId?: string;
-  uploading?: boolean;
-  inputType: string;
-}
-
-// History interface for undo/redo functionality
-export interface HistoryState {
-  nodes: Node[];
-  edges: Edge[];
-}
-
-// Define the workflow JSON schema
-export interface WorkflowJsonNode {
-  inputs: Record<string, any>;
-  class_type: string;
-  _meta: {
-    title: string;
-  };
-}
-
-export interface WorkflowJson {
-  [key: string]: WorkflowJsonNode;
-}
-
-// User credits interface
-export interface UserCredits {
-  id: string;
+export type UserCredits = {
   user_id: string;
-  credits_balance: number;
+  credits: number;
   updated_at: string;
-}
+};
 
-// Subscription tier type
-export type SubscriptionTier = 'free' | 'standard' | 'premium';
-
-// Subscription interface
-export interface UserSubscription {
+export type UserSubscription = {
   id: string;
   user_id: string;
-  tier: SubscriptionTier;
+  tier: string;
   is_annual: boolean;
   starts_at: string;
   expires_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface CanvasState {
+export type HistoryState = {
+  nodes: Node[];
+  edges: Edge[];
+};
+
+export type WorkflowJson = {
+  nodes: Node[];
+  edges: Edge[];
+  version: string;
+  settings: {
+    [key: string]: JsonValue;
+  };
+};
+
+export type CanvasState = {
+  // Core state
   nodes: Node[];
   edges: Edge[];
   selectedNode: Node | null;
@@ -102,30 +51,53 @@ export interface CanvasState {
   clipboard: Node | null;
   history: HistoryState[];
   historyIndex: number;
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
-  addNode: (nodeType: NodeType, position: { x: number; y: number }) => void;
+  
+  // Real-time collaboration state
+  isLocalUpdate: boolean;
+  externalUpdateInProgress: boolean;
+  
+  // Real-time collaboration actions
+  setIsLocalUpdate: (isLocal: boolean) => void;
+  setExternalUpdateInProgress: (inProgress: boolean) => void;
+  updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => void;
+  
+  // Node actions
+  onNodesChange: any;
+  onEdgesChange: any;
+  onConnect: any;
+  addNode: (type: string, position: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, newData: any) => void;
   setSelectedNode: (node: Node | null) => void;
   setSelectedEdge: (edge: Edge | null) => void;
+  
+  // API actions
   setRunwayApiKey: (apiKey: string) => void;
-  generateImageFromNodes: () => Promise<void>;
-  uploadControlNetImage: (nodeId: string, imageData: string) => Promise<void>;
-  uploadInputImage: (nodeId: string, imageData: string) => Promise<void>;
+  uploadControlNetImage: (nodeId: string, imageData: File) => Promise<void>;
+  uploadInputImage: (nodeId: string, imageData: File) => Promise<void>;
+  
+  // Clipboard actions
   copySelectedNode: () => void;
   cutSelectedNode: () => void;
   pasteNodes: (position: { x: number; y: number }) => void;
   deleteSelectedNode: () => void;
   deleteEdge: (edgeId: string) => void;
+  
+  // History actions
+  saveToHistory: () => void;
   undo: () => void;
   redo: () => void;
-  saveToHistory: () => void;
+  
+  // Workflow actions
   exportWorkflowAsJson: () => WorkflowJson;
+  
+  // Database actions
   saveProject: (name: string, description?: string) => Promise<string | null>;
   loadProject: (projectId: string) => Promise<boolean>;
   fetchUserCredits: () => Promise<void>;
   fetchUserSubscription: () => Promise<void>;
   useCreditsForGeneration: () => Promise<boolean>;
-  sendWorkflowToAPI: () => Promise<boolean>;
-}
+  
+  // Generation actions
+  generateImageFromNodes: () => Promise<void>;
+  sendWorkflowToAPI: () => Promise<any>;
+};

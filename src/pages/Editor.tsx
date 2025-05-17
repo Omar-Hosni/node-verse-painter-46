@@ -15,11 +15,14 @@ const Editor = () => {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('Untitled Project');
   const [loading, setLoading] = useState(true);
+  const [collaborators, setCollaborators] = useState<{id: string, email: string}[]>([]);
+  
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
   const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
   const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
   const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
+  const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
   
   useEffect(() => {
     // Check authentication and redirect if not authenticated
@@ -102,6 +105,9 @@ const Editor = () => {
         }
 
         const { nodes, edges } = useCanvasStore.getState();
+        
+        // Set flag to prevent loop with own updates
+        setIsLocalUpdate(true);
         
         // Convert to serializable JSON
         const canvasData = {
