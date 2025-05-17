@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
@@ -29,7 +29,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { NodeType } from '@/store/types';
-import { Node, Edge } from '@xyflow/react';
 
 type NodeOption = {
   type: NodeType;
@@ -219,18 +218,6 @@ export const LeftSidebar = () => {
     if (nodeType?.includes('output')) return <FileOutput className="h-4 w-4 text-pink-400" />;
     return <CircuitBoard className="h-4 w-4 text-gray-400" />;
   };
-  
-  // Simple node rendering function that doesn't cause circular references
-  const renderNodeItem = (node: Node) => {
-    return (
-      <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center mb-2">
-        {getNodeIcon(node.type)}
-        <span className="text-sm ml-2 truncate">
-          {node.data?.displayName || node.id}
-        </span>
-      </div>
-    );
-  };
 
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
@@ -299,7 +286,14 @@ export const LeftSidebar = () => {
             <div className="space-y-2">
               {nodes.length > 0 ? (
                 <div className="space-y-2">
-                  {nodes.map(node => renderNodeItem(node))}
+                  {nodes.map(node => (
+                    <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center mb-2">
+                      {getNodeIcon(node.type)}
+                      <span className="text-sm ml-2 truncate">
+                        {node.data?.displayName || node.id}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
