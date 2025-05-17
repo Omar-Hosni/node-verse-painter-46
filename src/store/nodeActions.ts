@@ -1,4 +1,3 @@
-
 import { Node, NodeChange, applyNodeChanges, Edge } from '@xyflow/react';
 import { NodeType } from './types';
 
@@ -108,83 +107,64 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
   // ControlNet nodes
   else if (nodeType.startsWith('controlnet-')) {
     const controlType = nodeType.replace('controlnet-', ''); // canny, depth, pose, segment
-    let emoji = "🎯";
-    let color = "#10b981";
     let displayName = `${controlType.charAt(0).toUpperCase() + controlType.slice(1)} Control`;
     
-    newNode = {
-      id,
-      type: 'controlnetNode',
-      position,
-      data: {
-        type: controlType,
-        controlNetType: controlType,
-        image: null,
-        imageId: null,
-        uploading: false,
-        strength: 0.8,
-        displayName,
-        emoji,
-        color,
-        tutorialVideo: `/videos/controlnet-${controlType}-tutorial.mp4`,
-        description: `${displayName}: Guides the image generation process using ${controlType} information from a reference image.`
-      },
-      className: 'node-controlnet',
+    const baseControlnetData = {
+      type: controlType,
+      controlNetType: controlType,
+      image: null,
+      imageId: null,
+      uploading: false,
+      strength: 0.8,
+      displayName,
     };
+
+    // Add Canny specific properties
+    if (controlType === 'canny') {
+      newNode = {
+        id,
+        type: 'controlnetNode',
+        position,
+        data: {
+          ...baseControlnetData,
+          low_threshold: 100,
+          high_threshold: 200,
+          resolution: 512,
+        },
+        className: 'node-controlnet',
+      };
+    } else {
+      newNode = {
+        id,
+        type: 'controlnetNode',
+        position,
+        data: baseControlnetData,
+        className: 'node-controlnet',
+      };
+    }
   } 
   // Input nodes
   else if (nodeType.startsWith('input-')) {
     const inputType = nodeType.split('-')[1]; // text, image
-    let emoji = "📝";
-    let color = "#3498db";
-    let displayName = "Input";
+    let displayName = inputType.charAt(0).toUpperCase() + inputType.slice(1) + ' Input';
     
-    switch(inputType) {
-      case 'text':
-        emoji = "📝";
-        color = "#3498db";
-        displayName = "Text Input";
-        newNode = {
-          id,
-          type: 'inputNode',
-          position,
-          data: {
-            inputType,
-            text: "",
-            displayName,
-            emoji,
-            color,
-            tutorialVideo: "/videos/text-input-tutorial.mp4",
-            description: "Text Input: Enter text to be used as a prompt for image generation."
-          },
-          className: 'node-input',
-        };
-        break;
-      case 'image':
-        emoji = "🖼️";
-        color = "#2980b9";
-        displayName = "Image Input";
-        newNode = {
-          id,
-          type: 'inputNode',
-          position,
-          data: {
-            inputType,
-            image: null,
-            imageId: null,
-            uploading: false,
-            displayName,
-            emoji,
-            color,
-            tutorialVideo: "/videos/image-input-tutorial.mp4",
-            description: "Image Input: Upload an image to be used as reference or input for other nodes."
-          },
-          className: 'node-input',
-        };
-        break;
-      default:
-        throw new Error(`Unknown input type: ${inputType}`);
-    }
+    newNode = {
+      id,
+      type: 'inputNode',
+      position,
+      data: {
+        inputType,
+        // For text input
+        text: inputType === 'text' ? "" : undefined,
+        // For image input
+        image: inputType === 'image' ? null : undefined,
+        imageId: inputType === 'image' ? null : undefined,
+        uploading: inputType === 'image' ? false : undefined,
+        // Common properties
+        displayName,
+      },
+      className: 'node-input',
+    };
   } 
   // Output/Preview node
   else if (nodeType === 'output-preview') {

@@ -1,13 +1,10 @@
 
 import React, { useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Loader2, HelpCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 
 interface ControlnetNodeProps {
   id: string;
@@ -17,10 +14,12 @@ interface ControlnetNodeProps {
     imageId?: string;
     uploading?: boolean;
     strength: number;
+    // Canny specific properties
+    low_threshold?: number;
+    high_threshold?: number;
+    resolution?: number;
     // Style properties
     displayName: string;
-    emoji: string;
-    color: string;
   };
   selected: boolean;
 }
@@ -28,29 +27,19 @@ interface ControlnetNodeProps {
 export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadControlNetImage = useCanvasStore(state => state.uploadControlNetImage);
+  const updateNodeData = useCanvasStore(state => state.updateNodeData);
   
-  // Determine the controlnet example image based on type
-  let controlnetImage = '/lovable-uploads/1c2649bd-85ef-4878-b14a-de464363af13.png'; // Default for segmentation
-  
-  if (data.type === 'depth') {
-    controlnetImage = '/lovable-uploads/d50dc01b-0350-4e41-b8e0-ec31e170b265.png';
-  } else if (data.type === 'pose') {
-    controlnetImage = '/lovable-uploads/7dd04116-2934-408d-9a4c-d77762bd58c5.png';
-  } else if (data.type === 'canny') {
-    controlnetImage = '/lovable-uploads/334c0c60-a16b-41af-8e36-3ce5c24b1205.png';
-  }
-
-  // Segment model doesn't allow uploads; other types do
-  const isSegmentModel = data.type === 'segment';
+  // Determine if uploads are allowed
+  const allowsUpload = data.type === 'pose';
 
   const handleImageClick = () => {
-    if (!isSegmentModel && fileInputRef.current) {
+    if (allowsUpload && fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isSegmentModel) return;
+    if (!allowsUpload) return;
     
     const file = e.target.files?.[0];
     if (file) {
@@ -60,8 +49,9 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
           const imageData = e.target.result as string;
           
           // Update the local image preview
-          useCanvasStore.getState().updateNodeData(id, {
+          updateNodeData(id, {
             image: imageData,
+            uploading: true
           });
           
           // Start the upload process
@@ -71,107 +61,75 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
       reader.readAsDataURL(file);
     }
   };
-  
-  // Get the tutorial content for each controlnet type
-  const getTutorialContent = () => {
-    switch (data.type) {
-      case 'depth':
-        return {
-          title: "Depth ControlNet",
-          description: "Depth ControlNet uses depth information to guide image generation, allowing for better control of spatial relationships and 3D structure."
-        };
-      case 'pose':
-        return {
-          title: "Pose ControlNet",
-          description: "Pose ControlNet uses human pose estimation to guide image generation, perfect for creating specific poses for characters and figures."
-        };
-      case 'canny':
-        return {
-          title: "Canny ControlNet",
-          description: "Canny ControlNet uses edge detection to guide image generation, helping maintain specific outlines and shapes in the generated image."
-        };
-      default:
-        return {
-          title: "Segment ControlNet",
-          description: "Segment ControlNet uses segmentation maps to guide image generation, allowing for precise control over different regions and objects."
-        };
-    }
-  };
-  
-  const tutorialContent = getTutorialContent();
 
   return (
     <div 
-      className={`relative rounded-xl overflow-hidden controlnet-node ${selected ? 'selected' : ''}`}
+      className={`relative rounded-lg overflow-hidden bg-gray-800 controlnet-node shadow-md
+        ${selected ? 'border border-purple-500' : 'border border-transparent'}`}
       style={{ width: 220 }}
     >
-      <div className="node-header w-full justify-between">
-        <div className="flex items-center gap-2">
-          <div className="node-icon-container">
-            <span className="text-xl">{data.emoji || '🎯'}</span>
-          </div>
-          <span className="text-base font-semibold text-white tracking-wide">
-            {data.displayName || `${data.type} Control`}
-          </span>
-        </div>
-
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <button className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors">
-              <HelpCircle className="h-5 w-5 text-white" />
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-white">
-            <div className="space-y-2">
-              <h4 className="text-lg font-semibold">{tutorialContent.title}</h4>
-              <p className="text-sm text-gray-300">{tutorialContent.description}</p>
-              <div className="mt-2 bg-gray-900 rounded overflow-hidden">
-                <img 
-                  src={controlnetImage}
-                  alt={`${data.displayName} example`}
-                  className="w-full h-auto"
-                />
-              </div>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
+      <div className="p-3 border-b border-gray-700">
+        <span className="text-sm font-semibold text-white">
+          {data.displayName || `${data.type} Control`}
+        </span>
       </div>
 
-      {/* Display the image thumbnail if it exists, with loading indicator */}
-      <div className="node-content w-full">
-        <div 
-          className={`${!isSegmentModel ? 'cursor-pointer' : ''}`}
-          onClick={!isSegmentModel ? handleImageClick : undefined}
-        >
-          {data.uploading ? (
-            <div className="image-preview w-full h-32 flex items-center justify-center">
-              <Loader2 className="h-10 w-10 text-white animate-spin" />
-            </div>
-          ) : data.image ? (
-            <div className="image-preview">
-              <img 
-                src={data.image} 
-                alt={`${data.type} control`}
-                className="w-full h-auto object-contain"
-                style={{ maxHeight: '120px' }}
+      <div className="p-3 space-y-3">
+        {/* Strength slider for all ControlNet types */}
+        <div className="space-y-1">
+          <label className="block text-xs text-gray-300">Strength: {data.strength.toFixed(2)}</label>
+          <Slider 
+            value={[data.strength]} 
+            min={0} 
+            max={1} 
+            step={0.01} 
+            onValueChange={(values) => updateNodeData(id, { strength: values[0] })}
+          />
+        </div>
+
+        {/* Canny-specific controls */}
+        {data.type === 'canny' && (
+          <>
+            <div className="space-y-1">
+              <label className="block text-xs text-gray-300">Low Threshold</label>
+              <Input
+                type="number"
+                value={data.low_threshold || 100}
+                onChange={(e) => updateNodeData(id, { low_threshold: parseInt(e.target.value) })}
+                className="bg-gray-700 text-white border-gray-600 h-8 text-sm"
+                min={0}
+                max={255}
               />
             </div>
-          ) : (
-            <div className="image-preview flex flex-col items-center justify-center">
-              <img 
-                src={controlnetImage}
-                alt={`${data.type} example`}
-                className="w-full h-auto opacity-50"
-                style={{ maxHeight: '100px' }}
+            <div className="space-y-1">
+              <label className="block text-xs text-gray-300">High Threshold</label>
+              <Input
+                type="number"
+                value={data.high_threshold || 200}
+                onChange={(e) => updateNodeData(id, { high_threshold: parseInt(e.target.value) })}
+                className="bg-gray-700 text-white border-gray-600 h-8 text-sm"
+                min={0}
+                max={255}
               />
-              {!isSegmentModel ? (
-                <p className="text-center text-gray-400 mt-2 text-sm">Click to upload an image</p>
-              ) : (
-                <p className="text-center text-gray-400 mt-2 text-sm">Segment model with preloaded image</p>
-              )}
             </div>
-          )}
-          {!isSegmentModel && (
+            <div className="space-y-1">
+              <label className="block text-xs text-gray-300">Resolution</label>
+              <Input
+                type="number"
+                value={data.resolution || 512}
+                onChange={(e) => updateNodeData(id, { resolution: parseInt(e.target.value) })}
+                className="bg-gray-700 text-white border-gray-600 h-8 text-sm"
+                min={64}
+                max={1024}
+                step={64}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Image upload for Pose ControlNet */}
+        {allowsUpload && (
+          <div>
             <input
               ref={fileInputRef}
               type="file"
@@ -179,24 +137,50 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
               className="hidden"
               onChange={handleFileSelect}
             />
-          )}
-        </div>
+            
+            {data.image ? (
+              <div className="relative mt-2">
+                {data.uploading && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  </div>
+                )}
+                <img 
+                  src={data.image} 
+                  alt={`${data.type} control`}
+                  className="w-full h-auto rounded-md border border-gray-600"
+                />
+                <button
+                  className="absolute top-1 right-1 bg-red-500 rounded-full p-1 text-white text-xs"
+                  onClick={() => updateNodeData(id, { image: null })}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div 
+                className="mt-2 h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white cursor-pointer"
+                onClick={handleImageClick}
+              >
+                <span className="text-sm">Click to upload image</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Horizontal handles with improved positioning */}
+      {/* Horizontal handles */}
       <Handle
         type="target"
         position={Position.Left}
         id="controlnet-in"
-        className="!bg-white !border-2 !border-green-500 w-4 h-4"
-        style={{ left: -8, zIndex: 100 }}
+        className="!bg-white !border-2 !border-green-500 w-3 h-3"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="controlnet-out"
-        className="!bg-white !border-2 !border-green-500 w-4 h-4"
-        style={{ right: -8, zIndex: 100 }}
+        className="!bg-white !border-2 !border-green-500 w-3 h-3"
       />
     </div>
   );
