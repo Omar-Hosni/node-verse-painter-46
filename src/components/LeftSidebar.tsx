@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -285,7 +286,8 @@ export const LeftSidebar = () => {
             {nodeData.outgoing.map((connection: any, index: number) => (
               <div key={index} className="flex items-center text-xs text-gray-500 my-1">
                 <ArrowRight className="h-3 w-3 mr-1" />
-                <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} />
+                {/* Fixed TypeScript error by explicitly typing the JSX element */}
+                {connection.targetId ? <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} /> : null}
               </div>
             ))}
           </div>
