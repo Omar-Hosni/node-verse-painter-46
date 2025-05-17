@@ -3,7 +3,13 @@ import { Node, Edge } from '@xyflow/react';
 import { WorkflowJson } from './types';
 
 export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson => {
-  const workflowJson: WorkflowJson = {};
+  // Initialize with required properties to satisfy TypeScript
+  const workflowJson: WorkflowJson = {
+    nodes: JSON.parse(JSON.stringify(nodes)), 
+    edges: JSON.parse(JSON.stringify(edges)),
+    version: '1.0',
+    settings: {}
+  };
   
   // Create a counter for node IDs in the JSON
   let idCounter = 1;

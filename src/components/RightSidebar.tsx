@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Upload } from 'lucide-react';
@@ -43,21 +42,26 @@ export const RightSidebar = () => {
       // Get instance of the service
       const runwareService = getRunwareService(runwayApiKey);
 
-      // Convert file to data URL
-      const dataUrl = await runwareService.fileToDataURL(file);
+      // Convert file to data URL for preview
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string;
+        
+        // First update the node with the local image for preview
+        updateNodeData(selectedNode.id, {
+          image: dataUrl,
+          uploading: true
+        });
 
-      // First update the node with the local image for preview
-      updateNodeData(selectedNode.id, {
-        image: dataUrl,
-        uploading: true
-      });
-
-      // Upload based on node type
-      if (selectedNode.type === 'controlnetNode' && selectedNode.data.type === 'pose') {
-        await uploadControlNetImage(selectedNode.id, dataUrl);
-      } else if (selectedNode.type === 'inputNode' && selectedNode.data.inputType === 'image') {
-        await uploadInputImage(selectedNode.id, dataUrl);
-      }
+        // Upload based on node type with the actual File object
+        if (selectedNode.type === 'controlnetNode' && selectedNode.data.type === 'pose') {
+          await uploadControlNetImage(selectedNode.id, file);
+        } else if (selectedNode.type === 'inputNode' && selectedNode.data.inputType === 'image') {
+          await uploadInputImage(selectedNode.id, file);
+        }
+      };
+      
+      reader.readAsDataURL(file);
 
     } catch (error) {
       console.error("Error processing image:", error);
@@ -81,51 +85,92 @@ export const RightSidebar = () => {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-gray-400">Model Name</Label>
-                  <Input type="text" placeholder="Model Name" value={selectedNode.data.modelName as string || ''} onChange={e => updateNodeData(selectedNode.id, {
-                  modelName: e.target.value
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
+                  <Input 
+                    type="text" 
+                    placeholder="Model Name" 
+                    value={selectedNode.data.modelName?.toString() || ''} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      modelName: e.target.value
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Width</Label>
-                  <Input type="number" placeholder="Width" value={Number(selectedNode.data.width) || 512} onChange={e => updateNodeData(selectedNode.id, {
-                  width: parseInt(e.target.value)
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
+                  <Input 
+                    type="number" 
+                    placeholder="Width" 
+                    value={Number(selectedNode.data.width) || 512} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      width: parseInt(e.target.value)
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Height</Label>
-                  <Input type="number" placeholder="Height" value={Number(selectedNode.data.height) || 512} onChange={e => updateNodeData(selectedNode.id, {
-                  height: parseInt(e.target.value)
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
+                  <Input 
+                    type="number" 
+                    placeholder="Height" 
+                    value={Number(selectedNode.data.height) || 512} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      height: parseInt(e.target.value)
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Steps</Label>
-                  <Input type="number" placeholder="Steps" value={Number(selectedNode.data.steps) || 30} onChange={e => updateNodeData(selectedNode.id, {
-                  steps: parseInt(e.target.value)
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
+                  <Input 
+                    type="number" 
+                    placeholder="Steps" 
+                    value={Number(selectedNode.data.steps) || 30} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      steps: parseInt(e.target.value)
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">CFG Scale</Label>
-                  <Input type="number" step="0.1" placeholder="CFG Scale" value={Number(selectedNode.data.cfgScale) || 7.5} onChange={e => updateNodeData(selectedNode.id, {
-                  cfgScale: parseFloat(e.target.value)
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
+                  <Input 
+                    type="number" 
+                    step="0.1" 
+                    placeholder="CFG Scale" 
+                    value={Number(selectedNode.data.cfgScale) || 7.5} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      cfgScale: parseFloat(e.target.value)
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Prompt</Label>
-                  <Textarea placeholder="Enter your prompt here" value={selectedNode.data.prompt as string || ''} onChange={e => updateNodeData(selectedNode.id, {
-                  prompt: e.target.value
-                })} className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" />
+                  <Textarea 
+                    placeholder="Enter your prompt here" 
+                    value={selectedNode.data.prompt?.toString() || ''} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      prompt: e.target.value
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" 
+                  />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Negative Prompt</Label>
-                  <Textarea placeholder="Enter your negative prompt here" value={selectedNode.data.negativePrompt as string || ''} onChange={e => updateNodeData(selectedNode.id, {
-                  negativePrompt: e.target.value
-                })} className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" />
+                  <Textarea 
+                    placeholder="Enter your negative prompt here" 
+                    value={selectedNode.data.negativePrompt?.toString() || ''} 
+                    onChange={e => updateNodeData(selectedNode.id, {
+                      negativePrompt: e.target.value
+                    })} 
+                    className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" 
+                  />
                 </div>
               </div>
             </div>

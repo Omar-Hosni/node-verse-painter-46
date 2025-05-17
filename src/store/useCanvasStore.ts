@@ -168,6 +168,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   uploadControlNetImage: async (nodeId, imageData) => {
+    // Make sure we're passing the imageData directly without trying to convert it
     await uploadImage(
       nodeId, 
       imageData, 
@@ -177,7 +178,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   uploadInputImage: async (nodeId, imageData) => {
-    // Reuse the same upload function for input images
+    // Make sure we're passing the imageData directly without trying to convert it
     await uploadImage(
       nodeId, 
       imageData, 

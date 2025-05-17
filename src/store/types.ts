@@ -39,6 +39,22 @@ export type WorkflowJson = {
   };
 };
 
+// Add NodeType definition to fix the errors
+export type NodeType = 
+  | 'input-text' 
+  | 'input-image' 
+  | 'model-sdxl' 
+  | 'model-flux' 
+  | 'model-hidream'
+  | 'lora-realistic'
+  | 'lora-cartoon'
+  | 'lora-character'
+  | 'controlnet-canny'
+  | 'controlnet-depth'
+  | 'controlnet-pose'
+  | 'controlnet-segment'
+  | 'output-preview';
+
 export type CanvasState = {
   // Core state
   nodes: Node[];

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -280,7 +279,7 @@ export const LeftSidebar = () => {
                     {node.type?.includes('input') && <Type className="h-4 w-4 mr-2 text-yellow-400" />}
                     {node.type?.includes('output') && <FileOutput className="h-4 w-4 mr-2 text-pink-400" />}
                     <span className="text-sm truncate">
-                      {node.data.displayName || node.id}
+                      {String(node.data.displayName || node.id)}
                     </span>
                   </div>
                 ))
