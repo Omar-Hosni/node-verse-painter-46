@@ -44,6 +44,19 @@ type NodeCategory = {
   options: NodeOption[];
 };
 
+// Define types for the workflow structure
+type Connection = {
+  edge: any;
+  targetId?: string;
+  sourceId?: string;
+};
+
+type NodeData = {
+  node: any;
+  incoming: Connection[];
+  outgoing: Connection[];
+};
+
 export const LeftSidebar = () => {
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
@@ -214,7 +227,7 @@ export const LeftSidebar = () => {
   // Create a structured representation of the workflow
   const workflowStructure = useMemo(() => {
     // Create a map of connections
-    const connectionsMap = new Map();
+    const connectionsMap = new Map<string, NodeData>();
     
     // Populate map with all nodes first
     nodes.forEach(node => {
@@ -231,7 +244,6 @@ export const LeftSidebar = () => {
       const targetNode = connectionsMap.get(edge.target);
       
       if (sourceNode) {
-        if (!sourceNode.outgoing) sourceNode.outgoing = [];
         sourceNode.outgoing.push({
           edge,
           targetId: edge.target
@@ -239,7 +251,6 @@ export const LeftSidebar = () => {
       }
       
       if (targetNode) {
-        if (!targetNode.incoming) targetNode.incoming = [];
         targetNode.incoming.push({
           edge,
           sourceId: edge.source
@@ -283,11 +294,12 @@ export const LeftSidebar = () => {
         
         {nodeData.outgoing && nodeData.outgoing.length > 0 && (
           <div className="ml-6">
-            {nodeData.outgoing.map((connection: any, index: number) => (
+            {nodeData.outgoing.map((connection, index) => (
               <div key={index} className="flex items-center text-xs text-gray-500 my-1">
                 <ArrowRight className="h-3 w-3 mr-1" />
-                {/* Fixed TypeScript error by explicitly typing the JSX element */}
-                {connection.targetId ? <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} /> : null}
+                {connection.targetId && (
+                  <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} />
+                )}
               </div>
             ))}
           </div>
