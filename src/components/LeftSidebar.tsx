@@ -283,34 +283,17 @@ export const LeftSidebar = () => {
     return <CircuitBoard className="h-4 w-4 text-gray-400" />;
   };
   
-  // Recursive component to render node and its connections
-  const RenderWorkflowNode = ({ nodeId, depth = 0 }: { nodeId: string, depth?: number }): React.ReactNode => {
+  // Simplified version without using the recursive RenderWorkflowNode component
+  const renderNodeItem = (nodeId: string) => {
     const nodeData = workflowStructure.connections.get(nodeId);
     if (!nodeData) return null;
     
     return (
-      <div className="ml-2">
-        <div className={`p-2 ${depth > 0 ? 'border-l border-gray-700' : ''} pl-4 flex items-center`}>
-          {getNodeIcon(nodeData.node.type)}
-          <span className="text-sm ml-2 truncate">
-            {nodeData.node.data?.displayName || nodeId}
-          </span>
-        </div>
-        
-        {nodeData.outgoing && nodeData.outgoing.length > 0 && (
-          <div className="ml-6">
-            {nodeData.outgoing.map((connection, index) => (
-              <div key={index} className="flex items-center text-xs text-gray-500 my-1">
-                <ArrowRight className="h-3 w-3 mr-1" />
-                {connection.targetId && (
-                  <React.Fragment>
-                    {RenderWorkflowNode({ nodeId: connection.targetId, depth: depth + 1 })}
-                  </React.Fragment>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+      <div key={nodeId} className="p-2 bg-gray-800 rounded-md flex items-center mb-2">
+        {getNodeIcon(nodeData.node.type)}
+        <span className="text-sm ml-2 truncate">
+          {nodeData.node.data?.displayName || nodeId}
+        </span>
       </div>
     );
   };
@@ -381,24 +364,9 @@ export const LeftSidebar = () => {
             </h3>
             <div className="space-y-2">
               {nodes.length > 0 ? (
-                workflowStructure.startingNodeIds.length > 0 ? (
-                  // Show hierarchical structure
-                  <div className="space-y-2">
-                    {workflowStructure.startingNodeIds.map(nodeId => (
-                      <RenderWorkflowNode key={nodeId} nodeId={nodeId} />
-                    ))}
-                  </div>
-                ) : (
-                  // Fallback to flat list if no hierarchy can be determined
-                  nodes.map(node => (
-                    <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center">
-                      {getNodeIcon(node.type)}
-                      <span className="text-sm ml-2 truncate">
-                        {node.data?.displayName || node.id}
-                      </span>
-                    </div>
-                  ))
-                )
+                <div className="space-y-2">
+                  {nodes.map(node => renderNodeItem(node.id))}
+                </div>
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
                   No components in workflow yet. Add some from the Insert tab.
