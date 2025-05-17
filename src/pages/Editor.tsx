@@ -7,8 +7,8 @@ import { RightSidebar } from '@/components/RightSidebar';
 import { AppHeader } from '@/components/AppHeader';
 import { Toolbar } from '@/components/Toolbar';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Collaborator } from '@/store/types';
 
 const Editor = () => {
@@ -75,7 +75,7 @@ const Editor = () => {
     // Get current user's profile data
     const { data: profile } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url')
+      .select('first_name, last_name, avatar_url, email')
       .eq('id', user.id)
       .single();
     
@@ -115,10 +115,10 @@ const Editor = () => {
 
         // Track the user's presence once connected
         await channel.track({
-          email: user.email,
-          first_name: profile?.first_name,
-          last_name: profile?.last_name,
-          avatar_url: profile?.avatar_url,
+          email: user.email || '',
+          first_name: profile?.first_name || '',
+          last_name: profile?.last_name || '',
+          avatar_url: profile?.avatar_url || '',
         });
       });
 
@@ -230,6 +230,7 @@ const Editor = () => {
         onBackToDashboard={handleBackToDashboard}
         showLogoutButton={true}
         onLogout={handleLogout}
+        projectId={projectId}
       />
       <div className="flex flex-1 relative">
         <LeftSidebar />

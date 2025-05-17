@@ -1,5 +1,6 @@
 import { Node, NodeChange, applyNodeChanges } from '@xyflow/react';
 import { NodeType } from "./types";
+import { Edge } from '@xyflow/react';
 
 let nodeIdCounter = 1;
 
@@ -248,7 +249,7 @@ export const deleteEdgeHelper = (
   edgeId: string,
   edges: Edge[]
 ): Edge[] => {
-  return edges.filter(e => e.id !== edgeId);
+  return edges.filter(edge => edge.id !== edgeId);
 };
 
 // Reset node counter - useful when loading projects

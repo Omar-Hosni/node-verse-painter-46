@@ -5,9 +5,9 @@ import { Node } from '@xyflow/react';
 
 export const uploadControlNetImage = async (
   nodeId: string, 
-  imageData: File,
+  imageData: File, 
   apiKey: string | null,
-  updateNodeData: (nodeId: string, newData: any) => void
+  updateNodeData: (nodeId: string, data: any) => void
 ) => {
   try {
     if (!apiKey) {

@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, LogOut } from 'lucide-react';
+import { ArrowLeft, Save, LogOut, Share } from 'lucide-react';
 import { CreditsDisplay } from './CreditsDisplay';
 import { CollaboratorsDisplay } from './CollaboratorsDisplay';
+import { ShareProjectDialog } from './ShareProjectDialog';
 
 interface AppHeaderProps {
   projectName?: string;
@@ -11,6 +12,7 @@ interface AppHeaderProps {
   onBackToDashboard?: () => void;
   showLogoutButton?: boolean;
   onLogout?: () => void;
+  projectId?: string;
 }
 
 export const AppHeader = ({ 
@@ -18,8 +20,11 @@ export const AppHeader = ({
   onSave,
   onBackToDashboard,
   showLogoutButton,
-  onLogout
+  onLogout,
+  projectId
 }: AppHeaderProps) => {
+  const [showShareDialog, setShowShareDialog] = React.useState(false);
+  
   return (
     <header className="flex items-center justify-between px-4 h-14 bg-[#111111] border-b border-[#2A2A2A] py-[16px]">
       <div className="flex items-center gap-2">
@@ -45,6 +50,18 @@ export const AppHeader = ({
       <div className="flex gap-3 items-center">
         <CollaboratorsDisplay />
         <CreditsDisplay />
+        
+        {projectId && (
+          <Button 
+            variant="outline" 
+            onClick={() => setShowShareDialog(true)}
+            className="gap-1 border-[#333] bg-[#1A1A1A] text-gray-300"
+            size="sm"
+          >
+            <Share className="h-4 w-4" />
+            Share
+          </Button>
+        )}
         
         {showLogoutButton && onLogout && (
           <Button 
@@ -72,6 +89,15 @@ export const AppHeader = ({
           </Button>
         )}
       </div>
+      
+      {showShareDialog && projectId && (
+        <ShareProjectDialog 
+          isOpen={showShareDialog} 
+          onClose={() => setShowShareDialog(false)} 
+          projectId={projectId}
+          projectName={projectName || "Untitled Project"}
+        />
+      )}
     </header>
   );
 };
