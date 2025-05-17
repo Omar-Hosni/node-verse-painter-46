@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
@@ -14,9 +15,7 @@ import {
   LayoutList,
   SquarePlus,
   FileImage,
-  Shuffle,
-  CircuitBoard,
-  ArrowRight
+  Shuffle
 } from 'lucide-react';
 import {
   HoverCard,
@@ -204,96 +203,9 @@ export const LeftSidebar = () => {
     }
   ];
 
-  // Get workflow components and edges
-  const { nodes, edges } = useCanvasStore(state => ({
-    nodes: state.nodes,
-    edges: state.edges
-  }));
+  // Demo content for Outline tab (workflow components)
+  const canvasNodes = useCanvasStore(state => state.nodes);
   
-  // Create a structured representation of the workflow
-  const workflowStructure = useMemo(() => {
-    // Create a map of connections
-    const connectionsMap = new Map();
-    
-    // Populate map with all nodes first
-    nodes.forEach(node => {
-      connectionsMap.set(node.id, {
-        node,
-        incoming: [],
-        outgoing: []
-      });
-    });
-    
-    // Add connections based on edges
-    edges.forEach(edge => {
-      const sourceNode = connectionsMap.get(edge.source);
-      const targetNode = connectionsMap.get(edge.target);
-      
-      if (sourceNode) {
-        if (!sourceNode.outgoing) sourceNode.outgoing = [];
-        sourceNode.outgoing.push({
-          edge,
-          targetId: edge.target
-        });
-      }
-      
-      if (targetNode) {
-        if (!targetNode.incoming) targetNode.incoming = [];
-        targetNode.incoming.push({
-          edge,
-          sourceId: edge.source
-        });
-      }
-    });
-    
-    // Find starting nodes (nodes without incoming connections)
-    const startingNodes = Array.from(connectionsMap.values())
-      .filter(item => item.incoming.length === 0)
-      .map(item => item.node.id);
-    
-    return {
-      connections: connectionsMap,
-      startingNodeIds: startingNodes
-    };
-  }, [nodes, edges]);
-  
-  const getNodeIcon = (nodeType: string | undefined) => {
-    if (nodeType?.includes('model')) return <Cpu className="h-4 w-4 text-blue-400" />;
-    if (nodeType?.includes('lora')) return <Layers className="h-4 w-4 text-purple-400" />;
-    if (nodeType?.includes('controlnet')) return <ImageIcon className="h-4 w-4 text-green-400" />;
-    if (nodeType?.includes('input')) return <Type className="h-4 w-4 text-yellow-400" />;
-    if (nodeType?.includes('output')) return <FileOutput className="h-4 w-4 text-pink-400" />;
-    return <CircuitBoard className="h-4 w-4 text-gray-400" />;
-  };
-  
-  // Recursive component to render node and its connections
-  const RenderWorkflowNode = ({ nodeId, depth = 0 }: { nodeId: string, depth?: number }) => {
-    const nodeData = workflowStructure.connections.get(nodeId);
-    if (!nodeData) return null;
-    
-    return (
-      <div className="ml-2">
-        <div className={`p-2 ${depth > 0 ? 'border-l border-gray-700' : ''} pl-4 flex items-center`}>
-          {getNodeIcon(nodeData.node.type)}
-          <span className="text-sm ml-2 truncate">
-            {nodeData.node.data?.displayName || nodeId}
-          </span>
-        </div>
-        
-        {nodeData.outgoing && nodeData.outgoing.length > 0 && (
-          <div className="ml-6">
-            {nodeData.outgoing.map((connection: any, index: number) => (
-              <div key={index} className="flex items-center text-xs text-gray-500 my-1">
-                <ArrowRight className="h-3 w-3 mr-1" />
-                <RenderWorkflowNode nodeId={connection.targetId} depth={depth + 1} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
     const center = {
@@ -359,25 +271,19 @@ export const LeftSidebar = () => {
               <span>Workflow Components</span>
             </h3>
             <div className="space-y-2">
-              {nodes.length > 0 ? (
-                workflowStructure.startingNodeIds.length > 0 ? (
-                  // Show hierarchical structure
-                  <div className="space-y-2">
-                    {workflowStructure.startingNodeIds.map(nodeId => (
-                      <RenderWorkflowNode key={nodeId} nodeId={nodeId} />
-                    ))}
+              {canvasNodes.length > 0 ? (
+                canvasNodes.map(node => (
+                  <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center">
+                    {node.type?.includes('model') && <Cpu className="h-4 w-4 mr-2 text-blue-400" />}
+                    {node.type?.includes('lora') && <Layers className="h-4 w-4 mr-2 text-purple-400" />}
+                    {node.type?.includes('controlnet') && <ImageIcon className="h-4 w-4 mr-2 text-green-400" />}
+                    {node.type?.includes('input') && <Type className="h-4 w-4 mr-2 text-yellow-400" />}
+                    {node.type?.includes('output') && <FileOutput className="h-4 w-4 mr-2 text-pink-400" />}
+                    <span className="text-sm truncate">
+                      {node.data.displayName || node.id}
+                    </span>
                   </div>
-                ) : (
-                  // Fallback to flat list if no hierarchy can be determined
-                  nodes.map(node => (
-                    <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center">
-                      {getNodeIcon(node.type)}
-                      <span className="text-sm ml-2 truncate">
-                        {node.data?.displayName || node.id}
-                      </span>
-                    </div>
-                  ))
-                )
+                ))
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
                   No components in workflow yet. Add some from the Insert tab.

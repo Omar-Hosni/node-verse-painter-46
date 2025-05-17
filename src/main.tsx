@@ -5,9 +5,6 @@ import App from './App.tsx'
 import './index.css'
 import './styles/button-overrides.css'
 
-// Apply font-family to the root element
-document.documentElement.style.fontFamily = 'Arial, Helvetica, sans-serif';
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
