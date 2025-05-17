@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Loader2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -25,43 +25,8 @@ interface ControlnetNodeProps {
 }
 
 export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadControlNetImage = useCanvasStore(state => state.uploadControlNetImage);
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   
-  // Determine if uploads are allowed
-  const allowsUpload = data.type === 'pose';
-
-  const handleImageClick = () => {
-    if (allowsUpload && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!allowsUpload) return;
-    
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          const imageData = e.target.result as string;
-          
-          // Update the local image preview
-          updateNodeData(id, {
-            image: imageData,
-            uploading: true
-          });
-          
-          // Start the upload process
-          uploadControlNetImage(id, imageData);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div 
       className={`relative rounded-lg overflow-hidden bg-gray-800 controlnet-node shadow-md
@@ -127,44 +92,26 @@ export const ControlnetNode = ({ id, data, selected }: ControlnetNodeProps) => {
           </>
         )}
 
-        {/* Image upload for Pose ControlNet */}
-        {allowsUpload && (
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-            
-            {data.image ? (
-              <div className="relative mt-2">
-                {data.uploading && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                    <Loader2 className="h-8 w-8 text-white animate-spin" />
-                  </div>
-                )}
-                <img 
-                  src={data.image} 
-                  alt={`${data.type} control`}
-                  className="w-full h-auto rounded-md border border-gray-600"
-                />
-                <button
-                  className="absolute top-1 right-1 bg-red-500 rounded-full p-1 text-white text-xs"
-                  onClick={() => updateNodeData(id, { image: null })}
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <div 
-                className="mt-2 h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white cursor-pointer"
-                onClick={handleImageClick}
-              >
-                <span className="text-sm">Click to upload image</span>
+        {/* Image display for uploaded images (no direct uploads) */}
+        {data.image && (
+          <div className="relative mt-2">
+            {data.uploading && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
               </div>
             )}
+            <img 
+              src={data.image} 
+              alt={`${data.type} control`}
+              className="w-full h-auto rounded-md border border-gray-600"
+            />
+          </div>
+        )}
+        
+        {/* For Pose ControlNet that doesn't have an image yet */}
+        {!data.image && data.type === 'pose' && (
+          <div className="mt-2 h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white">
+            <span className="text-sm">Upload image in properties panel</span>
           </div>
         )}
       </div>

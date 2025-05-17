@@ -16,6 +16,7 @@ export const RightSidebar = () => {
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
   const uploadControlNetImage = useCanvasStore(state => state.uploadControlNetImage);
+  const uploadInputImage = useCanvasStore(state => state.uploadInputImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleStyleChange = (property: string, value: string) => {
@@ -47,12 +48,15 @@ export const RightSidebar = () => {
 
       // First update the node with the local image for preview
       updateNodeData(selectedNode.id, {
-        image: dataUrl
+        image: dataUrl,
+        uploading: true
       });
 
-      // If this is a ControlNet node, also upload the image to the server
-      if (selectedNode.type === 'controlnetNode') {
+      // Upload based on node type
+      if (selectedNode.type === 'controlnetNode' && selectedNode.data.type === 'pose') {
         await uploadControlNetImage(selectedNode.id, dataUrl);
+      } else if (selectedNode.type === 'inputNode' && selectedNode.data.inputType === 'image') {
+        await uploadInputImage(selectedNode.id, dataUrl);
       }
 
     } catch (error) {
@@ -68,6 +72,7 @@ export const RightSidebar = () => {
 
   const renderNodeSpecificControls = () => {
     if (!selectedNode) return null;
+    
     switch (selectedNode.type) {
       case 'modelNode':
         return <div className="space-y-4">
@@ -125,6 +130,7 @@ export const RightSidebar = () => {
               </div>
             </div>
           </div>;
+          
       case 'loraNode':
         return <div className="space-y-4">
             <div className="border-b border-field pb-4">
@@ -146,6 +152,7 @@ export const RightSidebar = () => {
               </div>
             </div>
           </div>;
+          
       case 'controlnetNode':
         return <div className="space-y-4">
             <div className="border-b border-field pb-4">
@@ -156,33 +163,156 @@ export const RightSidebar = () => {
                   <div className="text-white py-2">{selectedNode.data.type as string}</div>
                 </div>
                 
-                <div>
-                  <Label className="text-sm text-gray-400">Upload Image</Label>
-                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                  <div className="mt-2">
-                    {selectedNode.data.image ? <div className="relative">
-                        <img src={selectedNode.data.image as string} alt="ControlNet input" className="w-full rounded-2xl border border-field" />
-                        <Button variant="destructive" size="sm" className="absolute top-2 right-2 rounded-full" onClick={() => updateNodeData(selectedNode.id, {
-                      image: null
-                    })}>
-                          X
+                {/* Only show image upload for Pose ControlNet */}
+                {selectedNode.data.type === 'pose' && (
+                  <div>
+                    <Label className="text-sm text-gray-400">Upload Image</Label>
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                    <div className="mt-2">
+                      {selectedNode.data.image ? (
+                        <div className="relative">
+                          <img src={selectedNode.data.image as string} alt="ControlNet input" className="w-full rounded-2xl border border-field" />
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="absolute top-2 right-2 rounded-full" 
+                            onClick={() => updateNodeData(selectedNode.id, { image: null })}
+                          >
+                            X
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full bg-field text-white border-none focus:ring-primary flex gap-2 rounded-full" 
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="h-4 w-4" />
+                          Upload Image
                         </Button>
-                      </div> : <Button variant="outline" className="w-full bg-field text-white border-none focus:ring-primary flex gap-2 rounded-full" onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="h-4 w-4" />
-                        Upload Image
-                      </Button>}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div>
                   <Label className="text-sm text-gray-400">Strength: {Number(selectedNode.data.strength).toFixed(2)}</Label>
-                  <Slider value={[Number(selectedNode.data.strength) || 0.8]} min={0} max={1} step={0.01} onValueChange={values => updateNodeData(selectedNode.id, {
-                  strength: values[0]
-                })} className="my-2" />
+                  <Slider 
+                    value={[Number(selectedNode.data.strength) || 0.8]} 
+                    min={0} 
+                    max={1} 
+                    step={0.01} 
+                    onValueChange={values => updateNodeData(selectedNode.id, { strength: values[0] })} 
+                    className="my-2" 
+                  />
                 </div>
+                
+                {/* Canny-specific controls */}
+                {selectedNode.data.type === 'canny' && (
+                  <>
+                    <div>
+                      <Label className="text-sm text-gray-400">Low Threshold</Label>
+                      <Input
+                        type="number"
+                        value={selectedNode.data.low_threshold || 100}
+                        onChange={(e) => updateNodeData(selectedNode.id, { 
+                          low_threshold: parseInt(e.target.value) 
+                        })}
+                        className="bg-field text-white border-none focus:ring-primary rounded-full"
+                        min={0}
+                        max={255}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-400">High Threshold</Label>
+                      <Input
+                        type="number"
+                        value={selectedNode.data.high_threshold || 200}
+                        onChange={(e) => updateNodeData(selectedNode.id, { 
+                          high_threshold: parseInt(e.target.value) 
+                        })}
+                        className="bg-field text-white border-none focus:ring-primary rounded-full"
+                        min={0}
+                        max={255}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-400">Resolution</Label>
+                      <Input
+                        type="number"
+                        value={selectedNode.data.resolution || 512}
+                        onChange={(e) => updateNodeData(selectedNode.id, { 
+                          resolution: parseInt(e.target.value) 
+                        })}
+                        className="bg-field text-white border-none focus:ring-primary rounded-full"
+                        min={64}
+                        max={1024}
+                        step={64}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>;
+          
+      case 'inputNode':
+        return <div className="space-y-4">
+            <div className="border-b border-field pb-4">
+              <h3 className="text-sm font-medium text-gray-400 mb-3">Input Settings</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm text-gray-400">Input Type</Label>
+                  <div className="text-white py-2">{selectedNode.data.inputType as string}</div>
+                </div>
+                
+                {selectedNode.data.inputType === 'text' && (
+                  <div>
+                    <Label className="text-sm text-gray-400">Text</Label>
+                    <Textarea 
+                      value={selectedNode.data.text as string || ''} 
+                      onChange={e => updateNodeData(selectedNode.id, { text: e.target.value })}
+                      className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl"
+                      placeholder="Enter your prompt here..."
+                    />
+                  </div>
+                )}
+                
+                {/* Only show image upload for Image Input */}
+                {selectedNode.data.inputType === 'image' && (
+                  <div>
+                    <Label className="text-sm text-gray-400">Upload Image</Label>
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                    <div className="mt-2">
+                      {selectedNode.data.image ? (
+                        <div className="relative">
+                          <img src={selectedNode.data.image as string} alt="Input image" className="w-full rounded-2xl border border-field" />
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="absolute top-2 right-2 rounded-full" 
+                            onClick={() => updateNodeData(selectedNode.id, { image: null })}
+                          >
+                            X
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full bg-field text-white border-none focus:ring-primary flex gap-2 rounded-full" 
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="h-4 w-4" />
+                          Upload Image
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>;
+          
       case 'previewNode':
         return <div className="space-y-4">
             <div className="border-b border-field pb-4">
@@ -201,6 +331,7 @@ export const RightSidebar = () => {
               </div>
             </div>
           </div>;
+          
       default:
         return null;
     }

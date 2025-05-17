@@ -1,7 +1,6 @@
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Loader2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 
 interface InputNodeProps {
@@ -18,37 +17,6 @@ interface InputNodeProps {
 }
 
 export const InputNode = ({ id, data, selected }: InputNodeProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadInputImage = useCanvasStore(state => state.uploadInputImage);
-  
-  const handleImageClick = () => {
-    if (data.inputType === 'image' && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-  
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && data.inputType === 'image') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          const imageData = e.target.result as string;
-          
-          // Update the local image preview
-          useCanvasStore.getState().updateNodeData(id, {
-            image: imageData,
-            uploading: true
-          });
-          
-          // Upload the image
-          uploadInputImage(id, imageData);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const renderContent = () => {
     if (data.inputType === 'text') {
       return (
@@ -64,20 +32,8 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
     } else if (data.inputType === 'image') {
       return (
         <div className="w-full">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
           {data.image ? (
             <div className="w-full h-24 overflow-hidden rounded-md border border-gray-600 relative">
-              {data.uploading && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                </div>
-              )}
               <img 
                 src={data.image} 
                 alt="Input image"
@@ -85,16 +41,14 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
               />
             </div>
           ) : (
-            <div 
-              className="w-full h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white cursor-pointer"
-              onClick={handleImageClick}
-            >
-              <span>Click to upload image</span>
+            <div className="w-full h-24 flex items-center justify-center border border-dashed border-gray-400 rounded-md bg-black bg-opacity-20 text-white">
+              <span>Upload image in properties panel</span>
             </div>
           )}
         </div>
       );
     }
+    return null;
   };
 
   return (
