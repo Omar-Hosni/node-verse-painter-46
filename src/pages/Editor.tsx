@@ -9,13 +9,14 @@ import { Toolbar } from '@/components/Toolbar';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Collaborator } from '@/store/types';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('Untitled Project');
   const [loading, setLoading] = useState(true);
-  const [collaborators, setCollaborators] = useState<{id: string, email: string}[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
@@ -23,6 +24,7 @@ const Editor = () => {
   const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
   const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
+  const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
   
   useEffect(() => {
     // Check authentication and redirect if not authenticated
@@ -42,6 +44,7 @@ const Editor = () => {
     // Load project if projectId is provided
     if (projectId) {
       loadProjectData();
+      setupPresenceChannel();
     } else {
       setLoading(false);
     }
@@ -61,6 +64,69 @@ const Editor = () => {
       subscription.unsubscribe();
     };
   }, [projectId, navigate, setRunwayApiKey, fetchUserCredits, fetchUserSubscription]);
+
+  // Set up presence channel for collaborators
+  const setupPresenceChannel = async () => {
+    if (!projectId) return;
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Get current user's profile data
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url')
+      .eq('id', user.id)
+      .single();
+    
+    // Set up presence channel for this project
+    const channel = supabase.channel(`project:${projectId}`, {
+      config: { 
+        presence: {
+          key: user.id,
+        },
+      },
+    });
+
+    // Handle presence events
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const collaboratorsList: Collaborator[] = [];
+        
+        Object.entries(state).forEach(([userId, userStates]) => {
+          // userStates is an array because a user can have multiple states
+          const userState = userStates[0] as any;
+          collaboratorsList.push({
+            id: userId,
+            email: userState.email,
+            first_name: userState.first_name,
+            last_name: userState.last_name,
+            avatar_url: userState.avatar_url,
+            last_active: new Date().toISOString(),
+          });
+        });
+        
+        setCollaborators(collaboratorsList);
+        updateCollaborators(collaboratorsList);
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return;
+
+        // Track the user's presence once connected
+        await channel.track({
+          email: user.email,
+          first_name: profile?.first_name,
+          last_name: profile?.last_name,
+          avatar_url: profile?.avatar_url,
+        });
+      });
+
+    // Clean up channel on unmount
+    return () => {
+      channel.unsubscribe();
+    };
+  };
 
   const loadProjectData = async () => {
     setLoading(true);

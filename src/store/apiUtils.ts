@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { getRunwareService } from '@/services/runwareService';
 import { WorkflowJson } from './types';
@@ -6,12 +5,12 @@ import { Node } from '@xyflow/react';
 
 export const uploadControlNetImage = async (
   nodeId: string, 
-  imageData: string,
-  runwayApiKey: string | null,
+  imageData: File,
+  apiKey: string | null,
   updateNodeData: (nodeId: string, newData: any) => void
 ) => {
   try {
-    if (!runwayApiKey) {
+    if (!apiKey) {
       toast.error("API key not set! Please set your API key in the settings.");
       return;
     }
@@ -20,7 +19,43 @@ export const uploadControlNetImage = async (
     updateNodeData(nodeId, { uploading: true });
     
     // Get RunwareService instance and upload image
-    const runwareService = getRunwareService(runwayApiKey);
+    const runwareService = getRunwareService(apiKey);
+    const uploadedImage = await runwareService.uploadImage(imageData);
+    
+    // Update node with uploaded image ID
+    updateNodeData(nodeId, {
+      imageId: uploadedImage.imageUUID,
+      uploading: false
+    });
+    
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    
+    // Reset uploading flag
+    updateNodeData(nodeId, { uploading: false });
+    
+    // Show error
+    toast.error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+export const uploadInputImage = async (
+  nodeId: string, 
+  imageData: File,
+  apiKey: string | null,
+  updateNodeData: (nodeId: string, newData: any) => void
+) => {
+  try {
+    if (!apiKey) {
+      toast.error("API key not set! Please set your API key in the settings.");
+      return;
+    }
+
+    // Set uploading flag
+    updateNodeData(nodeId, { uploading: true });
+    
+    // Get RunwareService instance and upload image
+    const runwareService = getRunwareService(apiKey);
     const uploadedImage = await runwareService.uploadImage(imageData);
     
     // Update node with uploaded image ID

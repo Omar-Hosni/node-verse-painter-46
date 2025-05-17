@@ -13,7 +13,9 @@ import {
   HistoryState,
   WorkflowJson,
   JsonValue,
-  Json
+  Json,
+  NodeType,
+  Collaborator
 } from './types';
 
 import { 
@@ -55,6 +57,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   historyIndex: -1,
   isLocalUpdate: false,
   externalUpdateInProgress: false,
+  collaborators: [],
   
   // Real-time collaboration helpers
   setIsLocalUpdate: (isLocal: boolean) => {
@@ -71,6 +74,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       edges: newEdges,
       externalUpdateInProgress: false
     });
+  },
+  
+  updateCollaborators: (collaborators: Collaborator[]) => {
+    set({ collaborators });
   },
   
   // Node operations
@@ -126,7 +133,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     });
   },
   
-  addNode: (nodeType, position) => {
+  addNode: (nodeType: NodeType, position) => {
     // Save state before adding node
     get().saveToHistory();
     

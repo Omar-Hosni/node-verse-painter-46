@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save, LogOut } from 'lucide-react';
 import { CreditsDisplay } from './CreditsDisplay';
+import { CollaboratorsDisplay } from './CollaboratorsDisplay';
 
 interface AppHeaderProps {
   projectName?: string;
@@ -42,6 +43,7 @@ export const AppHeader = ({
       </div>
 
       <div className="flex gap-3 items-center">
+        <CollaboratorsDisplay />
         <CreditsDisplay />
         
         {showLogoutButton && onLogout && (

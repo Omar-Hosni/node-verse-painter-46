@@ -1,5 +1,5 @@
-import { Node, NodeChange, applyNodeChanges, Edge } from '@xyflow/react';
-import { NodeType } from './types';
+import { Node, NodeChange, applyNodeChanges } from '@xyflow/react';
+import { NodeType } from "./types";
 
 let nodeIdCounter = 1;
 

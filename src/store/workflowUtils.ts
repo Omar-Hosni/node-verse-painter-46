@@ -26,7 +26,7 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
     // Define the node structure based on node type
     switch (node.type) {
       case 'modelNode':
-        workflowJson[jsonNodeId] = {
+        workflowJson[jsonNodeId as keyof typeof workflowJson] = {
           inputs: {
             modelName: node.data.modelName as string || "runware:100@1",
             width: node.data.width as number || 512,
@@ -43,7 +43,7 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
         };
         break;
       case 'loraNode':
-        workflowJson[jsonNodeId] = {
+        workflowJson[jsonNodeId as keyof typeof workflowJson] = {
           inputs: {
             loraName: node.data.loraName as string || "",
             strength: node.data.strength as number || 0.8
@@ -55,7 +55,7 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
         };
         break;
       case 'controlnetNode':
-        workflowJson[jsonNodeId] = {
+        workflowJson[jsonNodeId as keyof typeof workflowJson] = {
           inputs: {
             type: node.data.type as string || "canny",
             imageId: node.data.imageId as string || null,
@@ -68,7 +68,7 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
         };
         break;
       case 'previewNode':
-        workflowJson[jsonNodeId] = {
+        workflowJson[jsonNodeId as keyof typeof workflowJson] = {
           inputs: {
             image: node.data.image as string || null
           },
@@ -86,13 +86,15 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
     const sourceNodeJsonId = nodeIdMap.get(edge.source);
     const targetNodeJsonId = nodeIdMap.get(edge.target);
     
-    if (sourceNodeJsonId && targetNodeJsonId && workflowJson[targetNodeJsonId]) {
+    if (sourceNodeJsonId && targetNodeJsonId && workflowJson[targetNodeJsonId as keyof typeof workflowJson]) {
+      const targetNode = workflowJson[targetNodeJsonId as keyof typeof workflowJson] as any;
+      
       // Add connection to the target node's inputs
-      if (!workflowJson[targetNodeJsonId].inputs.connections) {
-        workflowJson[targetNodeJsonId].inputs.connections = [];
+      if (!targetNode.inputs.connections) {
+        targetNode.inputs.connections = [];
       }
       
-      workflowJson[targetNodeJsonId].inputs.connections.push([sourceNodeJsonId, 0]);
+      targetNode.inputs.connections.push([sourceNodeJsonId, 0]);
     }
   });
   

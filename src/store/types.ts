@@ -39,6 +39,16 @@ export type WorkflowJson = {
   };
 };
 
+// Collaborator type for showing active users
+export type Collaborator = {
+  id: string;
+  email: string;
+  avatar_url?: string;
+  first_name?: string;
+  last_name?: string;
+  last_active?: string;
+};
+
 // Add NodeType definition to fix the errors
 export type NodeType = 
   | 'input-text' 
@@ -71,17 +81,19 @@ export type CanvasState = {
   // Real-time collaboration state
   isLocalUpdate: boolean;
   externalUpdateInProgress: boolean;
+  collaborators: Collaborator[];
   
   // Real-time collaboration actions
   setIsLocalUpdate: (isLocal: boolean) => void;
   setExternalUpdateInProgress: (inProgress: boolean) => void;
   updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => void;
+  updateCollaborators: (collaborators: Collaborator[]) => void;
   
   // Node actions
   onNodesChange: any;
   onEdgesChange: any;
   onConnect: any;
-  addNode: (type: string, position: { x: number; y: number }) => void;
+  addNode: (type: NodeType, position: { x: number; y: number }) => void;
   updateNodeData: (nodeId: string, newData: any) => void;
   setSelectedNode: (node: Node | null) => void;
   setSelectedEdge: (edge: Edge | null) => void;
