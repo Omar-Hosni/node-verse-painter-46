@@ -17,6 +17,10 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter var", "Inter", ...fontFamily.sans],
+        mono: ["SF Mono", "Menlo", ...fontFamily.mono],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -24,7 +28,11 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         sidebar: "#121212",
-        "sidebar-accent": "#1a1a1a",
+        "sidebar-foreground": "#FFFFFF",
+        "sidebar-border": "rgba(255, 255, 255, 0.1)",
+        "sidebar-accent": "rgba(255, 255, 255, 0.05)",
+        "sidebar-accent-foreground": "#FFFFFF",
+        "sidebar-ring": "rgba(255, 255, 255, 0.2)",
         field: "#1E1E1E",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -61,10 +69,6 @@ const config = {
           controlnet: "#22543D",
           output: "#702459",
         },
-      },
-      fontFamily: {
-        sans: ["Inter", "SF Pro Display", ...fontFamily.sans],
-        mono: ["SF Mono", "Menlo", ...fontFamily.mono],
       },
       borderRadius: {
         lg: "var(--radius)",

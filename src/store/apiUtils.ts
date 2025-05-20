@@ -87,8 +87,7 @@ export const generateImage = async (
   edges: Edge[],
   apiKey: string | null,
   updateNodeData: (nodeId: string, data: any) => void,
-  useCreditsForGeneration: () => Promise<boolean>,
-  sendWorkflow: () => Promise<any>
+  useCreditsForGeneration: () => Promise<boolean>
 ): Promise<void> => {
   try {
     if (!apiKey) {
@@ -104,18 +103,9 @@ export const generateImage = async (
     
     toast.success('Image generation initiated...');
     
-    // Send workflow to API
-    const result = await sendWorkflow();
+    // Send workflow to API - implemented in sendWorkflowToAPI function below
+    await sendWorkflowToAPI({ nodes, edges }, updateNodeData, nodes);
     
-    // Find preview node and update it with the generated image
-    const previewNode = nodes.find(n => n.type === 'previewNode');
-    if (previewNode) {
-      // For demo purposes, use a placeholder image
-      updateNodeData(previewNode.id, {
-        image: 'https://images.unsplash.com/photo-1682687981974-c5ef2111640c',
-        loading: false
-      });
-    }
   } catch (error: any) {
     console.error('Error generating image:', error);
     toast.error(`Failed to generate image: ${error.message}`);
@@ -146,6 +136,17 @@ export const sendWorkflowToAPI = async (
   if (previewNode) {
     updateNodeData(previewNode.id, {
       loading: true
+    });
+  }
+  
+  // Simulate the API response with a delay
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Update with a placeholder image
+  if (previewNode) {
+    updateNodeData(previewNode.id, {
+      image: 'https://images.unsplash.com/photo-1682687981974-c5ef2111640c',
+      loading: false
     });
   }
   

@@ -1,4 +1,7 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://rsms.me/inter/inter.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,6 +37,9 @@
     --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
+
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: "Inter var", "Inter", sans-serif;
   }
 
   .dark {
@@ -72,18 +78,18 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
 /* Sidebar related classes */
 .bg-sidebar {
-  background-color: #1A1A1A;
+  background-color: #121212;
   border-color: #333;
 }
 
 .bg-sidebar-accent {
-  background-color: #252525;
+  background-color: #1A1A1A;
 }
 
 .bg-field {
@@ -224,4 +230,27 @@
 .asset-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Left Sidebar enhancements */
+.node-option {
+  @apply bg-gradient-to-br from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700;
+  @apply border border-gray-700 hover:border-blue-500;
+  @apply transition-all duration-200 shadow-lg hover:shadow-xl;
+  @apply rounded-xl overflow-hidden;
+}
+
+.node-option-icon {
+  @apply bg-black bg-opacity-40 p-2 rounded-lg;
+  @apply flex items-center justify-center;
+  @apply transition-transform duration-300;
+}
+
+.node-option:hover .node-option-icon {
+  @apply transform scale-110;
+}
+
+.node-category-title {
+  @apply text-sm font-medium text-gray-300 mb-3 flex items-center;
+  @apply tracking-wide uppercase;
 }

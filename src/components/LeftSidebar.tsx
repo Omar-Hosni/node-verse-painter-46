@@ -59,10 +59,10 @@ export const LeftSidebar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     'Inputs': true,
-    'Models': false,
+    'Models': true,
     'LoRAs': false,
-    'ControlNets': false,
-    'Output': false,
+    'ControlNets': true,
+    'Output': true,
     'Components': true,
     'Renders': false,
     'Uploaded': false
@@ -243,7 +243,7 @@ export const LeftSidebar = () => {
   };
   
   /**
-   * New hierarchical organization logic:
+   * Hierarchical organization logic:
    * - ControlNet nodes are considered top-level parents
    * - Any node that connects TO a ControlNet node is considered its child
    * - Other nodes without this relationship are considered top-level
@@ -370,9 +370,26 @@ export const LeftSidebar = () => {
   const allNodeOptions = insertCategories.flatMap(category => category.options);
   
   const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
+
+  // Handler for adding a node
+  const handleAddNode = (nodeType: NodeType) => {
+    // Get the center of the viewport
+    const center = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+  
+    // Convert screen coordinates to flow coordinates
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: center.x,
+      y: center.y
+    });
+    
+    addNode(nodeType, position);
+  };
   
   return (
-    <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-field flex flex-col overflow-hidden transition-all duration-200">
+    <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
       {/* Tab selector */}
       <div className="flex border-b border-gray-700 bg-sidebar-accent">
         <button 
@@ -418,7 +435,7 @@ export const LeftSidebar = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-2 lg:p-4">
+      <div className="flex-1 overflow-y-auto p-2 lg:p-4 scroll-smooth">
         {/* Outline Tab - Hierarchical Workflow Components */}
         {activeTab === 'Outline' && (
           <div>
@@ -448,24 +465,28 @@ export const LeftSidebar = () => {
         {activeTab === 'Insert' && !searchTerm && (
           <div className="space-y-8">
             {insertCategories.map((category) => (
-              <div key={category.name} className="mb-6">
-                <div className="flex items-center mb-3 text-white font-medium">
-                  <category.icon className="h-5 w-5 mr-2 text-gray-300" />
-                  <span className="text-sm tracking-wide">{category.name}</span>
+              <div key={category.name} className="mb-8">
+                <div className="node-category-title">
+                  <category.icon className="h-4 w-4 mr-2" />
+                  <span>{category.name}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {category.options.map((option) => (
-                    <div 
-                      key={option.type}
-                      onClick={() => handleAddNode(option.type)}
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-900 hover:bg-gray-800 cursor-pointer border border-gray-700 hover:border-blue-500 transition-all duration-200"
-                    >
-                      <div className="w-10 h-10 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
-                        <option.icon className="h-6 w-6 text-blue-400" />
+                <div className="flex flex-col space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {category.options.map((option) => (
+                      <div 
+                        key={option.type}
+                        onClick={() => handleAddNode(option.type)}
+                        className="node-option p-3 cursor-pointer"
+                      >
+                        <div className="flex flex-col items-center">
+                          <div className="node-option-icon mb-2">
+                            <option.icon className="h-6 w-6 text-blue-400" />
+                          </div>
+                          <span className="text-sm text-center font-medium text-white tracking-tight">{option.label}</span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-center text-white">{option.label}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -482,12 +503,14 @@ export const LeftSidebar = () => {
                   <div 
                     key={option.type}
                     onClick={() => handleAddNode(option.type)}
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-900 hover:bg-gray-800 cursor-pointer border border-gray-700 hover:border-blue-500 transition-all duration-200"
+                    className="node-option p-3 cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
-                      <option.icon className="h-5 w-5 text-blue-400" />
+                    <div className="flex flex-col items-center">
+                      <div className="node-option-icon mb-2">
+                        <option.icon className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <span className="text-xs text-center font-medium text-white">{option.label}</span>
                     </div>
-                    <span className="text-xs font-medium text-center text-white">{option.label}</span>
                   </div>
                 ))}
               </div>
@@ -559,19 +582,3 @@ export const LeftSidebar = () => {
     </div>
   );
 };
-
-function handleAddNode(nodeType: NodeType) {
-  // Get the center of the viewport
-  const center = {
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2
-  };
-
-  // Convert screen coordinates to flow coordinates
-  const position = useReactFlow().screenToFlowPosition({
-    x: center.x,
-    y: center.y
-  });
-  
-  useCanvasStore.getState().addNode(nodeType, position);
-}
