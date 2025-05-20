@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -344,8 +343,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes) => set({ nodes }),
-      (edges) => set({ edges }),
+      (nodes: Node[]) => set({ nodes }),
+      (edges: Edge[]) => set({ edges }),
       get().setSelectedNode,
       (history) => set({
         history: [history],

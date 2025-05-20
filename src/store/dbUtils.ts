@@ -73,8 +73,8 @@ export const loadProject = async (
     }
 
     if (data && data.canvas_data) {
-      // Type checking and safe casting
-      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
+      // First convert to unknown, then safely cast to the expected type
+      const canvasData = data.canvas_data as unknown as { nodes: Node[], edges: Edge[] };
       
       if (!canvasData || typeof canvasData !== 'object' || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.edges)) {
         console.error('Invalid canvas data format:', canvasData);
