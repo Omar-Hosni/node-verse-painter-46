@@ -1,246 +1,195 @@
 
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { exportToSVG, exportToPNG } from '@xyflow/react';
-import { 
-  Copy, 
-  Download, 
-  Save, 
-  Share2, 
-  Trash2, 
-  Undo, 
-  Redo, 
-  Scissors, 
-  Paste, 
-  Image,
-  FileJson,
-  Settings
+import { useReactFlow } from '@xyflow/react';
+import {
+  Hand, 
+  MousePointer, 
+  ZoomIn, 
+  ZoomOut,
+  Circle as CircleIcon,
+  RectangleHorizontal,
+  Text,
+  Frame
 } from 'lucide-react';
-import { toast } from 'sonner';
-import { downloadObjectAsJson } from '@/store/workflowUtils';
-import ShareProjectDialog from './ShareProjectDialog';
-import ApiKeyModal from './ApiKeyModal';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-export default function Toolbar() {
-  const [shareOpen, setShareOpen] = useState(false);
-  const [apiKeyOpen, setApiKeyOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export const Toolbar = () => {
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame'>('select');
+  const addNode = useCanvasStore(state => state.addNode);
+  const reactFlowInstance = useReactFlow();
   
-  const {
-    nodes,
-    edges,
-    copySelectedNode,
-    cutSelectedNode,
-    pasteNodes,
-    selectedNode,
-    deleteSelectedNode,
-    saveProject,
-    undo,
-    redo,
-    generateImageFromNodes,
-    runwayApiKey,
-    setRunwayApiKey,
-    exportWorkflowAsJson
-  } = useCanvasStore();
+  const handleToolChange = (tool: typeof activeTool) => {
+    setActiveTool(tool);
+  };
   
-  const handleExportPNG = () => {
-    exportToPNG({
-      fileName: 'workflow-export',
+  const handleAddShape = (type: 'circle' | 'rectangle' | 'text' | 'frame') => {
+    // Get the center of the viewport
+    const center = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+
+    // Convert screen coordinates to flow coordinates
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: center.x,
+      y: center.y
     });
-    toast.success('Exported as PNG');
-  };
-  
-  const handleExportSVG = () => {
-    exportToSVG({
-      fileName: 'workflow-export',
-    });
-    toast.success('Exported as SVG');
-  };
-  
-  const handleExportJSON = () => {
-    const workflowJson = exportWorkflowAsJson();
-    downloadObjectAsJson(workflowJson, 'workflow-export');
-    toast.success('Exported as JSON');
-  };
-  
-  const handleSave = async () => {
-    // Simplified for the example, would usually open a dialog
-    const name = 'My Project';
-    const description = 'Auto-saved project';
-    const projectId = await saveProject(name, description);
     
-    if (projectId) {
-      toast.success(`Project saved with ID: ${projectId}`);
-    }
-  };
-  
-  const handlePaste = () => {
-    // Get center of viewport
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    // Map shape types to node types
+    const nodeTypeMap = {
+      'circle': 'controlnet-pose' as const,
+      'rectangle': 'controlnet-canny' as const,
+      'text': 'input-text' as const,
+      'frame': 'output-preview' as const
+    };
     
-    pasteNodes({ x: centerX, y: centerY });
-  };
-  
-  const handleGenerateImage = async () => {
-    if (!runwayApiKey) {
-      setApiKeyOpen(true);
-      return;
-    }
-    
-    await generateImageFromNodes();
-  };
-  
-  const handleApiKeySave = (apiKey: string) => {
-    setRunwayApiKey(apiKey);
-    setApiKeyOpen(false);
-    toast.success('API Key saved successfully');
+    addNode(nodeTypeMap[type], position);
   };
 
   return (
-    <div className="absolute top-0 right-0 z-10 p-3 flex flex-col space-y-1">
-      <div className="flex space-x-1 mb-1">
+    <>
+      {/* Bottom toolbar */}
+      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-10">
         <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={undo}
-          title="Undo"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
+          size="icon" 
+          variant={activeTool === 'select' ? "default" : "ghost"}
+          className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => handleToolChange('select')}
         >
-          <Undo className="h-4 w-4" />
+          <MousePointer className="h-4 w-4 text-white" />
         </Button>
         <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={redo}
-          title="Redo"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
+          size="icon" 
+          variant={activeTool === 'hand' ? "default" : "ghost"} 
+          className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => handleToolChange('hand')}
         >
-          <Redo className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex space-x-1 mb-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={copySelectedNode}
-          disabled={!selectedNode}
-          title="Copy"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md disabled:opacity-50"
-        >
-          <Copy className="h-4 w-4" />
+          <Hand className="h-4 w-4 text-white" />
         </Button>
         <Button 
+          size="icon" 
           variant="ghost" 
-          size="icon"
-          onClick={cutSelectedNode}
-          disabled={!selectedNode}
-          title="Cut"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md disabled:opacity-50"
+          className="rounded-full hover:bg-gray-700"
         >
-          <Scissors className="h-4 w-4" />
+          <ZoomIn className="h-4 w-4 text-white" />
         </Button>
         <Button 
+          size="icon" 
           variant="ghost" 
-          size="icon"
-          onClick={handlePaste}
-          title="Paste"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
+          className="rounded-full hover:bg-gray-700"
         >
-          <Paste className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={deleteSelectedNode}
-          disabled={!selectedNode}
-          title="Delete"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md disabled:opacity-50"
-        >
-          <Trash2 className="h-4 w-4" />
+          <ZoomOut className="h-4 w-4 text-white" />
         </Button>
       </div>
       
-      <div className="flex space-x-1 mb-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleSave}
-          title="Save Project"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Save className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setShareOpen(true)}
-          title="Share Project"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
+      {/* Top center shape tools */}
+      <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'rectangle' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('rectangle')}
+            >
+              <RectangleHorizontal className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('rectangle')}
+              >
+                <RectangleHorizontal className="h-4 w-4 mr-2" />
+                Rectangle
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'circle' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('circle')}
+            >
+              <CircleIcon className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('circle')}
+              >
+                <CircleIcon className="h-4 w-4 mr-2" />
+                Circle
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'text' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('text')}
+            >
+              <Text className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('text')}
+              >
+                <Text className="h-4 w-4 mr-2" />
+                Text Input
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'frame' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('frame')}
+            >
+              <Frame className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('frame')}
+              >
+                <Frame className="h-4 w-4 mr-2" />
+                Frame
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
-      
-      <div className="flex space-x-1 mb-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleExportPNG}
-          title="Export as PNG"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex space-x-1 mb-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleExportJSON}
-          title="Export as JSON"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <FileJson className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Generate Image button moved below Export buttons */}
-      <div className="flex space-x-1">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleGenerateImage}
-          title="Generate Image"
-          className="bg-blue-600/90 text-white hover:bg-blue-700 rounded-md"
-        >
-          <Image className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex space-x-1 mt-4">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setApiKeyOpen(true)}
-          title="API Settings"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <ShareProjectDialog open={shareOpen} onClose={() => setShareOpen(false)} />
-      
-      <ApiKeyModal
-        open={apiKeyOpen}
-        onClose={() => setApiKeyOpen(false)}
-        apiKey={runwayApiKey}
-        onSave={handleApiKeySave}
-      />
-    </div>
+    </>
   );
-}
+};
