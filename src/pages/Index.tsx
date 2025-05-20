@@ -5,7 +5,7 @@ import { LeftSidebar } from '@/components/LeftSidebar';
 import { RightSidebar } from '@/components/RightSidebar';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { AppHeader } from '@/components/AppHeader';
-import { Toolbar } from '@/components/Toolbar';
+import Toolbar from '@/components/Toolbar';
 
 const Index = () => {
   const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);

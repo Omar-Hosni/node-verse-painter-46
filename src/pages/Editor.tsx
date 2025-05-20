@@ -5,7 +5,7 @@ import { Canvas } from '@/components/Canvas';
 import { LeftSidebar } from '@/components/LeftSidebar';
 import { RightSidebar } from '@/components/RightSidebar';
 import { AppHeader } from '@/components/AppHeader';
-import { Toolbar } from '@/components/Toolbar';
+import Toolbar from '@/components/Toolbar';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
