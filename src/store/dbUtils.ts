@@ -57,7 +57,7 @@ export const loadProject = async (
   setEdges: (edges: Edge[]) => void,
   setSelectedNode: (node: Node | null) => void,
   setHistory: (history: { nodes: Node[], edges: Edge[] }) => void,
-  resetNodeIdCounter: () => void
+  resetNodeIdCounterFunc: () => void
 ): Promise<boolean> => {
   try {
     const { data, error } = await supabase
@@ -74,7 +74,7 @@ export const loadProject = async (
 
     if (data && data.canvas_data) {
       // Cast safely using type assertion after checking required properties
-      const canvasData = data.canvas_data as { nodes: unknown, edges: unknown };
+      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
       
       if (typeof canvasData !== 'object' || !canvasData || !('nodes' in canvasData) || !('edges' in canvasData)) {
         console.error('Invalid canvas data format:', canvasData);
@@ -82,11 +82,11 @@ export const loadProject = async (
         return false;
       }
 
-      const nodes = canvasData.nodes as Node[];
-      const edges = canvasData.edges as Edge[];
+      const nodes = canvasData.nodes;
+      const edges = canvasData.edges;
       
       // Reset node ID counter to avoid duplicate IDs
-      resetNodeIdCounter();
+      resetNodeIdCounterFunc();
       
       // Set the canvas data
       setNodes(nodes);

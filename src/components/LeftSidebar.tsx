@@ -67,6 +67,9 @@ export const LeftSidebar = () => {
     'Renders': false,
     'Uploaded': false
   });
+
+  // Track expanded nodes in the outline view
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   
   const insertCategories: NodeCategory[] = [
     { 
@@ -216,89 +219,134 @@ export const LeftSidebar = () => {
 
   // Get nodes from the canvas
   const canvasNodes = useCanvasStore(state => state.nodes);
+  const canvasEdges = useCanvasStore(state => state.edges);
   
-  // Organize nodes into hierarchical structure for the outline
-  const organizeHierarchy = (nodes: Node[]) => {
-    const rootNodes: Node[] = [];
-    const childrenMap: Record<string, Node[]> = {};
-    
-    // First pass: Identify parent-child relationships based on connections
-    const edges = useCanvasStore.getState().edges;
-    
-    edges.forEach(edge => {
-      const sourceId = edge.source;
-      const targetId = edge.target;
-      
-      if (!childrenMap[sourceId]) {
-        childrenMap[sourceId] = [];
-      }
-      
-      const targetNode = nodes.find(n => n.id === targetId);
-      if (targetNode) {
-        childrenMap[sourceId].push(targetNode);
-      }
-    });
-    
-    // Second pass: Identify root nodes (nodes that are not children of any other nodes)
-    const childIds = Object.values(childrenMap).flat().map(node => node.id);
-    
-    nodes.forEach(node => {
-      if (!childIds.includes(node.id)) {
-        rootNodes.push(node);
-      }
-    });
-    
-    return { rootNodes, childrenMap };
+  // Toggle expanded state of a node
+  const toggleNodeExpanded = (nodeId: string) => {
+    setExpandedNodes(prev => ({
+      ...prev,
+      [nodeId]: !prev[nodeId]
+    }));
   };
-
-  const renderNodeHierarchy = (node: Node, childrenMap: Record<string, Node[]>, level = 0) => {
-    const hasChildren = childrenMap[node.id] && childrenMap[node.id].length > 0;
-    const nodeType = node.type as string || '';
+  
+  // Get node icon based on node type
+  const getNodeIcon = (nodeType: string | undefined) => {
+    if (!nodeType) return <div className="w-4 h-4 rounded-sm bg-gray-400"></div>;
+    
+    if (nodeType?.includes('model')) return <Cpu className="h-4 w-4 mr-2 text-blue-400" />;
+    if (nodeType?.includes('lora')) return <Layers className="h-4 w-4 mr-2 text-purple-400" />;
+    if (nodeType?.includes('controlnet')) return <ImageIcon className="h-4 w-4 mr-2 text-green-400" />;
+    if (nodeType?.includes('input')) return <Type className="h-4 w-4 mr-2 text-yellow-400" />;
+    if (nodeType?.includes('output') || nodeType?.includes('preview')) return <FileOutput className="h-4 w-4 mr-2 text-pink-400" />;
+    
+    return <div className="w-4 h-4 rounded-sm bg-gray-400"></div>;
+  };
+  
+  /**
+   * New hierarchical organization logic:
+   * - ControlNet nodes are considered top-level parents
+   * - Any node that connects TO a ControlNet node is considered its child
+   * - Other nodes without this relationship are considered top-level
+   */
+  const organizeHierarchy = () => {
+    // First identify which nodes are ControlNet nodes
+    const controlNetNodes = canvasNodes.filter(node => 
+      node.type === 'controlnetNode' || 
+      (node.data && node.data.controlNetType)
+    );
+    
+    // Create mapping of node IDs to their parent ControlNet (if any)
+    const childToParentMap: Record<string, string> = {};
+    
+    // Map all nodes that are connected TO controlnet nodes
+    canvasEdges.forEach(edge => {
+      const targetNode = canvasNodes.find(n => n.id === edge.target);
+      const sourceNode = canvasNodes.find(n => n.id === edge.source);
+      
+      if (targetNode && sourceNode) {
+        // If target is a controlnet, source is its child
+        if (targetNode.type === 'controlnetNode' || (targetNode.data && targetNode.data.controlNetType)) {
+          childToParentMap[sourceNode.id] = targetNode.id;
+        }
+      }
+    });
+    
+    // Create parent to children mapping
+    const parentToChildrenMap: Record<string, Node[]> = {};
+    
+    Object.entries(childToParentMap).forEach(([childId, parentId]) => {
+      if (!parentToChildrenMap[parentId]) {
+        parentToChildrenMap[parentId] = [];
+      }
+      
+      const childNode = canvasNodes.find(n => n.id === childId);
+      if (childNode) {
+        parentToChildrenMap[parentId].push(childNode);
+      }
+    });
+    
+    // Identify top-level nodes (including controlnets and nodes not connected to controlnets)
+    const topLevelNodes = canvasNodes.filter(node => {
+      // Node is not a child of any controlnet
+      return !childToParentMap[node.id];
+    });
+    
+    return { topLevelNodes, parentToChildrenMap, childToParentMap };
+  };
+  
+  // Render a node and its children
+  const renderNode = (node: Node, parentToChildrenMap: Record<string, Node[]>, level: number = 0) => {
+    const nodeId = node.id;
+    const isControlNet = node.type === 'controlnetNode' || (node.data && node.data.controlNetType);
+    const hasChildren = isControlNet && parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId].length > 0;
+    const isExpanded = expandedNodes[nodeId] !== false; // Default to expanded
     
     return (
-      <div key={node.id} className="mb-1">
+      <div key={nodeId} className="mb-1">
         <div 
-          className="p-2 bg-gray-800 rounded-md flex items-center cursor-pointer hover:bg-gray-700"
-          style={{ paddingLeft: `${level * 12 + 8}px` }}
+          className={`p-2 rounded-md flex items-center cursor-pointer transition-colors duration-150
+            ${useCanvasStore.getState().selectedNode?.id === nodeId 
+              ? 'bg-blue-900/40 text-blue-200' 
+              : 'hover:bg-gray-700/50 text-gray-200'}`}
+          style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
             // Select the node when clicked
-            useCanvasStore.getState().setSelectedNode(node);
+            const node = canvasNodes.find(n => n.id === nodeId);
+            if (node) {
+              useCanvasStore.getState().setSelectedNode(node);
+            }
           }}
         >
-          {nodeType?.includes('model') && <Cpu className="h-4 w-4 mr-2 text-blue-400" />}
-          {nodeType?.includes('lora') && <Layers className="h-4 w-4 mr-2 text-purple-400" />}
-          {nodeType?.includes('controlnet') && <ImageIcon className="h-4 w-4 mr-2 text-green-400" />}
-          {nodeType?.includes('input') && <Type className="h-4 w-4 mr-2 text-yellow-400" />}
-          {nodeType?.includes('output') && <FileOutput className="h-4 w-4 mr-2 text-pink-400" />}
-          <span className="text-sm truncate">
-            {String(node.data.displayName || node.id)}
-          </span>
           {hasChildren && (
-            <ChevronDown className="h-3 w-3 ml-auto text-gray-400" />
+            <button 
+              className="mr-1 p-1 rounded-sm hover:bg-gray-600/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleNodeExpanded(nodeId);
+              }}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3 text-gray-400" />
+              ) : (
+                <ChevronRight className="h-3 w-3 text-gray-400" />
+              )}
+            </button>
           )}
+          
+          {!hasChildren && <div className="w-4 mr-1" />}
+          
+          {getNodeIcon(node.type)}
+          
+          <span className="text-sm font-medium truncate flex-1">
+            {String(node.data?.displayName || node.type || node.id)}
+          </span>
         </div>
         
-        {hasChildren && childrenMap[node.id].map((childNode) => 
-          renderNodeHierarchy(childNode, childrenMap, level + 1)
-        )}
+        {hasChildren && isExpanded && parentToChildrenMap[nodeId].map(childNode => (
+          renderNode(childNode, parentToChildrenMap, level + 1)
+        ))}
       </div>
     );
-  };
-  
-  const handleAddNode = (nodeType: NodeType) => {
-    // Get the center of the viewport
-    const center = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2
-    };
-
-    // Convert screen coordinates to flow coordinates
-    const position = reactFlowInstance.screenToFlowPosition({
-      x: center.x,
-      y: center.y
-    });
-    
-    addNode(nodeType, position);
   };
 
   const toggleCategory = (category: string) => {
@@ -321,7 +369,7 @@ export const LeftSidebar = () => {
   // Create a flat list of all options for search
   const allNodeOptions = insertCategories.flatMap(category => category.options);
   
-  const { rootNodes, childrenMap } = organizeHierarchy(canvasNodes);
+  const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
   
   return (
     <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-field flex flex-col overflow-hidden transition-all duration-200">
@@ -377,16 +425,16 @@ export const LeftSidebar = () => {
             <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center justify-between">
               <div className="flex items-center">
                 <LayoutList className="h-4 w-4 mr-2" />
-                <span>Workflow Components</span>
+                <span className="font-medium">Workflow Components</span>
               </div>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-700">
                 <PlusCircle className="h-4 w-4" />
               </Button>
             </h3>
             
-            <div className="space-y-1">
-              {rootNodes.length > 0 ? (
-                rootNodes.map(node => renderNodeHierarchy(node, childrenMap))
+            <div className="space-y-1 mt-4">
+              {topLevelNodes.length > 0 ? (
+                topLevelNodes.map(node => renderNode(node, parentToChildrenMap))
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
                   No components in workflow yet. Add some from the Insert tab.
@@ -396,26 +444,26 @@ export const LeftSidebar = () => {
           </div>
         )}
         
-        {/* Insert Tab - Node Categories (redesigned to match the reference image) */}
+        {/* Insert Tab - Node Categories */}
         {activeTab === 'Insert' && !searchTerm && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {insertCategories.map((category) => (
               <div key={category.name} className="mb-6">
                 <div className="flex items-center mb-3 text-white font-medium">
-                  <category.icon className="h-4 w-4 mr-2" />
+                  <category.icon className="h-5 w-5 mr-2 text-gray-300" />
                   <span className="text-sm tracking-wide">{category.name}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {category.options.map((option) => (
                     <div 
                       key={option.type}
                       onClick={() => handleAddNode(option.type)}
                       className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-900 hover:bg-gray-800 cursor-pointer border border-gray-700 hover:border-blue-500 transition-all duration-200"
                     >
-                      <div className="w-8 h-8 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
-                        <option.icon className="h-5 w-5 text-blue-400" />
+                      <div className="w-10 h-10 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
+                        <option.icon className="h-6 w-6 text-blue-400" />
                       </div>
-                      <span className="text-xs font-medium text-center text-white">{option.label}</span>
+                      <span className="text-sm font-medium text-center text-white">{option.label}</span>
                     </div>
                   ))}
                 </div>
@@ -511,3 +559,19 @@ export const LeftSidebar = () => {
     </div>
   );
 };
+
+function handleAddNode(nodeType: NodeType) {
+  // Get the center of the viewport
+  const center = {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
+  };
+
+  // Convert screen coordinates to flow coordinates
+  const position = useReactFlow().screenToFlowPosition({
+    x: center.x,
+    y: center.y
+  });
+  
+  useCanvasStore.getState().addNode(nodeType, position);
+}

@@ -88,7 +88,7 @@ export const generateImage = async (
   apiKey: string | null,
   updateNodeData: (nodeId: string, data: any) => void,
   useCreditsForGeneration: () => Promise<boolean>,
-  sendWorkflowToAPI: () => Promise<any>
+  sendWorkflow: () => Promise<any>
 ): Promise<void> => {
   try {
     if (!apiKey) {
@@ -105,7 +105,7 @@ export const generateImage = async (
     toast.success('Image generation initiated...');
     
     // Send workflow to API
-    const result = await sendWorkflowToAPI();
+    const result = await sendWorkflow();
     
     // Find preview node and update it with the generated image
     const previewNode = nodes.find(n => n.type === 'previewNode');
@@ -150,12 +150,4 @@ export const sendWorkflowToAPI = async (
   }
   
   return { success: true };
-};
-
-// Export all the API utility functions
-export {
-  uploadControlNetImage,
-  uploadInputImage,
-  generateImage,
-  sendWorkflowToAPI
 };

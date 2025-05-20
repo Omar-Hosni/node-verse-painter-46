@@ -1,447 +1,499 @@
 
-import React, { useRef } from 'react';
+// Fix the typings for the inputs in RightSidebar.tsx
+import React, { useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { Upload } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
+import { 
+  Trash, 
+  Copy, 
+  ChevronRight, 
+  Settings,
+  Upload,
+  Link
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from 'sonner';
-import { getRunwareService } from '@/services/runwareService';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const RightSidebar = () => {
-  const selectedNode = useCanvasStore(state => state.selectedNode);
-  const updateNodeData = useCanvasStore(state => state.updateNodeData);
-  const runwayApiKey = useCanvasStore(state => state.runwayApiKey);
-  const uploadControlNetImage = useCanvasStore(state => state.uploadControlNetImage);
-  const uploadInputImage = useCanvasStore(state => state.uploadInputImage);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { 
+    selectedNode, 
+    updateNodeData, 
+    deleteSelectedNode,
+    copySelectedNode,
+    selectedEdge,
+    deleteEdge,
+    uploadControlNetImage,
+    uploadInputImage
+  } = useCanvasStore();
+  
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleStyleChange = (property: string, value: string) => {
-    if (selectedNode) {
-      updateNodeData(selectedNode.id, {
-        [property]: value
-      });
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedNode || !event.target.files || event.target.files.length === 0) {
-      return;
-    }
-
-    const file = event.target.files[0];
+  // Handle image upload for ControlNet or Input nodes
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedNode) return;
+    
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
     try {
-      toast.info("Processing image...");
-      if (!runwayApiKey) {
-        toast.error("API key not set! Please set your API key in the settings.");
-        return;
-      }
-
-      // Get instance of the service
-      const runwareService = getRunwareService(runwayApiKey);
-
-      // Convert file to data URL for preview
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
-        
-        // First update the node with the local image for preview
-        updateNodeData(selectedNode.id, {
-          image: dataUrl,
-          uploading: true
-        });
-
-        // Upload based on node type with the actual File object
-        if (selectedNode.type === 'controlnetNode' && selectedNode.data.type === 'pose') {
-          await uploadControlNetImage(selectedNode.id, file);
-        } else if (selectedNode.type === 'inputNode' && selectedNode.data.inputType === 'image') {
-          await uploadInputImage(selectedNode.id, file);
-        }
-      };
+      setIsUploading(true);
       
-      reader.readAsDataURL(file);
-
+      // Update node to indicate upload in progress
+      updateNodeData(selectedNode.id, { uploading: true });
+      
+      // Different upload function based on node type
+      if (selectedNode.type === 'controlnetNode') {
+        await uploadControlNetImage(selectedNode.id, file);
+      } else if (selectedNode.type === 'inputNode' && selectedNode.data?.inputType === 'image') {
+        await uploadInputImage(selectedNode.id, file);
+      }
+      
+      toast.success('Image uploaded successfully');
     } catch (error) {
-      console.error("Error processing image:", error);
-      toast.error(`Failed to process image: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      console.error("Upload error:", error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
     }
   };
+  
+  // This function safely renders inputs with proper type casting
+  const renderNumericInput = (
+    label: string,
+    property: string,
+    min: number,
+    max: number,
+    step: number
+  ) => {
+    if (!selectedNode?.data) return null;
+    
+    // Safely cast the value to number
+    const value = selectedNode.data[property];
+    const numericValue = typeof value === 'number' ? value : 0;
+    
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {label}
+        </label>
+        <input
+          type="number"
+          value={numericValue}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => {
+            const newValue = parseFloat(e.target.value);
+            if (!isNaN(newValue) && newValue >= min && newValue <= max) {
+              updateNodeData(selectedNode.id, { [property]: newValue });
+            }
+          }}
+          className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+    );
+  };
+  
+  const renderTextInput = (
+    label: string,
+    property: string,
+  ) => {
+    if (!selectedNode?.data) return null;
+    
+    // Safely cast the value to string
+    const value = selectedNode.data[property];
+    const textValue = typeof value === 'string' ? value : '';
+    
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {label}
+        </label>
+        <input
+          type="text"
+          value={textValue}
+          onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
+          className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+    );
+  };
+  
+  const renderSlider = (
+    label: string,
+    property: string,
+    min: number,
+    max: number,
+    step: number
+  ) => {
+    if (!selectedNode?.data) return null;
+    
+    // Safely cast the value to number
+    const value = selectedNode.data[property];
+    const numericValue = typeof value === 'number' ? value : 0;
+    
+    return (
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-1">
+          <label className="text-sm font-medium text-gray-300">{label}</label>
+          <span className="text-xs text-gray-400">{numericValue}</span>
+        </div>
+        <input
+          type="range"
+          value={numericValue}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => updateNodeData(selectedNode.id, { [property]: parseFloat(e.target.value) })}
+          className="w-full bg-gray-700 rounded-lg appearance-none cursor-pointer h-2 accent-blue-500"
+        />
+      </div>
+    );
+  };
+  
+  const renderTextArea = (
+    label: string,
+    property: string,
+    placeholder: string = ""
+  ) => {
+    if (!selectedNode?.data) return null;
+    
+    // Safely cast the value to string
+    const value = selectedNode.data[property];
+    const textValue = typeof value === 'string' ? value : '';
+    
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {label}
+        </label>
+        <textarea
+          value={textValue}
+          placeholder={placeholder}
+          onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
+          className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"
+        />
+      </div>
+    );
+  };
+  
+  // Utility to check if a property exists
+  const hasProperty = (property: string) => {
+    return selectedNode?.data && property in selectedNode.data;
+  };
 
+  // Render node-specific controls based on type
   const renderNodeSpecificControls = () => {
     if (!selectedNode) return null;
     
     switch (selectedNode.type) {
+      // Model node controls
       case 'modelNode':
-        return <div className="space-y-4">
-            <div className="border-b border-field pb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Model Settings</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm text-gray-400">Model Name</Label>
-                  <Input 
-                    type="text" 
-                    placeholder="Model Name" 
-                    value={String(selectedNode.data.modelName || '')} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      modelName: e.target.value
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Width</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="Width" 
-                    value={Number(selectedNode.data.width) || 512} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      width: parseInt(e.target.value)
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Height</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="Height" 
-                    value={Number(selectedNode.data.height) || 512} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      height: parseInt(e.target.value)
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Steps</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="Steps" 
-                    value={Number(selectedNode.data.steps) || 30} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      steps: parseInt(e.target.value)
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">CFG Scale</Label>
-                  <Input 
-                    type="number" 
-                    step="0.1" 
-                    placeholder="CFG Scale" 
-                    value={Number(selectedNode.data.cfgScale) || 7.5} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      cfgScale: parseFloat(e.target.value)
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary rounded-full" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Prompt</Label>
-                  <Textarea 
-                    placeholder="Enter your prompt here" 
-                    value={String(selectedNode.data.prompt || '')} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      prompt: e.target.value
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Negative Prompt</Label>
-                  <Textarea 
-                    placeholder="Enter your negative prompt here" 
-                    value={String(selectedNode.data.negativePrompt || '')} 
-                    onChange={e => updateNodeData(selectedNode.id, {
-                      negativePrompt: e.target.value
-                    })} 
-                    className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>;
-          
+        return (
+          <>
+            {/* Model settings */}
+            {renderTextInput('Model Name', 'modelName')}
+            {renderNumericInput('Width', 'width', 256, 1024, 8)}
+            {renderNumericInput('Height', 'height', 256, 1024, 8)}
+            {renderNumericInput('Steps', 'steps', 1, 150, 1)}
+            {renderSlider('CFG Scale', 'cfgScale', 1, 20, 0.1)}
+            {renderTextArea('Prompt', 'prompt', 'Enter your prompt here...')}
+            {renderTextArea('Negative Prompt', 'negativePrompt', 'Enter your negative prompt here...')}
+          </>
+        );
+        
+      // LoRA node controls
       case 'loraNode':
-        return <div className="space-y-4">
-            <div className="border-b border-field pb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">LoRA Settings</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm text-gray-400">LoRA Name</Label>
-                  <Input type="text" placeholder="LoRA Name" value={String(selectedNode.data.loraName || '')} onChange={e => updateNodeData(selectedNode.id, {
-                  loraName: e.target.value
-                })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
-                </div>
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Strength: {Number(selectedNode.data.strength).toFixed(2)}</Label>
-                  <Slider 
-                    value={[Number(selectedNode.data.strength) || 0.8]} 
-                    min={0} 
-                    max={1} 
-                    step={0.01} 
-                    onValueChange={values => updateNodeData(selectedNode.id, {
-                      strength: values[0]
-                    })} 
-                    className="my-2" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>;
-          
+        return (
+          <>
+            {renderTextInput('LoRA Name', 'loraName')}
+            {renderSlider('Strength', 'strength', 0, 1, 0.01)}
+          </>
+        );
+        
+      // ControlNet node controls
       case 'controlnetNode':
-        return <div className="space-y-4">
-            <div className="border-b border-field pb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">ControlNet Settings</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm text-gray-400">Type</Label>
-                  <div className="text-white py-2">{String(selectedNode.data.type || '')}</div>
+        return (
+          <>
+            {renderSlider('Strength', 'strength', 0, 1, 0.01)}
+            
+            {/* Image upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Control Image
+              </label>
+              
+              {selectedNode.data.image ? (
+                <div className="relative mb-2">
+                  <img 
+                    src={selectedNode.data.image}
+                    alt="Control"
+                    className="w-full h-auto rounded-md"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-1 right-1 h-6 w-6 p-0"
+                    onClick={() => updateNodeData(selectedNode.id, { image: null })}
+                  >
+                    <Trash className="h-3 w-3" />
+                  </Button>
                 </div>
-                
-                {/* Only show image upload for Pose ControlNet */}
-                {selectedNode.data.type === 'pose' && (
-                  <div>
-                    <Label className="text-sm text-gray-400">Upload Image</Label>
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                    <div className="mt-2">
-                      {selectedNode.data.image ? (
-                        <div className="relative">
-                          <img src={String(selectedNode.data.image || '')} alt="ControlNet input" className="w-full rounded-2xl border border-field" />
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            className="absolute top-2 right-2 rounded-full" 
-                            onClick={() => updateNodeData(selectedNode.id, { image: null })}
-                          >
-                            X
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          className="w-full bg-field text-white border-none focus:ring-primary flex gap-2 rounded-full" 
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="h-4 w-4" />
-                          Upload Image
-                        </Button>
-                      )}
-                    </div>
+              ) : (
+                <div className="flex items-center justify-center border-2 border-dashed border-gray-700 rounded-lg p-6 cursor-pointer hover:border-gray-500 transition-colors"
+                  onClick={() => document.getElementById('controlnet-image-upload')?.click()}>
+                  <div className="text-center">
+                    <Upload className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">
+                      {isUploading ? 'Uploading...' : 'Click to upload image'}
+                    </p>
                   </div>
-                )}
-                
-                <div>
-                  <Label className="text-sm text-gray-400">Strength: {Number(selectedNode.data.strength).toFixed(2)}</Label>
-                  <Slider 
-                    value={[Number(selectedNode.data.strength) || 0.8]} 
-                    min={0} 
-                    max={1} 
-                    step={0.01} 
-                    onValueChange={values => updateNodeData(selectedNode.id, { strength: values[0] })} 
-                    className="my-2" 
+                  <input
+                    id="controlnet-image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
                   />
                 </div>
-                
-                {/* Canny-specific controls */}
-                {selectedNode.data.type === 'canny' && (
-                  <>
-                    <div>
-                      <Label className="text-sm text-gray-400">Low Threshold</Label>
-                      <Input
-                        type="number"
-                        value={selectedNode.data.low_threshold || 100}
-                        onChange={(e) => updateNodeData(selectedNode.id, { 
-                          low_threshold: parseInt(e.target.value) 
-                        })}
-                        className="bg-field text-white border-none focus:ring-primary rounded-full"
-                        min={0}
-                        max={255}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-400">High Threshold</Label>
-                      <Input
-                        type="number"
-                        value={selectedNode.data.high_threshold || 200}
-                        onChange={(e) => updateNodeData(selectedNode.id, { 
-                          high_threshold: parseInt(e.target.value) 
-                        })}
-                        className="bg-field text-white border-none focus:ring-primary rounded-full"
-                        min={0}
-                        max={255}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-400">Resolution</Label>
-                      <Input
-                        type="number"
-                        value={selectedNode.data.resolution || 512}
-                        onChange={(e) => updateNodeData(selectedNode.id, { 
-                          resolution: parseInt(e.target.value) 
-                        })}
-                        className="bg-field text-white border-none focus:ring-primary rounded-full"
-                        min={64}
-                        max={1024}
-                        step={64}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              )}
             </div>
-          </div>;
-          
+            
+            {/* Canny specific controls */}
+            {selectedNode.data.controlNetType === 'canny' && (
+              <>
+                {renderNumericInput('Low Threshold', 'low_threshold', 0, 255, 1)}
+                {renderNumericInput('High Threshold', 'high_threshold', 0, 255, 1)}
+              </>
+            )}
+          </>
+        );
+        
+      // Input node controls
       case 'inputNode':
-        return <div className="space-y-4">
-            <div className="border-b border-field pb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Input Settings</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm text-gray-400">Input Type</Label>
-                  <div className="text-white py-2">{String(selectedNode.data.inputType || '')}</div>
-                </div>
+        if (selectedNode.data.inputType === 'text') {
+          return renderTextArea('Text Input', 'text', 'Enter your text here...');
+        }
+        else if (selectedNode.data.inputType === 'image') {
+          return (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Input Image
+                </label>
                 
-                {selectedNode.data.inputType === 'text' && (
-                  <div>
-                    <Label className="text-sm text-gray-400">Text</Label>
-                    <Textarea 
-                      value={String(selectedNode.data.text || '')}
-                      onChange={e => updateNodeData(selectedNode.id, { text: e.target.value })}
-                      className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl"
-                      placeholder="Enter your prompt here..."
+                {selectedNode.data.image ? (
+                  <div className="relative mb-2">
+                    <img 
+                      src={selectedNode.data.image}
+                      alt="Input"
+                      className="w-full h-auto rounded-md"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-1 right-1 h-6 w-6 p-0"
+                      onClick={() => updateNodeData(selectedNode.id, { image: null })}
+                    >
+                      <Trash className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center border-2 border-dashed border-gray-700 rounded-lg p-6 cursor-pointer hover:border-gray-500 transition-colors"
+                    onClick={() => document.getElementById('input-image-upload')?.click()}>
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">
+                        {isUploading ? 'Uploading...' : 'Click to upload image'}
+                      </p>
+                    </div>
+                    <input
+                      id="input-image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
                     />
                   </div>
                 )}
-                
-                {/* Only show image upload for Image Input */}
-                {selectedNode.data.inputType === 'image' && (
-                  <div>
-                    <Label className="text-sm text-gray-400">Upload Image</Label>
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                    <div className="mt-2">
-                      {selectedNode.data.image ? (
-                        <div className="relative">
-                          <img src={String(selectedNode.data.image || '')} alt="Input image" className="w-full rounded-2xl border border-field" />
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            className="absolute top-2 right-2 rounded-full" 
-                            onClick={() => updateNodeData(selectedNode.id, { image: null })}
-                          >
-                            X
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          className="w-full bg-field text-white border-none focus:ring-primary flex gap-2 rounded-full" 
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="h-4 w-4" />
-                          Upload Image
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
-          </div>;
-          
-      case 'previewNode':
-        return <div className="space-y-4">
-            <div className="border-b border-field pb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-3">Preview Settings</h3>
-              <div className="space-y-3">
-                {selectedNode.data.image ? <div className="relative">
-                    <img src={String(selectedNode.data.image || '')} alt="Generated image" className="w-full rounded-2xl border border-field" />
-                  </div> : <div className="bg-field rounded-2xl border border-gray-700 h-64 flex items-center justify-center text-gray-400">
-                    No image generated yet.
-                  </div>}
-                <Button variant="default" className="w-full rounded-full" onClick={() => {
-                useCanvasStore.getState().generateImageFromNodes();
-              }}>
-                  Generate Image
-                </Button>
-              </div>
-            </div>
-          </div>;
-          
-      default:
+            </>
+          );
+        }
         return null;
+        
+      // Preview node controls
+      case 'previewNode':
+        return (
+          <>
+            {selectedNode.data.image ? (
+              <div className="mb-4">
+                <p className="text-sm text-gray-300 mb-2">Generated Image</p>
+                <img 
+                  src={selectedNode.data.image}
+                  alt="Generated"
+                  className="w-full h-auto rounded-md"
+                />
+              </div>
+            ) : (
+              <div className="mb-4">
+                <p className="text-sm text-gray-500">
+                  No image generated yet. Connect a model node to this preview node.
+                </p>
+              </div>
+            )}
+          </>
+        );
+        
+      default:
+        return (
+          <p className="text-sm text-gray-500">
+            Select a node to view and edit its properties.
+          </p>
+        );
     }
   };
-
-  const renderStyleProperties = () => {
-    if (!selectedNode) return null;
-    return <div className="space-y-3 py-2">
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">Display Name</label>
-          <Input type="text" value={String(selectedNode.data.displayName || '')} onChange={e => handleStyleChange('displayName', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" />
+  
+  // If no node is selected but an edge is selected
+  const renderEdgeControls = () => {
+    if (!selectedEdge) return null;
+    
+    return (
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-white">Edge Properties</h2>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => deleteEdge(selectedEdge.id)}
+          >
+            <Trash className="h-4 w-4 mr-1" /> Delete
+          </Button>
         </div>
         
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">Emoji</label>
-          <Input type="text" value={String(selectedNode.data.emoji || '')} onChange={e => handleStyleChange('emoji', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" placeholder="Enter an emoji" />
-        </div>
-        
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">Color</label>
-          <div className="flex gap-2">
-            <Input type="color" value={String(selectedNode.data.color || '#ff69b4')} onChange={e => handleStyleChange('color', e.target.value)} className="w-12 h-8 p-1 bg-field border-none focus:ring-primary rounded-full" />
-            <Input type="text" value={String(selectedNode.data.color || '#ff69b4')} onChange={e => handleStyleChange('color', e.target.value)} className="flex-1 bg-field text-white border-none focus:ring-primary rounded-full" />
-          </div>
-        </div>
-      </div>;
+        <p className="text-sm text-gray-400 mb-2">
+          Source: {selectedEdge.source}
+        </p>
+        <p className="text-sm text-gray-400 mb-2">
+          Target: {selectedEdge.target}
+        </p>
+      </div>
+    );
+  };
+  
+  // Helper function to get node color
+  const getNodeColor = () => {
+    if (!selectedNode?.data) return "#666666";
+    
+    // If node has color property in its data
+    if (selectedNode.data.color) {
+      return selectedNode.data.color;
+    }
+    
+    // Or determine by node type
+    switch (selectedNode.type) {
+      case 'modelNode': return "#8000ff";
+      case 'loraNode': return "#9370db";
+      case 'controlnetNode': return "#4CAF50";
+      case 'inputNode': return "#FFD700";
+      case 'previewNode': return "#f59e0b";
+      default: return "#666666";
+    }
+  };
+  
+  // Empty state when nothing is selected
+  const renderEmptyState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+        <Settings className="h-16 w-16 text-gray-600 mb-4" />
+        <h3 className="text-xl font-medium text-gray-400 mb-2">No Selection</h3>
+        <p className="text-sm text-gray-500">
+          Select a node or edge on the canvas to view and edit its properties.
+        </p>
+      </div>
+    );
   };
 
+  // Main render
   return (
-    <div className="w-80 h-screen bg-sidebar border-l border-field">
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-field">
-          <h2 className="text-white text-sm font-medium">Node Properties</h2>
-        </div>
-        
-        {/* Fix: Use proper height to ensure scrolling works */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full px-4">
-            <div className="py-4">
-              {/* Style Preferences Section */}
-              <div className="border-b border-field pb-4 mb-4">
-                <h3 className="text-sm font-medium text-gray-400 mb-3">Style Preferences</h3>
-                {renderStyleProperties()}
+    <div className="w-80 h-full bg-sidebar border-l border-field flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="bg-sidebar-accent border-b border-field p-4">
+        <h2 className="text-lg font-medium text-white">Properties</h2>
+      </div>
+      
+      {/* Properties panel */}
+      <div className="flex-1 overflow-y-auto">
+        {selectedNode ? (
+          <div className="p-4">
+            {/* Node header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div 
+                  className="w-4 h-4 rounded-full mr-2"
+                  style={{ backgroundColor: getNodeColor() }}
+                />
+                <h2 className="text-lg font-medium text-white truncate" title={selectedNode.data?.displayName || selectedNode.id}>
+                  {selectedNode.data?.displayName || selectedNode.id}
+                </h2>
               </div>
               
-              {/* Node-specific settings section */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-3">Node Settings</h3>
-                {renderNodeSpecificControls()}
+              <div className="flex space-x-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => copySelectedNode()}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copy node</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      onClick={() => deleteSelectedNode()}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete node</TooltipContent>
+                </Tooltip>
               </div>
-              
-              {/* Add padding at the bottom to ensure all content is scrollable */}
-              <div className="pb-8"></div>
             </div>
-          </ScrollArea>
-        </div>
+            
+            {/* Type and ID info */}
+            <div className="mb-4 text-xs text-gray-500">
+              <p>Type: {selectedNode.type}</p>
+              <p>ID: {selectedNode.id}</p>
+            </div>
+            
+            {/* Node-specific controls */}
+            <div className="mt-6">
+              {renderNodeSpecificControls()}
+            </div>
+          </div>
+        ) : selectedEdge ? (
+          renderEdgeControls()
+        ) : (
+          renderEmptyState()
+        )}
       </div>
     </div>
   );
 };
+
+export default RightSidebar;
