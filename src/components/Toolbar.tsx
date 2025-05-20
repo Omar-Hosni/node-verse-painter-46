@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { useReactFlow } from '@xyflow/react';
+import { toPNG, toSVG } from '@xyflow/react';
 import { 
   Copy, 
   Download, 
@@ -15,27 +15,28 @@ import {
   ClipboardPaste, 
   Image,
   FileJson,
-  Settings,
-  Circle,
-  RectangleHorizontal,
-  Text,
-  Frame
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { WorkflowJson } from '@/store/types';
 import { ShareProjectDialog } from './ShareProjectDialog';
 import { ApiKeyModal } from './ApiKeyModal';
-import { downloadObjectAsJson } from '@/store/workflowUtils';
 
-// Define the different drawing tool types
-export type DrawingTool = 'select' | 'circle' | 'rectangle' | 'text' | 'frame';
+// Helper function to download JSON file
+const downloadObjectAsJson = (exportObj: object, exportName: string) => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + ".json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+};
 
 export default function Toolbar() {
   const [shareOpen, setShareOpen] = useState(false);
   const [apiKeyOpen, setApiKeyOpen] = useState(false);
-  const [activeTool, setActiveTool] = useState<DrawingTool>('select');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const reactFlowInstance = useReactFlow();
   
   const {
     nodes,
@@ -51,32 +52,21 @@ export default function Toolbar() {
     generateImageFromNodes,
     runwayApiKey,
     setRunwayApiKey,
-    exportWorkflowAsJson,
-    addNode
+    exportWorkflowAsJson
   } = useCanvasStore();
   
   const handleExportPNG = () => {
-    // Use the reactFlowInstance to export
-    reactFlowInstance.toImage({
-      type: 'png',
-      quality: 1,
-      backgroundColor: '#ffffff',
-    }).then(dataUrl => {
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'workflow-export.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Exported as PNG');
+    toPNG({
+      fileName: 'workflow-export',
     });
+    toast.success('Exported as PNG');
   };
   
   const handleExportSVG = () => {
-    // Use react-flow-renderer's SVG export
-    reactFlowInstance.toObject();
+    toSVG({
+      fileName: 'workflow-export',
+    });
     toast.success('Exported as SVG');
-    // SVG export not directly supported, would require custom implementation
   };
   
   const handleExportJSON = () => {
@@ -119,110 +109,8 @@ export default function Toolbar() {
     toast.success('API Key saved successfully');
   };
 
-  const handleDrawingToolClick = (tool: DrawingTool) => {
-    setActiveTool(tool);
-    
-    // If it's a shape tool, prepare to add it on the next click
-    if (tool !== 'select' && tool !== 'frame') {
-      const handleCanvasClick = (event: MouseEvent) => {
-        // Get click position relative to the canvas
-        const bounds = document.querySelector('.react-flow').getBoundingClientRect();
-        const position = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX - bounds.left,
-          y: event.clientY - bounds.top
-        });
-        
-        // Add the appropriate node based on selected tool
-        switch(tool) {
-          case 'circle':
-            addNode('model-sdxl', position); // Using existing node types as placeholders
-            break;
-          case 'rectangle':
-            addNode('controlnet-canny', position); // Using existing node types as placeholders
-            break;
-          case 'text':
-            addNode('lora-realistic', position); // Using existing node types as placeholders
-            break;
-        }
-        
-        // Reset to select tool after placing an item
-        setActiveTool('select');
-        
-        // Remove the event listener after the first click
-        document.removeEventListener('click', handleCanvasClick);
-      };
-      
-      // Add a one-time click listener to the document
-      setTimeout(() => {
-        document.addEventListener('click', handleCanvasClick, { once: true });
-      }, 100); // Small delay to avoid capturing the current click event
-    }
-    
-    // For frame tool, enable a special selection mode
-    if (tool === 'frame') {
-      // Would implement a custom selection behavior here
-      toast.info('Frame selection tool activated. Click and drag to select items.');
-      // After selection is complete, we'd want to return to the select tool
-      // This would require more complex implementation with mousedown, mousemove, mouseup events
-    }
-  };
-
   return (
     <div className="absolute top-0 right-0 z-10 p-3 flex flex-col space-y-1">
-      {/* Drawing Tools */}
-      <div className="flex space-x-1 mb-1">
-        <Button 
-          variant={activeTool === 'select' ? "default" : "ghost"}
-          size="icon"
-          onClick={() => handleDrawingToolClick('select')}
-          title="Select"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Frame className="h-4 w-4" />
-          <span className="sr-only">Select</span>
-        </Button>
-        <Button 
-          variant={activeTool === 'circle' ? "default" : "ghost"}
-          size="icon"
-          onClick={() => handleDrawingToolClick('circle')}
-          title="Add Circle"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Circle className="h-4 w-4" />
-          <span className="sr-only">Circle</span>
-        </Button>
-        <Button 
-          variant={activeTool === 'rectangle' ? "default" : "ghost"}
-          size="icon"
-          onClick={() => handleDrawingToolClick('rectangle')}
-          title="Add Rectangle"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <RectangleHorizontal className="h-4 w-4" />
-          <span className="sr-only">Rectangle</span>
-        </Button>
-        <Button 
-          variant={activeTool === 'text' ? "default" : "ghost"}
-          size="icon"
-          onClick={() => handleDrawingToolClick('text')}
-          title="Add Text"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Text className="h-4 w-4" />
-          <span className="sr-only">Text</span>
-        </Button>
-        <Button 
-          variant={activeTool === 'frame' ? "default" : "ghost"}
-          size="icon"
-          onClick={() => handleDrawingToolClick('frame')}
-          title="Frame Selection"
-          className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
-        >
-          <Frame className="h-4 w-4" />
-          <span className="sr-only">Frame</span>
-        </Button>
-      </div>
-
       <div className="flex space-x-1 mb-1">
         <Button 
           variant="ghost" 
@@ -356,7 +244,7 @@ export default function Toolbar() {
         </Button>
       </div>
       
-      <ShareProjectDialog isOpen={false} onClose={() => setShareOpen(false)} />
+      <ShareProjectDialog open={shareOpen} onClose={() => setShareOpen(false)} />
       
       <ApiKeyModal
         open={apiKeyOpen}

@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
@@ -21,7 +22,6 @@ import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { DrawingTool } from './Toolbar';
 
 import '@xyflow/react/dist/style.css';
 
@@ -284,19 +284,19 @@ export const Canvas = () => {
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />
         <Background color="#333333" gap={16} />
-        <Panel position="top-right" className="flex flex-col gap-2">
+        <Panel position="top-right" className="flex gap-2">
+          <Button 
+            onClick={handleGenerateImage}
+            className="bg-blue-600 text-white"
+          >
+            Generate Image ({credits !== null ? credits : '...'} credits)
+          </Button>
           <Button 
             onClick={handleExportWorkflow}
             variant="outline"
             className="bg-[#1A1A1A] text-gray-300 border-[#333]"
           >
             Export Workflow
-          </Button>
-          <Button 
-            onClick={handleGenerateImage}
-            className="bg-blue-600 text-white"
-          >
-            Generate Image ({credits !== null ? credits : '...'} credits)
           </Button>
         </Panel>
       </ReactFlow>

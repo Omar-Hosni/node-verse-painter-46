@@ -344,10 +344,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes: Node[]) => set({ nodes }),
-      (edges: Edge[]) => set({ edges }),
-      (node: Node | null) => set({ selectedNode: node }),
-      (history: HistoryState) => set({
+      (nodes) => set({ nodes }),
+      (edges) => set({ edges }),
+      (node) => set({ selectedNode: node }),
+      (history) => set({
         history: [history],
         historyIndex: 0,
       }),
@@ -390,16 +390,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   sendWorkflowToAPI: async () => {
     // Create a proper WorkflowJson object
     const workflow: WorkflowJson = {
-      nodes: get().nodes,
-      edges: get().edges,
-      version: '1.0.0',
-      settings: {
-        // Default settings
-        autoLayout: false,
-        snapToGrid: true,
-        gridSize: 15,
-        theme: 'dark'
-      }
+      ...get().exportWorkflowAsJson(),
     };
     
     return await sendWorkflowToAPI(
