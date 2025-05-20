@@ -69,7 +69,7 @@ export interface CanvasState {
   selectedEdge: Edge | null;
   runwayApiKey: string | null;
   credits: number | null;
-  subscription: string | null;
+  subscription: UserSubscription | null;
   clipboard: Node | null;
   history: HistoryState[];
   historyIndex: number;

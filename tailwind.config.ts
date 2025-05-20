@@ -24,6 +24,7 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         sidebar: "#121212",
+        "sidebar-accent": "#1a1a1a",
         field: "#1E1E1E",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -53,14 +54,22 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        node: {
+          input: "#4A5568",
+          model: "#2A4365",
+          lora: "#44337A",
+          controlnet: "#22543D",
+          output: "#702459",
+        },
+      },
+      fontFamily: {
+        sans: ["Inter", "SF Pro Display", ...fontFamily.sans],
+        mono: ["SF Mono", "Menlo", ...fontFamily.mono],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Node, Edge } from '@xyflow/react';
 import { toast } from 'sonner';
-import { UserCredits, UserSubscription } from './types';
+import { UserSubscription, UserCredits, Json } from './types';
 
 // Save a project to the database
 export const saveProject = async (
@@ -56,7 +56,7 @@ export const loadProject = async (
   setNodes: (nodes: Node[]) => void,
   setEdges: (edges: Edge[]) => void,
   setSelectedNode: (node: Node | null) => void,
-  setHistory: (nodes: Node[], edges: Edge[]) => void,
+  setHistory: (history: { nodes: Node[], edges: Edge[] }) => void,
   resetNodeIdCounter: () => void
 ): Promise<boolean> => {
   try {
@@ -73,16 +73,16 @@ export const loadProject = async (
     }
 
     if (data && data.canvas_data) {
-      const { nodes, edges } = data.canvas_data;
+      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
       
       // Reset node ID counter to avoid duplicate IDs
       resetNodeIdCounter();
       
       // Set the canvas data
-      setNodes(nodes);
-      setEdges(edges);
+      setNodes(canvasData.nodes);
+      setEdges(canvasData.edges);
       setSelectedNode(null);
-      setHistory(nodes, edges);
+      setHistory({ nodes: canvasData.nodes, edges: canvasData.edges });
       
       return true;
     }
@@ -112,7 +112,7 @@ export const fetchUserCredits = async (): Promise<number | null> => {
 };
 
 // Fetch user subscription
-export const fetchUserSubscription = async (): Promise<string | null> => {
+export const fetchUserSubscription = async (): Promise<UserSubscription | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -120,7 +120,10 @@ export const fetchUserSubscription = async (): Promise<string | null> => {
     }
 
     // Simulate subscription fetch for now
-    return 'free'; // Default subscription
+    return { 
+      tier: 'free',
+      status: 'active' 
+    }; // Default subscription
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return null;

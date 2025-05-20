@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -193,22 +194,22 @@ export const LeftSidebar = () => {
       name: 'Renders',
       icon: FileImage,
       items: [
-        { name: 'Render 1', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475', type: 'render' },
-        { name: 'Render 2', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5', type: 'render' },
-        { name: 'Render 3', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158', type: 'render' },
-        { name: 'Render 4', image: 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb', type: 'render' },
-        { name: 'Render 5', image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22', type: 'render' },
-        { name: 'Render 6', image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901', type: 'render' },
+        { name: 'Render 1', type: 'render', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475' },
+        { name: 'Render 2', type: 'render', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5' },
+        { name: 'Render 3', type: 'render', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158' },
+        { name: 'Render 4', type: 'render', image: 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb' },
+        { name: 'Render 5', type: 'render', image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22' },
+        { name: 'Render 6', type: 'render', image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901' },
       ] as AssetItem[]
     },
     {
       name: 'Uploaded',
       icon: Shuffle,
       items: [
-        { name: 'Upload 1', image: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7', type: 'upload' },
-        { name: 'Upload 2', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475', type: 'upload' },
-        { name: 'Upload 3', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5', type: 'upload' },
-        { name: 'Upload 4', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158', type: 'upload' },
+        { name: 'Upload 1', type: 'upload', image: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7' },
+        { name: 'Upload 2', type: 'upload', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475' },
+        { name: 'Upload 3', type: 'upload', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5' },
+        { name: 'Upload 4', type: 'upload', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158' },
       ] as AssetItem[]
     }
   ];
@@ -395,24 +396,26 @@ export const LeftSidebar = () => {
           </div>
         )}
         
-        {/* Insert Tab - Node Categories (with search filter) */}
+        {/* Insert Tab - Node Categories (redesigned to match the reference image) */}
         {activeTab === 'Insert' && !searchTerm && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-6">
             {insertCategories.map((category) => (
-              <div key={category.name} className="mb-4">
-                <div className="flex items-center mb-2 text-gray-300 font-medium">
+              <div key={category.name} className="mb-6">
+                <div className="flex items-center mb-3 text-white font-medium">
                   <category.icon className="h-4 w-4 mr-2" />
-                  <span>{category.name}</span>
+                  <span className="text-sm tracking-wide">{category.name}</span>
                 </div>
-                <div className="space-y-1 pl-1">
+                <div className="grid grid-cols-2 gap-2">
                   {category.options.map((option) => (
                     <div 
                       key={option.type}
-                      className="p-2 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700 flex items-center"
                       onClick={() => handleAddNode(option.type)}
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-900 hover:bg-gray-800 cursor-pointer border border-gray-700 hover:border-blue-500 transition-all duration-200"
                     >
-                      <option.icon className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{option.label}</span>
+                      <div className="w-8 h-8 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
+                        <option.icon className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <span className="text-xs font-medium text-center text-white">{option.label}</span>
                     </div>
                   ))}
                 </div>
@@ -426,19 +429,20 @@ export const LeftSidebar = () => {
           <div className="space-y-2">
             <h3 className="text-sm text-gray-400 mb-3">Search results for "{searchTerm}"</h3>
             {filterNodeOptions(allNodeOptions).length > 0 ? (
-              filterNodeOptions(allNodeOptions).map((option) => (
-                <div 
-                  key={option.type}
-                  className="p-2 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700 flex items-center"
-                  onClick={() => handleAddNode(option.type)}
-                >
-                  <option.icon className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{option.label}</span>
-                  <span className="ml-auto text-xs text-gray-500">
-                    {insertCategories.find(c => c.options.some(o => o.type === option.type))?.name}
-                  </span>
-                </div>
-              ))
+              <div className="grid grid-cols-2 gap-2">
+                {filterNodeOptions(allNodeOptions).map((option) => (
+                  <div 
+                    key={option.type}
+                    onClick={() => handleAddNode(option.type)}
+                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-900 hover:bg-gray-800 cursor-pointer border border-gray-700 hover:border-blue-500 transition-all duration-200"
+                  >
+                    <div className="w-8 h-8 rounded-md flex items-center justify-center bg-black bg-opacity-30 mb-2">
+                      <option.icon className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <span className="text-xs font-medium text-center text-white">{option.label}</span>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-gray-500 text-sm p-2 italic">
                 No components match your search.

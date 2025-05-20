@@ -72,20 +72,23 @@ const Editor = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    // Get current user's profile data - protect against missing 'profiles' table
+    // Get current user's profile data
     let firstName = '';
     let lastName = '';
     let avatarUrl = '';
     
     try {
-      const { data: profile } = await supabase
-        .rpc('get_profile_data', { user_id_param: user.id })
-        .single();
+      // Use the Edge Function to get profile data
+      const { data: profile, error } = await supabase.functions.invoke('get_profile_data', {
+        body: { user_id: user.id }
+      });
       
-      if (profile) {
-        firstName = profile.first_name || '';
-        lastName = profile.last_name || '';
-        avatarUrl = profile.avatar_url || '';
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else if (profile && profile.data) {
+        firstName = profile.data.first_name || '';
+        lastName = profile.data.last_name || '';
+        avatarUrl = profile.data.avatar_url || '';
       }
     } catch (error) {
       console.log('No profile data found, using default values');
