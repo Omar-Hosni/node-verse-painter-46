@@ -63,33 +63,9 @@ export const ShareProjectDialog = ({
     try {
       setSending(true);
       
-      // Check if the user exists in the system first
-      const { data: existingUser, error: userError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name')
-        .eq('email', email)
-        .single();
-      
-      if (userError && userError.code !== 'PGRST116') {
-        toast.error("Error checking user. Please try again.");
-        setSending(false);
-        return;
-      }
-      
-      // If user doesn't exist, send an invitation email
-      // For demo purposes, we're just showing a success message
-      // In a real app, you'd send an email with a link to register
-      if (!existingUser) {
-        toast.success(`Invitation sent to ${email}`);
-        setEmail("");
-        setSending(false);
-        return;
-      }
-      
-      // If user exists, add them as a collaborator to the project
-      // Note: We're simulating this for the demo since 'project_collaborators' table doesn't exist yet
-      // In production, you'd create this table with the appropriate schema
-      toast.success(`${existingUser.first_name || existingUser.email} added as a collaborator`);
+      // For demo purposes, show success message
+      // In a real app, you'd implement the actual sharing functionality
+      toast.success(`Invitation sent to ${email}`);
       setEmail("");
     } catch (error) {
       console.error("Error inviting user:", error);

@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { Upload } from 'lucide-react';
@@ -183,16 +184,23 @@ export const RightSidebar = () => {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-gray-400">LoRA Name</Label>
-                  <Input type="text" placeholder="LoRA Name" value={selectedNode.data.loraName as string || ''} onChange={e => updateNodeData(selectedNode.id, {
+                  <Input type="text" placeholder="LoRA Name" value={String(selectedNode.data.loraName || '')} onChange={e => updateNodeData(selectedNode.id, {
                   loraName: e.target.value
                 })} className="bg-field text-white border-none focus:ring-primary rounded-full" />
                 </div>
                 
                 <div>
                   <Label className="text-sm text-gray-400">Strength: {Number(selectedNode.data.strength).toFixed(2)}</Label>
-                  <Slider value={[Number(selectedNode.data.strength) || 0.8]} min={0} max={1} step={0.01} onValueChange={values => updateNodeData(selectedNode.id, {
-                  strength: values[0]
-                })} className="my-2" />
+                  <Slider 
+                    value={[Number(selectedNode.data.strength) || 0.8]} 
+                    min={0} 
+                    max={1} 
+                    step={0.01} 
+                    onValueChange={values => updateNodeData(selectedNode.id, {
+                      strength: values[0]
+                    })} 
+                    className="my-2" 
+                  />
                 </div>
               </div>
             </div>
@@ -205,7 +213,7 @@ export const RightSidebar = () => {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-gray-400">Type</Label>
-                  <div className="text-white py-2">{selectedNode.data.type as string}</div>
+                  <div className="text-white py-2">{String(selectedNode.data.type || '')}</div>
                 </div>
                 
                 {/* Only show image upload for Pose ControlNet */}
@@ -216,7 +224,7 @@ export const RightSidebar = () => {
                     <div className="mt-2">
                       {selectedNode.data.image ? (
                         <div className="relative">
-                          <img src={selectedNode.data.image as string} alt="ControlNet input" className="w-full rounded-2xl border border-field" />
+                          <img src={String(selectedNode.data.image || '')} alt="ControlNet input" className="w-full rounded-2xl border border-field" />
                           <Button 
                             variant="destructive" 
                             size="sm" 
@@ -308,14 +316,14 @@ export const RightSidebar = () => {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-gray-400">Input Type</Label>
-                  <div className="text-white py-2">{selectedNode.data.inputType as string}</div>
+                  <div className="text-white py-2">{String(selectedNode.data.inputType || '')}</div>
                 </div>
                 
                 {selectedNode.data.inputType === 'text' && (
                   <div>
                     <Label className="text-sm text-gray-400">Text</Label>
                     <Textarea 
-                      value={selectedNode.data.text as string || ''} 
+                      value={String(selectedNode.data.text || '')}
                       onChange={e => updateNodeData(selectedNode.id, { text: e.target.value })}
                       className="bg-field text-white border-none focus:ring-primary min-h-[80px] rounded-2xl"
                       placeholder="Enter your prompt here..."
@@ -331,7 +339,7 @@ export const RightSidebar = () => {
                     <div className="mt-2">
                       {selectedNode.data.image ? (
                         <div className="relative">
-                          <img src={selectedNode.data.image as string} alt="Input image" className="w-full rounded-2xl border border-field" />
+                          <img src={String(selectedNode.data.image || '')} alt="Input image" className="w-full rounded-2xl border border-field" />
                           <Button 
                             variant="destructive" 
                             size="sm" 
@@ -364,7 +372,7 @@ export const RightSidebar = () => {
               <h3 className="text-sm font-medium text-gray-400 mb-3">Preview Settings</h3>
               <div className="space-y-3">
                 {selectedNode.data.image ? <div className="relative">
-                    <img src={selectedNode.data.image as string} alt="Generated image" className="w-full rounded-2xl border border-field" />
+                    <img src={String(selectedNode.data.image || '')} alt="Generated image" className="w-full rounded-2xl border border-field" />
                   </div> : <div className="bg-field rounded-2xl border border-gray-700 h-64 flex items-center justify-center text-gray-400">
                     No image generated yet.
                   </div>}
@@ -387,19 +395,19 @@ export const RightSidebar = () => {
     return <div className="space-y-3 py-2">
         <div>
           <label className="block text-sm text-gray-400 mb-1">Display Name</label>
-          <Input type="text" value={selectedNode.data.displayName as string || ''} onChange={e => handleStyleChange('displayName', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" />
+          <Input type="text" value={String(selectedNode.data.displayName || '')} onChange={e => handleStyleChange('displayName', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" />
         </div>
         
         <div>
           <label className="block text-sm text-gray-400 mb-1">Emoji</label>
-          <Input type="text" value={selectedNode.data.emoji as string || ''} onChange={e => handleStyleChange('emoji', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" placeholder="Enter an emoji" />
+          <Input type="text" value={String(selectedNode.data.emoji || '')} onChange={e => handleStyleChange('emoji', e.target.value)} className="w-full bg-field text-white border-none focus:ring-primary rounded-full" placeholder="Enter an emoji" />
         </div>
         
         <div>
           <label className="block text-sm text-gray-400 mb-1">Color</label>
           <div className="flex gap-2">
-            <Input type="color" value={selectedNode.data.color as string || '#ff69b4'} onChange={e => handleStyleChange('color', e.target.value)} className="w-12 h-8 p-1 bg-field border-none focus:ring-primary rounded-full" />
-            <Input type="text" value={selectedNode.data.color as string || '#ff69b4'} onChange={e => handleStyleChange('color', e.target.value)} className="flex-1 bg-field text-white border-none focus:ring-primary rounded-full" />
+            <Input type="color" value={String(selectedNode.data.color || '#ff69b4')} onChange={e => handleStyleChange('color', e.target.value)} className="w-12 h-8 p-1 bg-field border-none focus:ring-primary rounded-full" />
+            <Input type="text" value={String(selectedNode.data.color || '#ff69b4')} onChange={e => handleStyleChange('color', e.target.value)} className="flex-1 bg-field text-white border-none focus:ring-primary rounded-full" />
           </div>
         </div>
       </div>;

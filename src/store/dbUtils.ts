@@ -73,16 +73,26 @@ export const loadProject = async (
     }
 
     if (data && data.canvas_data) {
-      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
+      // Cast safely using type assertion after checking required properties
+      const canvasData = data.canvas_data as { nodes: unknown, edges: unknown };
+      
+      if (typeof canvasData !== 'object' || !canvasData || !('nodes' in canvasData) || !('edges' in canvasData)) {
+        console.error('Invalid canvas data format:', canvasData);
+        toast.error('Invalid canvas data format');
+        return false;
+      }
+
+      const nodes = canvasData.nodes as Node[];
+      const edges = canvasData.edges as Edge[];
       
       // Reset node ID counter to avoid duplicate IDs
       resetNodeIdCounter();
       
       // Set the canvas data
-      setNodes(canvasData.nodes);
-      setEdges(canvasData.edges);
+      setNodes(nodes);
+      setEdges(edges);
       setSelectedNode(null);
-      setHistory({ nodes: canvasData.nodes, edges: canvasData.edges });
+      setHistory({ nodes, edges });
       
       return true;
     }

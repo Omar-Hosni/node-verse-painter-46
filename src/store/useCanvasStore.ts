@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -27,9 +28,10 @@ import {
 } from './nodeActions';
 
 import { 
-  uploadControlNetImage as uploadImage,
-  sendWorkflowToAPI as sendToAPI,
-  generateImage
+  uploadControlNetImage,
+  uploadInputImage,
+  generateImage,
+  sendWorkflowToAPI
 } from './apiUtils';
 
 import {
@@ -174,22 +176,20 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ runwayApiKey: apiKey });
   },
 
-  uploadControlNetImage: async (nodeId, imageData) => {
-    // Make sure we're passing the imageData directly without trying to convert it
-    await uploadImage(
+  uploadControlNetImage: async (nodeId: string, imageData: File) => {
+    await uploadControlNetImage(
       nodeId, 
       imageData, 
-      get().runwayApiKey, 
+      get().runwayApiKey,
       get().updateNodeData
     );
   },
 
-  uploadInputImage: async (nodeId, imageData) => {
-    // Make sure we're passing the imageData directly without trying to convert it
-    await uploadImage(
+  uploadInputImage: async (nodeId: string, imageData: File) => {
+    await uploadInputImage(
       nodeId, 
       imageData, 
-      get().runwayApiKey, 
+      get().runwayApiKey,
       get().updateNodeData
     );
   },
@@ -347,8 +347,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       (nodes) => set({ nodes }),
       (edges) => set({ edges }),
       get().setSelectedNode,
-      (nodes, edges) => set({
-        history: [{ nodes, edges }],
+      (history) => set({
+        history: [history],
         historyIndex: 0,
       }),
       resetNodeIdCounter
@@ -389,7 +389,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   sendWorkflowToAPI: async () => {
-    return await sendToAPI(
+    return await sendWorkflowToAPI(
       get().exportWorkflowAsJson(),
       get().updateNodeData,
       get().nodes
