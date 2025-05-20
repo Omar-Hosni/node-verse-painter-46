@@ -1,3 +1,4 @@
+
 import { Node, Edge } from '@xyflow/react';
 import { WorkflowJson } from './types';
 
@@ -8,6 +9,10 @@ export const exportWorkflowAsJson = (nodes: Node[], edges: Edge[]): WorkflowJson
     version: '1.0.0',
     settings: {
       // Default settings
+      autoLayout: false,
+      snapToGrid: true,
+      gridSize: 15,
+      theme: 'dark'
     }
   };
 };

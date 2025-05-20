@@ -1,55 +1,6 @@
 
-// This file contains type definitions for the canvas store
 import { Node, Edge } from '@xyflow/react';
 
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
-
-export type Json = {
-  [key: string]: JsonValue;
-};
-
-export type UserCredits = {
-  user_id: string;
-  credits: number;
-  updated_at: string;
-};
-
-export type UserSubscription = {
-  id: string;
-  user_id: string;
-  tier: string;
-  is_annual: boolean;
-  starts_at: string;
-  expires_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type HistoryState = {
-  nodes: Node[];
-  edges: Edge[];
-};
-
-export type WorkflowJson = {
-  nodes: Node[];
-  edges: Edge[];
-  version: string;
-  settings: {
-    [key: string]: JsonValue;
-  };
-};
-
-// Collaborator type for showing active users
-export type Collaborator = {
-  id: string;
-  email: string;
-  avatar_url?: string;
-  first_name?: string;
-  last_name?: string;
-  last_active?: string;
-};
-
-// Add NodeType definition to fix the errors
 export type NodeType = 
   | 'input-text' 
   | 'input-image' 
@@ -65,67 +16,97 @@ export type NodeType =
   | 'controlnet-segment'
   | 'output-preview';
 
-export type CanvasState = {
-  // Core state
+export type Collaborator = {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  last_active: string;
+};
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export interface JsonValue {
+  [key: string]: Json;
+}
+
+export interface WorkflowJson {
+  nodes: Node[];
+  edges: Edge[];
+  version: string;
+  settings: {
+    [key: string]: Json;
+  };
+}
+
+export interface HistoryState {
+  nodes: Node[];
+  edges: Edge[];
+}
+
+export interface CanvasState {
   nodes: Node[];
   edges: Edge[];
   selectedNode: Node | null;
   selectedEdge: Edge | null;
   runwayApiKey: string | null;
   credits: number | null;
-  subscription: UserSubscription | null;
+  subscription: string | null;
   clipboard: Node | null;
   history: HistoryState[];
   historyIndex: number;
-  
-  // Real-time collaboration state
   isLocalUpdate: boolean;
   externalUpdateInProgress: boolean;
   collaborators: Collaborator[];
   
-  // Real-time collaboration actions
+  // Helper functions for real-time collaboration
   setIsLocalUpdate: (isLocal: boolean) => void;
   setExternalUpdateInProgress: (inProgress: boolean) => void;
-  updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => void;
+  updateCanvasFromExternalSource: (nodes: Node[], edges: Edge[]) => void;
   updateCollaborators: (collaborators: Collaborator[]) => void;
-  
-  // Node actions
-  onNodesChange: any;
-  onEdgesChange: any;
-  onConnect: any;
-  addNode: (type: NodeType, position: { x: number; y: number }) => void;
+
+  // Node operations
+  onNodesChange: (changes: any) => void;
+  onEdgesChange: (changes: any) => void;
+  onConnect: (connection: any) => void;
+  addNode: (nodeType: NodeType, position: { x: number, y: number }) => void;
   updateNodeData: (nodeId: string, newData: any) => void;
   setSelectedNode: (node: Node | null) => void;
   setSelectedEdge: (edge: Edge | null) => void;
-  
-  // API actions
   setRunwayApiKey: (apiKey: string) => void;
   uploadControlNetImage: (nodeId: string, imageData: File) => Promise<void>;
   uploadInputImage: (nodeId: string, imageData: File) => Promise<void>;
   
-  // Clipboard actions
+  // Clipboard operations
   copySelectedNode: () => void;
   cutSelectedNode: () => void;
-  pasteNodes: (position: { x: number; y: number }) => void;
+  pasteNodes: (position: { x: number, y: number }) => void;
   deleteSelectedNode: () => void;
   deleteEdge: (edgeId: string) => void;
   
-  // History actions
+  // History operations
   saveToHistory: () => void;
   undo: () => void;
   redo: () => void;
   
-  // Workflow actions
+  // Export operations
   exportWorkflowAsJson: () => WorkflowJson;
   
-  // Database actions
+  // Database operations
   saveProject: (name: string, description?: string) => Promise<string | null>;
   loadProject: (projectId: string) => Promise<boolean>;
   fetchUserCredits: () => Promise<void>;
   fetchUserSubscription: () => Promise<void>;
   useCreditsForGeneration: () => Promise<boolean>;
   
-  // Generation actions
+  // API operations
   generateImageFromNodes: () => Promise<void>;
   sendWorkflowToAPI: () => Promise<any>;
-};
+}

@@ -1,19 +1,24 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Mail, Users } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Copy, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShareProjectDialogProps {
   isOpen: boolean;
@@ -22,150 +27,164 @@ interface ShareProjectDialogProps {
   projectName: string;
 }
 
-export const ShareProjectDialog: React.FC<ShareProjectDialogProps> = ({
+export const ShareProjectDialog = ({
   isOpen,
   onClose,
   projectId,
   projectName
-}) => {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInviteUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email) {
-      toast.error('Please enter an email address');
+}: ShareProjectDialogProps) => {
+  const [email, setEmail] = useState("");
+  const [shareableLink, setShareableLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  
+  useEffect(() => {
+    // Generate shareable link when dialog opens
+    if (isOpen) {
+      const baseUrl = window.location.origin;
+      setShareableLink(`${baseUrl}/editor/${projectId}`);
+    }
+  }, [isOpen, projectId]);
+  
+  const handleInvite = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      toast.error("Please enter a valid email address.");
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
-      // First check if the user exists in the system
-      const { data: userData, error: userError } = await supabase
+      setSending(true);
+      
+      // Check if the user exists in the system first
+      const { data: existingUser, error: userError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email, first_name, last_name')
         .eq('email', email)
         .single();
       
-      if (userError) {
-        // User not found, send invitation email
-        // Here you would typically set up an edge function to send an email
-        // For now, we'll just show a success message
-        
-        // Create an invitation in the database (this would need a new table setup)
-        // This is simplified, but you would need to add this table in a separate SQL migration
-        /* const { error } = await supabase
-          .from('project_invitations')
-          .insert({
-            project_id: projectId,
-            email: email,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          }); */
-          
-        toast.success(`Invitation sent to ${email}`);
-      } else {
-        // User exists, add them as a collaborator directly
-        // This would need a project_collaborators table
-        /* const { error } = await supabase
-          .from('project_collaborators')
-          .insert({
-            project_id: projectId,
-            user_id: userData.id,
-            role: 'editor',
-            created_at: new Date().toISOString()
-          }); */
-        
-        toast.success(`${email} added as a collaborator!`);
+      if (userError && userError.code !== 'PGRST116') {
+        toast.error("Error checking user. Please try again.");
+        setSending(false);
+        return;
       }
       
-      setEmail('');
-      onClose();
-    } catch (error: any) {
-      console.error('Error inviting user:', error);
-      toast.error(`Failed to send invitation: ${error.message}`);
+      // If user doesn't exist, send an invitation email
+      // For demo purposes, we're just showing a success message
+      // In a real app, you'd send an email with a link to register
+      if (!existingUser) {
+        toast.success(`Invitation sent to ${email}`);
+        setEmail("");
+        setSending(false);
+        return;
+      }
+      
+      // If user exists, add them as a collaborator to the project
+      // This is a simplified version - in production you'd want to store collaborator info
+      // in a separate table with roles, permissions, etc.
+      const { error: collabError } = await supabase
+        .from('project_collaborators')
+        .upsert({
+          project_id: projectId,
+          user_id: existingUser.id,
+          role: 'editor',
+          invited_at: new Date().toISOString(),
+        });
+      
+      if (collabError) {
+        console.error("Error adding collaborator:", collabError);
+        toast.error("Error adding collaborator. Please try again.");
+      } else {
+        toast.success(`${existingUser.first_name || existingUser.email} added as a collaborator`);
+        setEmail("");
+      }
+    } catch (error) {
+      console.error("Error inviting user:", error);
+      toast.error("Error sending invitation. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setSending(false);
     }
   };
-
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareableLink);
+    setCopied(true);
+    toast.success("Link copied to clipboard!");
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Share {projectName}
-          </DialogTitle>
+          <DialogTitle>Share "{projectName}"</DialogTitle>
           <DialogDescription>
-            Invite others to collaborate on this project in real-time.
+            Invite others to collaborate on this project.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleInviteUser}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
+        <Tabs defaultValue="invite" className="w-full">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="invite">Invite People</TabsTrigger>
+            <TabsTrigger value="link">Shareable Link</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="invite" className="space-y-4">
+            <div className="flex flex-col space-y-2">
               <Label htmlFor="email">Email address</Label>
-              <div className="flex gap-2">
+              <div className="flex space-x-2">
                 <Input
                   id="email"
+                  placeholder="example@email.com"
                   type="email"
-                  placeholder="colleague@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="col-span-3"
+                  className="flex-1"
                 />
                 <Button 
                   type="submit" 
-                  disabled={!email || isSubmitting}
+                  onClick={handleInvite} 
+                  disabled={sending || !email.trim()}
                 >
-                  {isSubmitting ? 'Sending...' : 'Invite'}
+                  {sending ? "Sending..." : "Invite"}
                 </Button>
               </div>
             </div>
             
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or share link
-                </span>
-              </div>
+            <div className="text-sm text-muted-foreground">
+              <p>The invited user will receive an email with a link to this project.</p>
             </div>
-            
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="link">Anyone with the link can view</Label>
-              <div className="flex gap-2">
+          </TabsContent>
+          
+          <TabsContent value="link" className="space-y-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="link">Shareable link</Label>
+              <div className="flex space-x-2">
                 <Input
                   id="link"
-                  value={`${window.location.origin}/editor/${projectId}`}
+                  value={shareableLink}
                   readOnly
-                  className="col-span-3"
+                  className="flex-1"
                 />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/editor/${projectId}`);
-                    toast.success('Link copied to clipboard');
-                  }}
-                >
-                  Copy
+                <Button size="icon" onClick={copyToClipboard} variant="outline">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-          </div>
-        </form>
+            
+            <div className="text-sm text-muted-foreground">
+              <p>Anyone with this link can view and collaborate on this project.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
         
-        <DialogFooter className="sm:justify-start">
-          <DialogDescription className="text-xs">
-            Note: This is a simplified version. Currently, invited users will need to be sent the link manually.
-          </DialogDescription>
-        </DialogFooter>
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -26,7 +26,7 @@ export const AppHeader = ({
   const [showShareDialog, setShowShareDialog] = React.useState(false);
   
   return (
-    <header className="flex items-center justify-between px-4 h-14 bg-[#111111] border-b border-[#2A2A2A] py-[16px]">
+    <header className="flex items-center justify-between px-4 h-14 bg-[#111111] border-b border-[#2A2A2A] py-[16px] z-20">
       <div className="flex items-center gap-2">
         {onBackToDashboard && (
           <Button 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
@@ -14,7 +14,9 @@ import {
   LayoutList,
   SquarePlus,
   FileImage,
-  Shuffle
+  Shuffle,
+  Search,
+  PlusCircle
 } from 'lucide-react';
 import {
   HoverCard,
@@ -26,6 +28,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Node } from '@xyflow/react';
 import { NodeType } from '@/store/types';
 
 type NodeOption = {
@@ -45,6 +49,7 @@ export const LeftSidebar = () => {
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
   const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Insert');
+  const [searchTerm, setSearchTerm] = useState('');
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     'Inputs': true,
     'Models': false,
@@ -202,8 +207,76 @@ export const LeftSidebar = () => {
     }
   ];
 
-  // Demo content for Outline tab (workflow components)
+  // Get nodes from the canvas
   const canvasNodes = useCanvasStore(state => state.nodes);
+  
+  // Organize nodes into hierarchical structure for the outline
+  const organizeHierarchy = (nodes: Node[]) => {
+    const rootNodes: Node[] = [];
+    const childrenMap: Record<string, Node[]> = {};
+    
+    // First pass: Identify parent-child relationships based on connections
+    const edges = useCanvasStore.getState().edges;
+    
+    edges.forEach(edge => {
+      const sourceId = edge.source;
+      const targetId = edge.target;
+      
+      if (!childrenMap[sourceId]) {
+        childrenMap[sourceId] = [];
+      }
+      
+      const targetNode = nodes.find(n => n.id === targetId);
+      if (targetNode) {
+        childrenMap[sourceId].push(targetNode);
+      }
+    });
+    
+    // Second pass: Identify root nodes (nodes that are not children of any other nodes)
+    const childIds = Object.values(childrenMap).flat().map(node => node.id);
+    
+    nodes.forEach(node => {
+      if (!childIds.includes(node.id)) {
+        rootNodes.push(node);
+      }
+    });
+    
+    return { rootNodes, childrenMap };
+  };
+
+  const renderNodeHierarchy = (node: Node, childrenMap: Record<string, Node[]>, level = 0) => {
+    const hasChildren = childrenMap[node.id] && childrenMap[node.id].length > 0;
+    const nodeType = node.type as string || '';
+    
+    return (
+      <div key={node.id} className="mb-1">
+        <div 
+          className="p-2 bg-gray-800 rounded-md flex items-center cursor-pointer hover:bg-gray-700"
+          style={{ paddingLeft: `${level * 12 + 8}px` }}
+          onClick={() => {
+            // Select the node when clicked
+            useCanvasStore.getState().setSelectedNode(node);
+          }}
+        >
+          {nodeType?.includes('model') && <Cpu className="h-4 w-4 mr-2 text-blue-400" />}
+          {nodeType?.includes('lora') && <Layers className="h-4 w-4 mr-2 text-purple-400" />}
+          {nodeType?.includes('controlnet') && <ImageIcon className="h-4 w-4 mr-2 text-green-400" />}
+          {nodeType?.includes('input') && <Type className="h-4 w-4 mr-2 text-yellow-400" />}
+          {nodeType?.includes('output') && <FileOutput className="h-4 w-4 mr-2 text-pink-400" />}
+          <span className="text-sm truncate">
+            {String(node.data.displayName || node.id)}
+          </span>
+          {hasChildren && (
+            <ChevronDown className="h-3 w-3 ml-auto text-gray-400" />
+          )}
+        </div>
+        
+        {hasChildren && childrenMap[node.id].map((childNode) => 
+          renderNodeHierarchy(childNode, childrenMap, level + 1)
+        )}
+      </div>
+    );
+  };
   
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
@@ -227,6 +300,21 @@ export const LeftSidebar = () => {
       [category]: !prev[category]
     }));
   };
+
+  // Filter nodes based on search term
+  const filterNodeOptions = (options: NodeOption[]) => {
+    if (!searchTerm) return options;
+    
+    return options.filter(option => 
+      option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      option.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+  
+  // Create a flat list of all options for search
+  const allNodeOptions = insertCategories.flatMap(category => category.options);
+  
+  const { rootNodes, childrenMap } = organizeHierarchy(canvasNodes);
   
   return (
     <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-field flex flex-col overflow-hidden transition-all duration-200">
@@ -261,28 +349,37 @@ export const LeftSidebar = () => {
         </button>
       </div>
       
+      {/* Search bar */}
+      <div className="p-2 border-b border-gray-700">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input 
+            type="text"
+            placeholder="Search components..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 bg-gray-800 border-gray-700 text-sm h-9"
+          />
+        </div>
+      </div>
+      
       <div className="flex-1 overflow-y-auto p-2 lg:p-4">
-        {/* Outline Tab - Workflow Components */}
+        {/* Outline Tab - Hierarchical Workflow Components */}
         {activeTab === 'Outline' && (
           <div>
-            <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center">
-              <LayoutList className="h-4 w-4 mr-2" />
-              <span>Workflow Components</span>
+            <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center justify-between">
+              <div className="flex items-center">
+                <LayoutList className="h-4 w-4 mr-2" />
+                <span>Workflow Components</span>
+              </div>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <PlusCircle className="h-4 w-4" />
+              </Button>
             </h3>
-            <div className="space-y-2">
-              {canvasNodes.length > 0 ? (
-                canvasNodes.map(node => (
-                  <div key={node.id} className="p-2 bg-gray-800 rounded-md flex items-center">
-                    {node.type?.includes('model') && <Cpu className="h-4 w-4 mr-2 text-blue-400" />}
-                    {node.type?.includes('lora') && <Layers className="h-4 w-4 mr-2 text-purple-400" />}
-                    {node.type?.includes('controlnet') && <ImageIcon className="h-4 w-4 mr-2 text-green-400" />}
-                    {node.type?.includes('input') && <Type className="h-4 w-4 mr-2 text-yellow-400" />}
-                    {node.type?.includes('output') && <FileOutput className="h-4 w-4 mr-2 text-pink-400" />}
-                    <span className="text-sm truncate">
-                      {String(node.data.displayName || node.id)}
-                    </span>
-                  </div>
-                ))
+            
+            <div className="space-y-1">
+              {rootNodes.length > 0 ? (
+                rootNodes.map(node => renderNodeHierarchy(node, childrenMap))
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
                   No components in workflow yet. Add some from the Insert tab.
@@ -292,75 +389,55 @@ export const LeftSidebar = () => {
           </div>
         )}
         
-        {/* Insert Tab - Node Categories */}
-        {activeTab === 'Insert' && (
-          <div className="grid grid-cols-1 gap-2">
+        {/* Insert Tab - Node Categories (with search filter) */}
+        {activeTab === 'Insert' && !searchTerm && (
+          <div className="grid grid-cols-2 gap-2">
             {insertCategories.map((category) => (
-              <Collapsible 
-                key={category.name}
-                open={openCategories[category.name]} 
-                onOpenChange={() => toggleCategory(category.name)}
-                className="w-full"
-              >
-                <div className="flex items-center">
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 flex items-center justify-center lg:justify-between bg-field hover:bg-gray-700 border-none text-white h-12 rounded-lg w-full"
-                    >
-                      <div className="flex items-center">
-                        <category.icon className="h-5 w-5 lg:mr-2" />
-                        <span className="hidden lg:inline text-sm">{category.name}</span>
-                      </div>
-                      <div className="hidden lg:flex items-center">
-                        {openCategories[category.name] ? 
-                          <ChevronDown className="h-4 w-4" /> : 
-                          <ChevronRight className="h-4 w-4" />
-                        }
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-                  
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-2 text-white hover:bg-gray-600 rounded-full h-8 w-8"
-                      >
-                        <HelpCircle className="h-4 w-4" />
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-white">
-                      <div className="space-y-2">
-                        <h4 className="text-lg font-semibold">{category.name}</h4>
-                        <p className="text-sm text-gray-300">
-                          {category.name === 'Inputs' && 'Nodes for text and image inputs.'}
-                          {category.name === 'Models' && 'Different AI models for image generation.'}
-                          {category.name === 'LoRAs' && 'Low-Rank Adaptation models for specific styles.'}
-                          {category.name === 'ControlNets' && 'Controls for guiding image generation.'}
-                          {category.name === 'Output' && 'Nodes for displaying generated results.'}
-                        </p>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
+              <div key={category.name} className="mb-4">
+                <div className="flex items-center mb-2 text-gray-300 font-medium">
+                  <category.icon className="h-4 w-4 mr-2" />
+                  <span>{category.name}</span>
                 </div>
-                
-                <CollapsibleContent className="px-2 py-2 space-y-2">
+                <div className="space-y-1 pl-1">
                   {category.options.map((option) => (
-                    <Button 
+                    <div 
                       key={option.type}
-                      variant="ghost" 
-                      className="w-full flex items-center justify-start text-white hover:bg-gray-700 h-10 pl-8"
+                      className="p-2 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700 flex items-center"
                       onClick={() => handleAddNode(option.type)}
                     >
                       <option.icon className="h-4 w-4 mr-2" />
                       <span className="text-sm">{option.label}</span>
-                    </Button>
+                    </div>
                   ))}
-                </CollapsibleContent>
-              </Collapsible>
+                </div>
+              </div>
             ))}
+          </div>
+        )}
+        
+        {/* Search Results */}
+        {activeTab === 'Insert' && searchTerm && (
+          <div className="space-y-2">
+            <h3 className="text-sm text-gray-400 mb-3">Search results for "{searchTerm}"</h3>
+            {filterNodeOptions(allNodeOptions).length > 0 ? (
+              filterNodeOptions(allNodeOptions).map((option) => (
+                <div 
+                  key={option.type}
+                  className="p-2 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700 flex items-center"
+                  onClick={() => handleAddNode(option.type)}
+                >
+                  <option.icon className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{option.label}</span>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {insertCategories.find(c => c.options.some(o => o.type === option.type))?.name}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 text-sm p-2 italic">
+                No components match your search.
+              </div>
+            )}
           </div>
         )}
         
@@ -387,28 +464,33 @@ export const LeftSidebar = () => {
                   </CollapsibleTrigger>
                   
                   <CollapsibleContent className="pl-6 space-y-2">
-                    {category.items.map((item, index) => (
-                      <div key={index}>
-                        {item.type === 'component' ? (
-                          <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
-                            <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
-                            <span className="text-sm text-gray-300">{item.name}</span>
-                          </div>
-                        ) : (
-                          <div className="mb-2">
-                            {item.image && (
-                              <div className="relative group">
-                                <img 
-                                  src={item.image} 
-                                  alt={item.name} 
-                                  className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {category.items
+                      .filter(item => 
+                        !searchTerm || 
+                        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((item, index) => (
+                        <div key={index}>
+                          {item.type === 'component' ? (
+                            <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
+                              <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
+                              <span className="text-sm text-gray-300">{item.name}</span>
+                            </div>
+                          ) : (
+                            <div className="mb-2">
+                              {item.image && (
+                                <div className="relative group">
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.name} 
+                                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                   </CollapsibleContent>
                 </Collapsible>
               </div>
