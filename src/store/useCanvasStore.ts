@@ -383,14 +383,18 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       get().edges,
       get().runwayApiKey,
       get().updateNodeData,
-      get().useCreditsForGeneration,
-      get().sendWorkflowToAPI
+      get().useCreditsForGeneration
     );
   },
 
   sendWorkflowToAPI: async () => {
+    // Create a proper WorkflowJson object
+    const workflow: WorkflowJson = {
+      ...get().exportWorkflowAsJson(),
+    };
+    
     return await sendWorkflowToAPI(
-      get().exportWorkflowAsJson(),
+      workflow,
       get().updateNodeData,
       get().nodes
     );

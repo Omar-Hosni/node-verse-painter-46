@@ -73,11 +73,10 @@ export const loadProject = async (
     }
 
     if (data && data.canvas_data) {
-      // Cast safely using type assertion after checking required properties
-      // Fix TypeScript error by correctly casting the JSON data
-      const canvasData = data.canvas_data as unknown as { nodes: Node[], edges: Edge[] };
+      // Type checking and safe casting
+      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
       
-      if (typeof canvasData !== 'object' || !canvasData || !('nodes' in canvasData) || !('edges' in canvasData)) {
+      if (!canvasData || typeof canvasData !== 'object' || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.edges)) {
         console.error('Invalid canvas data format:', canvasData);
         toast.error('Invalid canvas data format');
         return false;

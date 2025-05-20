@@ -230,7 +230,7 @@ export const RightSidebar = () => {
               {selectedNode.data.image ? (
                 <div className="relative mb-2">
                   <img 
-                    src={selectedNode.data.image}
+                    src={typeof selectedNode.data.image === 'string' ? selectedNode.data.image : ''}
                     alt="Control"
                     className="w-full h-auto rounded-md"
                   />
@@ -290,7 +290,7 @@ export const RightSidebar = () => {
                 {selectedNode.data.image ? (
                   <div className="relative mb-2">
                     <img 
-                      src={selectedNode.data.image}
+                      src={typeof selectedNode.data.image === 'string' ? selectedNode.data.image : ''}
                       alt="Input"
                       className="w-full h-auto rounded-md"
                     />
@@ -336,7 +336,7 @@ export const RightSidebar = () => {
               <div className="mb-4">
                 <p className="text-sm text-gray-300 mb-2">Generated Image</p>
                 <img 
-                  src={selectedNode.data.image}
+                  src={typeof selectedNode.data.image === 'string' ? selectedNode.data.image : ''}
                   alt="Generated"
                   className="w-full h-auto rounded-md"
                 />
@@ -392,7 +392,7 @@ export const RightSidebar = () => {
     if (!selectedNode?.data) return "#666666";
     
     // If node has color property in its data
-    if (selectedNode.data.color) {
+    if (selectedNode.data.color && typeof selectedNode.data.color === 'string') {
       return selectedNode.data.color;
     }
     
@@ -439,8 +439,13 @@ export const RightSidebar = () => {
                   className="w-4 h-4 rounded-full mr-2"
                   style={{ backgroundColor: getNodeColor() }}
                 />
-                <h2 className="text-lg font-medium text-white truncate" title={selectedNode.data?.displayName || selectedNode.id}>
-                  {selectedNode.data?.displayName || selectedNode.id}
+                <h2 className="text-lg font-medium text-white truncate" 
+                    title={selectedNode.data?.displayName && typeof selectedNode.data.displayName === 'string' 
+                      ? selectedNode.data.displayName 
+                      : selectedNode.id}>
+                  {selectedNode.data?.displayName && typeof selectedNode.data.displayName === 'string'
+                    ? selectedNode.data.displayName
+                    : selectedNode.id}
                 </h2>
               </div>
               

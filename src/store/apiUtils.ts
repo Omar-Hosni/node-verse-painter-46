@@ -103,8 +103,21 @@ export const generateImage = async (
     
     toast.success('Image generation initiated...');
     
-    // Send workflow to API - implemented in sendWorkflowToAPI function below
-    await sendWorkflowToAPI({ nodes, edges }, updateNodeData, nodes);
+    // Create a proper WorkflowJson object
+    const workflowJson: WorkflowJson = {
+      nodes,
+      edges,
+      version: '1.0.0',
+      settings: {
+        autoLayout: false,
+        snapToGrid: true,
+        gridSize: 15,
+        theme: 'dark'
+      }
+    };
+    
+    // Send workflow to API
+    await sendWorkflowToAPI(workflowJson, updateNodeData, nodes);
     
   } catch (error: any) {
     console.error('Error generating image:', error);
