@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { toPNG, toSVG } from '@xyflow/react';
+import { exportToSVG, exportToPNG } from '@xyflow/react';
 import { 
   Copy, 
   Download, 
@@ -12,26 +12,15 @@ import {
   Undo, 
   Redo, 
   Scissors, 
-  ClipboardPaste, 
+  Paste, 
   Image,
   FileJson,
   Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { WorkflowJson } from '@/store/types';
-import { ShareProjectDialog } from './ShareProjectDialog';
-import { ApiKeyModal } from './ApiKeyModal';
-
-// Helper function to download JSON file
-const downloadObjectAsJson = (exportObj: object, exportName: string) => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", exportName + ".json");
-  document.body.appendChild(downloadAnchorNode);
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-};
+import { downloadObjectAsJson } from '@/store/workflowUtils';
+import ShareProjectDialog from './ShareProjectDialog';
+import ApiKeyModal from './ApiKeyModal';
 
 export default function Toolbar() {
   const [shareOpen, setShareOpen] = useState(false);
@@ -56,14 +45,14 @@ export default function Toolbar() {
   } = useCanvasStore();
   
   const handleExportPNG = () => {
-    toPNG({
+    exportToPNG({
       fileName: 'workflow-export',
     });
     toast.success('Exported as PNG');
   };
   
   const handleExportSVG = () => {
-    toSVG({
+    exportToSVG({
       fileName: 'workflow-export',
     });
     toast.success('Exported as SVG');
@@ -160,7 +149,7 @@ export default function Toolbar() {
           title="Paste"
           className="bg-gray-800/70 text-white hover:bg-gray-700 rounded-md"
         >
-          <ClipboardPaste className="h-4 w-4" />
+          <Paste className="h-4 w-4" />
         </Button>
         <Button 
           variant="ghost" 
