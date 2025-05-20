@@ -51,6 +51,17 @@ export interface HistoryState {
   edges: Edge[];
 }
 
+export interface UserCredits {
+  amount: number;
+  last_updated: string;
+}
+
+export interface UserSubscription {
+  tier: string;
+  status: string;
+  expires_at?: string;
+}
+
 export interface CanvasState {
   nodes: Node[];
   edges: Edge[];

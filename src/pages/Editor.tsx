@@ -72,12 +72,24 @@ const Editor = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    // Get current user's profile data
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('first_name, last_name, avatar_url, email')
-      .eq('id', user.id)
-      .single();
+    // Get current user's profile data - protect against missing 'profiles' table
+    let firstName = '';
+    let lastName = '';
+    let avatarUrl = '';
+    
+    try {
+      const { data: profile } = await supabase
+        .rpc('get_profile_data', { user_id_param: user.id })
+        .single();
+      
+      if (profile) {
+        firstName = profile.first_name || '';
+        lastName = profile.last_name || '';
+        avatarUrl = profile.avatar_url || '';
+      }
+    } catch (error) {
+      console.log('No profile data found, using default values');
+    }
     
     // Set up presence channel for this project
     const channel = supabase.channel(`project:${projectId}`, {
@@ -116,9 +128,9 @@ const Editor = () => {
         // Track the user's presence once connected
         await channel.track({
           email: user.email || '',
-          first_name: profile?.first_name || '',
-          last_name: profile?.last_name || '',
-          avatar_url: profile?.avatar_url || '',
+          first_name: firstName,
+          last_name: lastName,
+          avatar_url: avatarUrl,
         });
       });
 

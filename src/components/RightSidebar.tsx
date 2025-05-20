@@ -88,7 +88,7 @@ export const RightSidebar = () => {
                   <Input 
                     type="text" 
                     placeholder="Model Name" 
-                    value={selectedNode.data.modelName?.toString() || ''} 
+                    value={String(selectedNode.data.modelName || '')} 
                     onChange={e => updateNodeData(selectedNode.id, {
                       modelName: e.target.value
                     })} 
@@ -153,7 +153,7 @@ export const RightSidebar = () => {
                   <Label className="text-sm text-gray-400">Prompt</Label>
                   <Textarea 
                     placeholder="Enter your prompt here" 
-                    value={selectedNode.data.prompt?.toString() || ''} 
+                    value={String(selectedNode.data.prompt || '')} 
                     onChange={e => updateNodeData(selectedNode.id, {
                       prompt: e.target.value
                     })} 
@@ -165,7 +165,7 @@ export const RightSidebar = () => {
                   <Label className="text-sm text-gray-400">Negative Prompt</Label>
                   <Textarea 
                     placeholder="Enter your negative prompt here" 
-                    value={selectedNode.data.negativePrompt?.toString() || ''} 
+                    value={String(selectedNode.data.negativePrompt || '')} 
                     onChange={e => updateNodeData(selectedNode.id, {
                       negativePrompt: e.target.value
                     })} 

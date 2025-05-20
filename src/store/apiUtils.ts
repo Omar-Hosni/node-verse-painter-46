@@ -75,7 +75,11 @@ export const uploadInputImage = async (
   }
 };
 
-export const sendWorkflowToAPI = async (workflowJson: WorkflowJson, updateNodeData: (nodeId: string, newData: any) => void, nodes: Node[]) => {
+export const sendWorkflowToAPI = async (
+  workflowJson: any,
+  updateNodeData: (nodeId: string, data: any) => void,
+  nodes: any[]
+) => {
   try {
     // Send to local API
     const response = await fetch('http://localhost:8000/generate', {
@@ -108,12 +112,12 @@ export const sendWorkflowToAPI = async (workflowJson: WorkflowJson, updateNodeDa
 };
 
 export const generateImage = async (
-  nodes: Node[],
+  nodes: any[],
   edges: any[],
-  runwayApiKey: string | null,
-  updateNodeData: (nodeId: string, newData: any) => void,
+  apiKey: string | null,
+  updateNodeData: (nodeId: string, data: any) => void,
   useCreditsForGeneration: () => Promise<boolean>,
-  sendWorkflowToAPI: () => Promise<boolean>
+  sendWorkflowToAPI: () => Promise<any>
 ) => {
   const modelNode = nodes.find(n => n.type === 'modelNode');
   if (!modelNode) {
@@ -121,7 +125,7 @@ export const generateImage = async (
     return;
   }
 
-  if (!runwayApiKey) {
+  if (!apiKey) {
     toast.error("Runware API key not set! Please set your API key in the settings.");
     return;
   }
@@ -152,7 +156,7 @@ export const generateImage = async (
     toast.info("Preparing image generation...");
     
     // Get RunwareService instance
-    const runwareService = getRunwareService(runwayApiKey);
+    const runwareService = getRunwareService(apiKey);
     
     // Check if all ControlNet nodes with images have their images already uploaded
     for (const node of controlNetNodes) {

@@ -45,6 +45,12 @@ type NodeCategory = {
   options: NodeOption[];
 };
 
+type AssetItem = {
+  name: string;
+  type: string;
+  image?: string;
+};
+
 export const LeftSidebar = () => {
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
@@ -181,7 +187,7 @@ export const LeftSidebar = () => {
         { name: 'Component 1', type: 'component' },
         { name: 'Component 2', type: 'component' },
         { name: 'Untitled Component', type: 'component' },
-      ]
+      ] as AssetItem[]
     },
     {
       name: 'Renders',
@@ -193,7 +199,7 @@ export const LeftSidebar = () => {
         { name: 'Render 4', image: 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb', type: 'render' },
         { name: 'Render 5', image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22', type: 'render' },
         { name: 'Render 6', image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901', type: 'render' },
-      ]
+      ] as AssetItem[]
     },
     {
       name: 'Uploaded',
@@ -203,7 +209,7 @@ export const LeftSidebar = () => {
         { name: 'Upload 2', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475', type: 'upload' },
         { name: 'Upload 3', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5', type: 'upload' },
         { name: 'Upload 4', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158', type: 'upload' },
-      ]
+      ] as AssetItem[]
     }
   ];
 
