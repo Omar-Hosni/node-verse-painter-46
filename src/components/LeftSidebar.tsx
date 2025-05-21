@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -421,150 +422,152 @@ export const LeftSidebar = () => {
         </div>
       </div>
       
-      {/* Scrollable content area - all tab content now wrapped in ScrollArea */}
-      <ScrollArea className="flex-1 p-2 lg:p-4">
-        {/* Outline Tab - Hierarchical Workflow Components */}
-        {activeTab === 'Outline' && (
-          <div>
-            <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center justify-between">
-              <div className="flex items-center">
-                <LayoutList className="h-4 w-4 mr-2" />
-                <span className="font-medium">Workflow Components</span>
+      {/* Scrollable content area */}
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="p-2 lg:p-4">
+          {/* Outline Tab - Hierarchical Workflow Components */}
+          {activeTab === 'Outline' && (
+            <div>
+              <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center justify-between">
+                <div className="flex items-center">
+                  <LayoutList className="h-4 w-4 mr-2" />
+                  <span className="font-medium">Workflow Components</span>
+                </div>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-700">
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              </h3>
+              
+              <div className="space-y-1 mt-4">
+                {topLevelNodes.length > 0 ? (
+                  topLevelNodes.map(node => renderNode(node, parentToChildrenMap))
+                ) : (
+                  <div className="text-gray-500 text-sm p-2 italic">
+                    No components in workflow yet. Add some from the Insert tab.
+                  </div>
+                )}
               </div>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-700">
-                <PlusCircle className="h-4 w-4" />
-              </Button>
-            </h3>
-            
-            <div className="space-y-1 mt-4">
-              {topLevelNodes.length > 0 ? (
-                topLevelNodes.map(node => renderNode(node, parentToChildrenMap))
+            </div>
+          )}
+          
+          {/* Insert Tab - Node Categories */}
+          {activeTab === 'Insert' && !searchTerm && (
+            <div className="space-y-8">
+              {insertCategories.map((category) => (
+                <div key={category.name} className="mb-8">
+                  <div className="node-category-title">
+                    <category.icon className="h-4 w-4 mr-2" />
+                    <span>{category.name}</span>
+                  </div>
+                  <div className="flex flex-col space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {category.options.map((option) => (
+                        <div 
+                          key={option.type}
+                          onClick={() => handleAddNode(option.type)}
+                          className="node-option p-3 cursor-pointer"
+                        >
+                          <div className="flex flex-col items-center">
+                            <div className="node-option-icon mb-2">
+                              <option.icon className="h-6 w-6 text-blue-400" />
+                            </div>
+                            <span className="text-sm text-center font-medium text-white tracking-tight">{option.label}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Search Results */}
+          {activeTab === 'Insert' && searchTerm && (
+            <div className="space-y-2">
+              <h3 className="text-sm text-gray-400 mb-3">Search results for "{searchTerm}"</h3>
+              {filterNodeOptions(allNodeOptions).length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {filterNodeOptions(allNodeOptions).map((option) => (
+                    <div 
+                      key={option.type}
+                      onClick={() => handleAddNode(option.type)}
+                      className="node-option p-3 cursor-pointer"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="node-option-icon mb-2">
+                          <option.icon className="h-5 w-5 text-blue-400" />
+                        </div>
+                        <span className="text-xs text-center font-medium text-white">{option.label}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-gray-500 text-sm p-2 italic">
-                  No components in workflow yet. Add some from the Insert tab.
+                  No components match your search.
                 </div>
               )}
             </div>
-          </div>
-        )}
-        
-        {/* Insert Tab - Node Categories */}
-        {activeTab === 'Insert' && !searchTerm && (
-          <div className="space-y-8">
-            {insertCategories.map((category) => (
-              <div key={category.name} className="mb-8">
-                <div className="node-category-title">
-                  <category.icon className="h-4 w-4 mr-2" />
-                  <span>{category.name}</span>
-                </div>
-                <div className="flex flex-col space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {category.options.map((option) => (
-                      <div 
-                        key={option.type}
-                        onClick={() => handleAddNode(option.type)}
-                        className="node-option p-3 cursor-pointer"
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="node-option-icon mb-2">
-                            <option.icon className="h-6 w-6 text-blue-400" />
-                          </div>
-                          <span className="text-sm text-center font-medium text-white tracking-tight">{option.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* Search Results */}
-        {activeTab === 'Insert' && searchTerm && (
-          <div className="space-y-2">
-            <h3 className="text-sm text-gray-400 mb-3">Search results for "{searchTerm}"</h3>
-            {filterNodeOptions(allNodeOptions).length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {filterNodeOptions(allNodeOptions).map((option) => (
-                  <div 
-                    key={option.type}
-                    onClick={() => handleAddNode(option.type)}
-                    className="node-option p-3 cursor-pointer"
+          )}
+          
+          {/* Assets Tab - Images and Components */}
+          {activeTab === 'Assets' && (
+            <div className="space-y-6">
+              {assetCategories.map((category) => (
+                <div key={category.name}>
+                  <Collapsible 
+                    open={openCategories[category.name]} 
+                    onOpenChange={() => toggleCategory(category.name)}
                   >
-                    <div className="flex flex-col items-center">
-                      <div className="node-option-icon mb-2">
-                        <option.icon className="h-5 w-5 text-blue-400" />
+                    <CollapsibleTrigger className="flex items-center w-full text-left mb-2">
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <span className="text-blue-400">
+                          {openCategories[category.name] ? 
+                            <ChevronDown className="h-4 w-4" /> : 
+                            <ChevronRight className="h-4 w-4" />
+                          }
+                        </span>
+                        <category.icon className="h-4 w-4" />
+                        <span className="font-medium">{category.name}</span>
                       </div>
-                      <span className="text-xs text-center font-medium text-white">{option.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 text-sm p-2 italic">
-                No components match your search.
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Assets Tab - Images and Components */}
-        {activeTab === 'Assets' && (
-          <div className="space-y-6">
-            {assetCategories.map((category) => (
-              <div key={category.name}>
-                <Collapsible 
-                  open={openCategories[category.name]} 
-                  onOpenChange={() => toggleCategory(category.name)}
-                >
-                  <CollapsibleTrigger className="flex items-center w-full text-left mb-2">
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <span className="text-blue-400">
-                        {openCategories[category.name] ? 
-                          <ChevronDown className="h-4 w-4" /> : 
-                          <ChevronRight className="h-4 w-4" />
-                        }
-                      </span>
-                      <category.icon className="h-4 w-4" />
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent className="pl-6 space-y-2">
-                    {category.items
-                      .filter(item => 
-                        !searchTerm || 
-                        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((item, index) => (
-                        <div key={index}>
-                          {item.type === 'component' ? (
-                            <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
-                              <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
-                              <span className="text-sm text-gray-300">{item.name}</span>
-                            </div>
-                          ) : (
-                            <div className="mb-2">
-                              {item.image && (
-                                <div className="relative group">
-                                  <img 
-                                    src={item.image} 
-                                    alt={item.name} 
-                                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            ))}
-          </div>
-        )}
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent className="pl-6 space-y-2">
+                      {category.items
+                        .filter(item => 
+                          !searchTerm || 
+                          item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((item, index) => (
+                          <div key={index}>
+                            {item.type === 'component' ? (
+                              <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
+                                <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
+                                <span className="text-sm text-gray-300">{item.name}</span>
+                              </div>
+                            ) : (
+                              <div className="mb-2">
+                                {item.image && (
+                                  <div className="relative group">
+                                    <img 
+                                      src={item.image} 
+                                      alt={item.name} 
+                                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </ScrollArea>
     </div>
   );

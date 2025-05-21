@@ -341,14 +341,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
   
-  // Fix the loadProject function to match the signature in the API
+  // Fixed loadProject function to match the signature in dbUtils.ts
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes) => set({ nodes }), // Fix: Make sure this accepts nodes parameter
-      (edges) => set({ edges }), // Fix: Make sure this accepts edges parameter
+      (nodes: Node[]) => set({ nodes }), 
+      (edges: Edge[]) => set({ edges }), 
       get().setSelectedNode,
-      (history) => set({
+      (history: HistoryState) => set({
         history: [history],
         historyIndex: 0,
       }),
