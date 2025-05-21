@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -422,8 +421,8 @@ export const LeftSidebar = () => {
         </div>
       </div>
       
-      {/* Scrollable content area */}
-      <ScrollArea className="flex-1 overflow-y-auto">
+      {/* Scrollable content area - making sure it takes remaining height */}
+      <ScrollArea className="flex-1">
         <div className="p-2 lg:p-4">
           {/* Outline Tab - Hierarchical Workflow Components */}
           {activeTab === 'Outline' && (
@@ -455,7 +454,7 @@ export const LeftSidebar = () => {
             <div className="space-y-8">
               {insertCategories.map((category) => (
                 <div key={category.name} className="mb-8">
-                  <div className="node-category-title">
+                  <div className="node-category-title flex items-center mb-2">
                     <category.icon className="h-4 w-4 mr-2" />
                     <span>{category.name}</span>
                   </div>
@@ -465,7 +464,7 @@ export const LeftSidebar = () => {
                         <div 
                           key={option.type}
                           onClick={() => handleAddNode(option.type)}
-                          className="node-option p-3 cursor-pointer"
+                          className="node-option bg-gray-800 p-3 rounded-md cursor-pointer hover:bg-gray-700 transition-colors"
                         >
                           <div className="flex flex-col items-center">
                             <div className="node-option-icon mb-2">
