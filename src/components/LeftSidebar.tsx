@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -30,6 +29,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Node } from '@xyflow/react';
 import { NodeType } from '@/store/types';
 
@@ -243,62 +243,48 @@ export const LeftSidebar = () => {
   };
   
   /**
-   * Hierarchical organization logic:
-   * - ControlNet nodes are considered top-level parents
-   * - Any node that connects TO a ControlNet node is considered its child
-   * - Other nodes without this relationship are considered top-level
+   * Enhanced hierarchical organization logic:
+   * - Builds a complete dependency tree based on edge connections
+   * - Any node that receives connections from other nodes is considered a parent
+   * - This creates a natural hierarchy based on dataflow in the canvas
    */
   const organizeHierarchy = () => {
-    // First identify which nodes are ControlNet nodes
-    const controlNetNodes = canvasNodes.filter(node => 
-      node.type === 'controlnetNode' || 
-      (node.data && node.data.controlNetType)
-    );
-    
-    // Create mapping of node IDs to their parent ControlNet (if any)
-    const childToParentMap: Record<string, string> = {};
-    
-    // Map all nodes that are connected TO controlnet nodes
-    canvasEdges.forEach(edge => {
-      const targetNode = canvasNodes.find(n => n.id === edge.target);
-      const sourceNode = canvasNodes.find(n => n.id === edge.source);
-      
-      if (targetNode && sourceNode) {
-        // If target is a controlnet, source is its child
-        if (targetNode.type === 'controlnetNode' || (targetNode.data && targetNode.data.controlNetType)) {
-          childToParentMap[sourceNode.id] = targetNode.id;
-        }
-      }
-    });
-    
-    // Create parent to children mapping
+    // Create a map of target nodes to source nodes (parents to children)
     const parentToChildrenMap: Record<string, Node[]> = {};
     
-    Object.entries(childToParentMap).forEach(([childId, parentId]) => {
-      if (!parentToChildrenMap[parentId]) {
-        parentToChildrenMap[parentId] = [];
-      }
+    // Create a set to track nodes that are children of other nodes
+    const childrenSet = new Set<string>();
+    
+    // Build the parent-child relationships based on edge connections
+    canvasEdges.forEach(edge => {
+      const sourceNode = canvasNodes.find(n => n.id === edge.source);
+      const targetNode = canvasNodes.find(n => n.id === edge.target);
       
-      const childNode = canvasNodes.find(n => n.id === childId);
-      if (childNode) {
-        parentToChildrenMap[parentId].push(childNode);
+      if (sourceNode && targetNode) {
+        // Add source as child of target (target is parent)
+        if (!parentToChildrenMap[targetNode.id]) {
+          parentToChildrenMap[targetNode.id] = [];
+        }
+        
+        // Only add if not already added
+        if (!parentToChildrenMap[targetNode.id].some(n => n.id === sourceNode.id)) {
+          parentToChildrenMap[targetNode.id].push(sourceNode);
+        }
+        
+        childrenSet.add(sourceNode.id);
       }
     });
     
-    // Identify top-level nodes (including controlnets and nodes not connected to controlnets)
-    const topLevelNodes = canvasNodes.filter(node => {
-      // Node is not a child of any controlnet
-      return !childToParentMap[node.id];
-    });
+    // Find top-level nodes (nodes that are not children of any other node)
+    const topLevelNodes = canvasNodes.filter(node => !childrenSet.has(node.id));
     
-    return { topLevelNodes, parentToChildrenMap, childToParentMap };
+    return { topLevelNodes, parentToChildrenMap };
   };
   
   // Render a node and its children
   const renderNode = (node: Node, parentToChildrenMap: Record<string, Node[]>, level: number = 0) => {
     const nodeId = node.id;
-    const isControlNet = node.type === 'controlnetNode' || (node.data && node.data.controlNetType);
-    const hasChildren = isControlNet && parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId].length > 0;
+    const hasChildren = parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId].length > 0;
     const isExpanded = expandedNodes[nodeId] !== false; // Default to expanded
     
     return (
@@ -435,7 +421,8 @@ export const LeftSidebar = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-2 lg:p-4 scroll-smooth">
+      {/* Scrollable content area - all tab content now wrapped in ScrollArea */}
+      <ScrollArea className="flex-1 p-2 lg:p-4">
         {/* Outline Tab - Hierarchical Workflow Components */}
         {activeTab === 'Outline' && (
           <div>
@@ -578,7 +565,7 @@ export const LeftSidebar = () => {
             ))}
           </div>
         )}
-      </div>
+      </ScrollArea>
     </div>
   );
 };
