@@ -73,17 +73,23 @@ export const loadProject = async (
     }
 
     if (data && data.canvas_data) {
-      // Type checking and safe casting
-      const canvasData = data.canvas_data as { nodes: Node[], edges: Edge[] };
+      // Fix: Add type assertion and validation
+      const canvasData = data.canvas_data as unknown;
       
-      if (!canvasData || typeof canvasData !== 'object' || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.edges)) {
+      // Type guard to verify the shape of the data
+      if (!canvasData || typeof canvasData !== 'object' || 
+          !('nodes' in canvasData) || !('edges' in canvasData) ||
+          !Array.isArray((canvasData as any).nodes) || 
+          !Array.isArray((canvasData as any).edges)) {
         console.error('Invalid canvas data format:', canvasData);
         toast.error('Invalid canvas data format');
         return false;
       }
-
-      const nodes = canvasData.nodes;
-      const edges = canvasData.edges;
+      
+      // Now TypeScript knows this is safe
+      const typedCanvasData = canvasData as { nodes: Node[], edges: Edge[] };
+      const nodes = typedCanvasData.nodes;
+      const edges = typedCanvasData.edges;
       
       // Reset node ID counter to avoid duplicate IDs
       resetNodeIdCounterFunc();
