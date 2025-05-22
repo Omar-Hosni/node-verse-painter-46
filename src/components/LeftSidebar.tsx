@@ -421,8 +421,8 @@ export const LeftSidebar = () => {
         </div>
       </div>
       
-      {/* Scrollable content area - making sure it takes remaining height */}
-      <ScrollArea className="flex-1">
+      {/* Scrollable content area - implementing the user's solution */}
+      <ScrollArea className="h-[calc(90vh-112px)] overflow-y-auto">
         <div className="p-2 lg:p-4">
           {/* Outline Tab - Hierarchical Workflow Components */}
           {activeTab === 'Outline' && (
