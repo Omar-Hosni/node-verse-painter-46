@@ -43,6 +43,8 @@ import {
 
 import { exportWorkflowAsJson as exportJson } from './workflowUtils';
 
+import { ToolType } from '@/components/Toolbar';
+
 export * from './types';
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -59,6 +61,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   isLocalUpdate: false,
   externalUpdateInProgress: false,
   collaborators: [],
+  activeTool: 'select' as ToolType,
+  
+  // Set active tool
+  setActiveTool: (tool: ToolType) => {
+    set({ activeTool: tool });
+  },
   
   // Real-time collaboration helpers
   setIsLocalUpdate: (isLocal: boolean) => {

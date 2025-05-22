@@ -1,5 +1,6 @@
 
 import { Node, Edge } from '@xyflow/react';
+import { ToolType } from '@/components/Toolbar';
 
 export type NodeType = 
   | 'input-text' 
@@ -76,6 +77,10 @@ export interface CanvasState {
   isLocalUpdate: boolean;
   externalUpdateInProgress: boolean;
   collaborators: Collaborator[];
+  activeTool: ToolType;
+  
+  // Tool selection
+  setActiveTool: (tool: ToolType) => void;
   
   // Helper functions for real-time collaboration
   setIsLocalUpdate: (isLocal: boolean) => void;
