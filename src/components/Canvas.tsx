@@ -11,6 +11,7 @@ import {
   ConnectionLineType,
   Node,
   XYPosition,
+  SelectionMode,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -387,7 +388,7 @@ export const Canvas = () => {
         panOnScroll={activeTool === 'hand'}
         panOnDrag={activeTool === 'hand' || activeTool === 'select'}
         selectionOnDrag={activeTool === 'select'}
-        selectionMode={activeTool === 'frame' ? 'full' : 'partial'}
+        selectionMode={activeTool === 'frame' ? SelectionMode.Full : SelectionMode.Partial}
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />

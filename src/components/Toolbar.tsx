@@ -23,14 +23,14 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame';
 
 export const Toolbar = () => {
-  const [activeTool, setActiveTool] = useState<ToolType>('select');
+  // Use the store's active tool state instead of local state
+  const activeTool = useCanvasStore(state => state.activeTool);
   const addNode = useCanvasStore(state => state.addNode);
-  const setActiveTool = useCanvasStore(state => state.setActiveTool);
+  const setToolFromStore = useCanvasStore(state => state.setActiveTool);
   const reactFlowInstance = useReactFlow();
   
   const handleToolChange = (tool: ToolType) => {
-    setActiveTool(tool);
-    useCanvasStore.getState().setActiveTool(tool);
+    setToolFromStore(tool);
   };
   
   const handleAddShape = (type: 'circle' | 'rectangle' | 'text' | 'frame') => {
