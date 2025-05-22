@@ -18,19 +18,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-
-export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame';
 
 export const Toolbar = () => {
-  // Use the store's active tool state instead of local state
-  const activeTool = useCanvasStore(state => state.activeTool);
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame'>('select');
   const addNode = useCanvasStore(state => state.addNode);
-  const setToolFromStore = useCanvasStore(state => state.setActiveTool);
   const reactFlowInstance = useReactFlow();
   
-  const handleToolChange = (tool: ToolType) => {
-    setToolFromStore(tool);
+  const handleToolChange = (tool: typeof activeTool) => {
+    setActiveTool(tool);
   };
   
   const handleAddShape = (type: 'circle' | 'rectangle' | 'text' | 'frame') => {
@@ -61,136 +56,139 @@ export const Toolbar = () => {
     <>
       {/* Bottom toolbar */}
       <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-10">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                size="icon" 
-                variant={activeTool === 'select' ? "default" : "ghost"}
-                className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('select')}
-              >
-                <MousePointer className="h-4 w-4 text-white" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Select (V)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                size="icon" 
-                variant={activeTool === 'hand' ? "default" : "ghost"} 
-                className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('hand')}
-              >
-                <Hand className="h-4 w-4 text-white" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Hand Tool (H)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="rounded-full hover:bg-gray-700"
-                onClick={() => reactFlowInstance.zoomIn()}
-              >
-                <ZoomIn className="h-4 w-4 text-white" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zoom In (+)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="rounded-full hover:bg-gray-700"
-                onClick={() => reactFlowInstance.zoomOut()}
-              >
-                <ZoomOut className="h-4 w-4 text-white" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zoom Out (-)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button 
+          size="icon" 
+          variant={activeTool === 'select' ? "default" : "ghost"}
+          className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => handleToolChange('select')}
+        >
+          <MousePointer className="h-4 w-4 text-white" />
+        </Button>
+        <Button 
+          size="icon" 
+          variant={activeTool === 'hand' ? "default" : "ghost"} 
+          className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => handleToolChange('hand')}
+        >
+          <Hand className="h-4 w-4 text-white" />
+        </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="rounded-full hover:bg-gray-700"
+        >
+          <ZoomIn className="h-4 w-4 text-white" />
+        </Button>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="rounded-full hover:bg-gray-700"
+        >
+          <ZoomOut className="h-4 w-4 text-white" />
+        </Button>
       </div>
       
       {/* Top center shape tools */}
       <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'rectangle' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('rectangle')}
+            >
+              <RectangleHorizontal className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
               <Button 
-                size="icon" 
-                variant={activeTool === 'rectangle' ? "default" : "ghost"}
-                className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('rectangle')}
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('rectangle')}
               >
-                <RectangleHorizontal className="h-4 w-4 text-white" />
+                <RectangleHorizontal className="h-4 w-4 mr-2" />
+                Rectangle
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Rectangle (R)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </PopoverContent>
+        </Popover>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'circle' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('circle')}
+            >
+              <CircleIcon className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
               <Button 
-                size="icon" 
-                variant={activeTool === 'circle' ? "default" : "ghost"}
-                className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('circle')}
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('circle')}
               >
-                <CircleIcon className="h-4 w-4 text-white" />
+                <CircleIcon className="h-4 w-4 mr-2" />
+                Circle
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Circle (O)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </PopoverContent>
+        </Popover>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'text' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('text')}
+            >
+              <Text className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
               <Button 
-                size="icon" 
-                variant={activeTool === 'text' ? "default" : "ghost"}
-                className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('text')}
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('text')}
               >
-                <Text className="h-4 w-4 text-white" />
+                <Text className="h-4 w-4 mr-2" />
+                Text Input
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Text (T)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </PopoverContent>
+        </Popover>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'frame' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('frame')}
+            >
+              <Frame className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
               <Button 
-                size="icon" 
-                variant={activeTool === 'frame' ? "default" : "ghost"}
-                className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-                onClick={() => handleToolChange('frame')}
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => handleAddShape('frame')}
               >
-                <Frame className="h-4 w-4 text-white" />
+                <Frame className="h-4 w-4 mr-2" />
+                Frame
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Frame (F)</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </>
   );

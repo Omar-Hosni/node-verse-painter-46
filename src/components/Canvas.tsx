@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+
+import React, { useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   NodeTypes,
@@ -9,9 +10,6 @@ import {
   Background,
   Panel,
   ConnectionLineType,
-  Node,
-  XYPosition,
-  SelectionMode,
 } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
@@ -24,8 +22,6 @@ import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { NodeType } from '@/store/types';
-import { ToolType } from './Toolbar';
 
 import '@xyflow/react/dist/style.css';
 
@@ -65,14 +61,10 @@ export const Canvas = () => {
     sendWorkflowToAPI,
     setExternalUpdateInProgress,
     updateCanvasFromExternalSource,
-    addNode,
-    activeTool,
   } = useCanvasStore();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPosition, setStartPosition] = useState<XYPosition | null>(null);
   
   // Add real-time subscriptions
   useEffect(() => {
@@ -124,84 +116,19 @@ export const Canvas = () => {
   }, [projectId, setExternalUpdateInProgress, updateCanvasFromExternalSource]);
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
-    if (activeTool === 'select') {
-      setSelectedNode(node);
-      setSelectedEdge(null);
-    }
-  }, [setSelectedNode, setSelectedEdge, activeTool]);
+    setSelectedNode(node);
+    setSelectedEdge(null);
+  }, [setSelectedNode, setSelectedEdge]);
 
   const onEdgeClick = useCallback((event: React.MouseEvent, edge: any) => {
-    if (activeTool === 'select') {
-      setSelectedNode(null);
-      setSelectedEdge(edge);
-    }
-  }, [setSelectedNode, setSelectedEdge, activeTool]);
+    setSelectedNode(null);
+    setSelectedEdge(edge);
+  }, [setSelectedNode, setSelectedEdge]);
 
   const onPaneClick = useCallback(() => {
-    if (activeTool === 'select') {
-      setSelectedNode(null);
-      setSelectedEdge(null);
-    }
-  }, [setSelectedNode, setSelectedEdge, activeTool]);
-  
-  const handlePaneMouseDown = useCallback((event: React.MouseEvent) => {
-    if (activeTool !== 'select' && activeTool !== 'hand') {
-      setIsDrawing(true);
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY
-      });
-      setStartPosition(position);
-    }
-  }, [activeTool, reactFlowInstance]);
-  
-  const handlePaneMouseUp = useCallback((event: React.MouseEvent) => {
-    if (isDrawing && startPosition) {
-      setIsDrawing(false);
-      
-      const endPosition = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY
-      });
-      
-      // Only create node if the user has dragged a bit (not just clicked)
-      const distance = Math.sqrt(
-        Math.pow(endPosition.x - startPosition.x, 2) + 
-        Math.pow(endPosition.y - startPosition.y, 2)
-      );
-      
-      if (distance > 10) { // Minimum drag distance
-        // Map tool to node types
-        const nodeTypeMap: Record<ToolType, NodeType | null> = {
-          'select': null,
-          'hand': null,
-          'circle': 'controlnet-pose',
-          'rectangle': 'controlnet-canny',
-          'text': 'input-text',
-          'frame': 'output-preview'
-        };
-        
-        const nodeType = nodeTypeMap[activeTool];
-        
-        if (nodeType) {
-          // Calculate the center position for the node
-          const position = {
-            x: Math.min(startPosition.x, endPosition.x),
-            y: Math.min(startPosition.y, endPosition.y)
-          };
-          
-          addNode(nodeType, position);
-          toast.success(`Created ${activeTool} shape`);
-        }
-      }
-      
-      setStartPosition(null);
-    }
-  }, [isDrawing, startPosition, activeTool, addNode, reactFlowInstance]);
-  
-  const handlePaneMouseMove = useCallback((event: React.MouseEvent) => {
-    // Drawing preview could be added here in the future
-  }, []);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  }, [setSelectedNode, setSelectedEdge]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -253,39 +180,10 @@ export const Canvas = () => {
           toast.info('Redo action');
           break;
       }
-    } else {
-      // Shape creation keyboard shortcuts
-      switch (key.toLowerCase()) {
-        case 'v': // Select tool
-          useCanvasStore.getState().setActiveTool('select');
-          break;
-        case 'h': // Hand tool
-          useCanvasStore.getState().setActiveTool('hand');
-          break;
-        case 'r': // Rectangle
-          useCanvasStore.getState().setActiveTool('rectangle');
-          break;
-        case 'o': // Circle (O for oval)
-          useCanvasStore.getState().setActiveTool('circle');
-          break;
-        case 't': // Text
-          useCanvasStore.getState().setActiveTool('text');
-          break;
-        case 'f': // Frame
-          useCanvasStore.getState().setActiveTool('frame');
-          break;
-        case 'delete': // Delete
-        case 'backspace': // Delete/Backspace
-          deleteSelectedNode();
-          toast.info('Node deleted');
-          break;
-        case '+': // Zoom in
-          reactFlowInstance.zoomIn();
-          break;
-        case '-': // Zoom out
-          reactFlowInstance.zoomOut();
-          break;
-      }
+    } else if (key === 'Delete' || key === 'Backspace') {
+      // Only handle Delete/Backspace when not in an input field
+      deleteSelectedNode();
+      toast.info('Node deleted');
     }
   }, [copySelectedNode, pasteNodes, cutSelectedNode, deleteSelectedNode, undo, redo, reactFlowInstance]);
 
@@ -373,9 +271,6 @@ export const Canvas = () => {
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
-        onMouseDown={handlePaneMouseDown}
-        onMouseUp={handlePaneMouseUp}
-        onMouseMove={handlePaneMouseMove}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -385,10 +280,6 @@ export const Canvas = () => {
         connectionLineType={ConnectionLineType.SmoothStep}
         snapToGrid={true}
         snapGrid={[15, 15]}
-        panOnScroll={activeTool === 'hand'}
-        panOnDrag={activeTool === 'hand' || activeTool === 'select'}
-        selectionOnDrag={activeTool === 'select'}
-        selectionMode={activeTool === 'frame' ? SelectionMode.Full : SelectionMode.Partial}
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />
