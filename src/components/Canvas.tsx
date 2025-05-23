@@ -132,9 +132,9 @@ export const Canvas = () => {
   const onPaneClick = useCallback(() => {
     if (activeTool !== 'select' && activeTool !== 'hand') {
       // If a shape tool is active, add the appropriate node
-      const position = reactFlowInstance.project({ 
-        x: reactFlowInstance.getViewport().x + window.innerWidth / 2, 
-        y: reactFlowInstance.getViewport().y + window.innerHeight / 2
+      const position = reactFlowInstance.screenToFlowPosition({ 
+        x: window.innerWidth / 2, 
+        y: window.innerHeight / 2
       });
       
       // Map current active tool to node type

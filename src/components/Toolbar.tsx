@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
@@ -13,11 +13,6 @@ import {
   Text,
   Frame
 } from 'lucide-react';
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ToolType } from '@/store/types';
 
@@ -29,30 +24,6 @@ export const Toolbar = () => {
   
   const handleToolChange = (tool: ToolType) => {
     setToolType(tool);
-  };
-  
-  const handleAddShape = (type: 'circle' | 'rectangle' | 'text' | 'frame') => {
-    // Get the center of the viewport
-    const center = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2
-    };
-
-    // Convert screen coordinates to flow coordinates
-    const position = reactFlowInstance.screenToFlowPosition({
-      x: center.x,
-      y: center.y
-    });
-    
-    // Map shape types to node types
-    const nodeTypeMap = {
-      'circle': 'controlnet-pose' as const,
-      'rectangle': 'controlnet-canny' as const,
-      'text': 'input-text' as const,
-      'frame': 'output-preview' as const
-    };
-    
-    addNode(nodeTypeMap[type], position);
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -346,19 +347,18 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
   
-  // Fix the loadProject function to match the signature in dbUtils.ts
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      // Fix the callback signatures to match what's expected
-      (nodes) => set({ nodes }),  // Changed from (nodes: Node[]) to just (nodes)
+      (nodes) => set({ nodes }),
       (edges) => set({ edges }),
       (node) => set({ selectedNode: node }),
-      // This callback doesn't take arguments
-      () => set({
-        history: [{ nodes: get().nodes, edges: get().edges }],
-        historyIndex: 0,
-      }),
+      () => {
+        set({
+          history: [{ nodes: get().nodes, edges: get().edges }],
+          historyIndex: 0,
+        });
+      },
       resetNodeIdCounter
     );
   },
