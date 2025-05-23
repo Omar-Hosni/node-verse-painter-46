@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, Suspense  } from 'react';
 import {
   ReactFlow,
   NodeTypes,
@@ -300,9 +300,6 @@ export const Canvas = () => {
           </Button>
         </Panel>
       </ReactFlow>
-
-      {/* Drawing Layer */}
-      <DrawingLayer />
     </div>
   );
 };
