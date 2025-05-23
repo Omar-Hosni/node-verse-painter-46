@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { ToolType } from '@/store/types';
 
 import '@xyflow/react/dist/style.css';
 
@@ -61,6 +62,9 @@ export const Canvas = () => {
     sendWorkflowToAPI,
     setExternalUpdateInProgress,
     updateCanvasFromExternalSource,
+    activeTool,
+    setActiveTool,
+    addNode,
   } = useCanvasStore();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -126,9 +130,33 @@ export const Canvas = () => {
   }, [setSelectedNode, setSelectedEdge]);
 
   const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-    setSelectedEdge(null);
-  }, [setSelectedNode, setSelectedEdge]);
+    if (activeTool !== 'select' && activeTool !== 'hand') {
+      // If a shape tool is active, add the appropriate node
+      const position = reactFlowInstance.project({ 
+        x: reactFlowInstance.getViewport().x + window.innerWidth / 2, 
+        y: reactFlowInstance.getViewport().y + window.innerHeight / 2
+      });
+      
+      // Map current active tool to node type
+      const nodeTypeMap: Record<string, any> = {
+        'circle': 'controlnet-pose',
+        'rectangle': 'controlnet-canny',
+        'text': 'input-text',
+        'frame': 'output-preview'
+      };
+      
+      if (nodeTypeMap[activeTool]) {
+        addNode(nodeTypeMap[activeTool], position);
+        
+        // After adding the node, switch back to select tool
+        setActiveTool('select');
+      }
+    } else {
+      // Normal behavior for select/hand tools
+      setSelectedNode(null);
+      setSelectedEdge(null);
+    }
+  }, [setSelectedNode, setSelectedEdge, activeTool, addNode, reactFlowInstance, setActiveTool]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -140,9 +168,54 @@ export const Canvas = () => {
       return; // Skip shortcuts when an input field is focused
     }
 
-    const { key, ctrlKey, metaKey } = event;
+    const { key, ctrlKey, metaKey, shiftKey } = event;
     const cmdOrCtrl = metaKey || ctrlKey;
 
+    // Tool shortcuts
+    if (!cmdOrCtrl && !shiftKey) {
+      switch (key.toLowerCase()) {
+        case 'v': // Select tool
+          event.preventDefault();
+          setActiveTool('select');
+          toast.info('Select tool activated');
+          break;
+        case 'h': // Hand tool
+          event.preventDefault();
+          setActiveTool('hand');
+          toast.info('Hand tool activated');
+          break;
+        case 'r': // Rectangle tool
+          event.preventDefault();
+          setActiveTool('rectangle');
+          toast.info('Rectangle tool activated');
+          break;
+        case 'o': // Circle tool (o for "oval")
+          event.preventDefault();
+          setActiveTool('circle');
+          toast.info('Circle tool activated');
+          break;
+        case 't': // Text tool
+          event.preventDefault();
+          setActiveTool('text');
+          toast.info('Text tool activated');
+          break;
+        case 'f': // Frame tool
+          event.preventDefault();
+          setActiveTool('frame');
+          toast.info('Frame tool activated');
+          break;
+        case '+': // Zoom in
+          event.preventDefault();
+          reactFlowInstance.zoomIn();
+          break;
+        case '-': // Zoom out
+          event.preventDefault();
+          reactFlowInstance.zoomOut();
+          break;
+      }
+    }
+
+    // Standard shortcuts (copy, paste, etc.)
     if (cmdOrCtrl) {
       switch (key.toLowerCase()) {
         case 'c': // Copy
@@ -185,7 +258,16 @@ export const Canvas = () => {
       deleteSelectedNode();
       toast.info('Node deleted');
     }
-  }, [copySelectedNode, pasteNodes, cutSelectedNode, deleteSelectedNode, undo, redo, reactFlowInstance]);
+  }, [
+    copySelectedNode, 
+    pasteNodes, 
+    cutSelectedNode, 
+    deleteSelectedNode, 
+    undo, 
+    redo, 
+    reactFlowInstance, 
+    setActiveTool
+  ]);
 
   // Register and unregister keyboard event handlers
   useEffect(() => {
@@ -260,6 +342,10 @@ export const Canvas = () => {
     style: { strokeWidth: 2, stroke: '#666' }
   };
 
+  // Determine the pannable/draggable state based on the active tool
+  const panOnDrag = activeTool === 'hand';
+  const nodesDraggable = activeTool === 'select';
+
   return (
     <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
       <ReactFlow
@@ -280,6 +366,10 @@ export const Canvas = () => {
         connectionLineType={ConnectionLineType.SmoothStep}
         snapToGrid={true}
         snapGrid={[15, 15]}
+        panOnDrag={panOnDrag}
+        panOnScroll={panOnDrag}
+        nodesDraggable={nodesDraggable}
+        selectNodesOnDrag={!panOnDrag}
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />

@@ -16,6 +16,8 @@ export type NodeType =
   | 'controlnet-segment'
   | 'output-preview';
 
+export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame';
+
 export type Collaborator = {
   id: string;
   email: string;
@@ -76,6 +78,7 @@ export interface CanvasState {
   isLocalUpdate: boolean;
   externalUpdateInProgress: boolean;
   collaborators: Collaborator[];
+  activeTool: string;
   
   // Helper functions for real-time collaboration
   setIsLocalUpdate: (isLocal: boolean) => void;
@@ -83,6 +86,9 @@ export interface CanvasState {
   updateCanvasFromExternalSource: (nodes: Node[], edges: Edge[]) => void;
   updateCollaborators: (collaborators: Collaborator[]) => void;
 
+  // Tool selection
+  setActiveTool: (tool: string) => void;
+  
   // Node operations
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;
