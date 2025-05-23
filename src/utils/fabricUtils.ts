@@ -1,4 +1,3 @@
-
 import { Canvas, IText, Point, Rect, Circle } from "fabric";
 import { Edge, Node } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
@@ -225,12 +224,22 @@ export const loadShapesFromRemote = async (fabricCanvas: Canvas, projectId: stri
       
       // Load each shape
       data.forEach(item => {
-        const objects = [item.shape_data];
-        Canvas.util.enlivenObjects(objects, (enlivenedObjects) => {
-          if (enlivenedObjects && enlivenedObjects[0]) {
-            fabricCanvas.add(enlivenedObjects[0]);
+        try {
+          // Use fabric.js JSON parsing to recreate objects
+          const shapeData = item.shape_data;
+          // Create a new object from the shape data
+          const object = fabricCanvas.add(
+            new (fabric[shapeData.type])()
+          );
+          
+          // Set the properties from the shape data
+          if (object) {
+            object.set(shapeData);
+            object.setCoords();
           }
-        });
+        } catch (err) {
+          console.error('Error loading shape:', err);
+        }
       });
       
       fabricCanvas.renderAll();
@@ -265,21 +274,41 @@ export const setupRealTimeSubscription = (fabricCanvas: Canvas, projectId: strin
           
           if (existingObject) {
             // Update existing object
-            Canvas.util.enlivenObjects([shapeData], (objects) => {
-              if (objects && objects[0]) {
-                fabricCanvas.remove(existingObject);
-                fabricCanvas.add(objects[0]);
+            try {
+              // Remove the old object
+              fabricCanvas.remove(existingObject);
+              
+              // Create a new object from shape data
+              const object = fabricCanvas.add(
+                new (fabric[shapeData.type])()
+              );
+              
+              // Set the properties from the shape data
+              if (object) {
+                object.set(shapeData);
+                object.setCoords();
                 fabricCanvas.renderAll();
               }
-            });
+            } catch (err) {
+              console.error('Error updating shape:', err);
+            }
           } else {
             // Add new object
-            Canvas.util.enlivenObjects([shapeData], (objects) => {
-              if (objects && objects[0]) {
-                fabricCanvas.add(objects[0]);
+            try {
+              // Create a new object from shape data
+              const object = fabricCanvas.add(
+                new (fabric[shapeData.type])()
+              );
+              
+              // Set the properties from the shape data
+              if (object) {
+                object.set(shapeData);
+                object.setCoords();
                 fabricCanvas.renderAll();
               }
-            });
+            } catch (err) {
+              console.error('Error creating shape:', err);
+            }
           }
         } else if (payload.eventType === 'DELETE') {
           // Remove object from canvas
