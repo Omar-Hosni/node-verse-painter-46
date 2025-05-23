@@ -88,11 +88,13 @@ export const loadProject = async (
       
       // Now TypeScript knows this is safe
       const typedCanvasData = canvasData as { nodes: Node[], edges: Edge[] };
-      const nodes = typedCanvasData.nodes;
-      const edges = typedCanvasData.edges;
+      const nodes = typedCanvasData.nodes || [];
+      const edges = typedCanvasData.edges || [];
       
       // Reset node ID counter to avoid duplicate IDs
-      resetNodeIdCounterFunc();
+      if (nodes.length > 0) {
+        resetNodeIdCounterFunc();
+      }
       
       // Set the canvas data
       setNodes(nodes);
@@ -101,12 +103,24 @@ export const loadProject = async (
       setHistory({ nodes, edges });
       
       return true;
+    } else {
+      // Handle case where canvas_data is null or undefined
+      toast.error('No canvas data found for this project');
+      // Set empty arrays to avoid undefined errors
+      setNodes([]);
+      setEdges([]);
+      setSelectedNode(null);
+      setHistory({ nodes: [], edges: [] });
+      return false;
     }
-    
-    return false;
   } catch (error: any) {
     console.error('Error loading project:', error);
     toast.error(`Failed to load project: ${error.message}`);
+    // Set empty arrays to avoid undefined errors
+    setNodes([]);
+    setEdges([]);
+    setSelectedNode(null);
+    setHistory({ nodes: [], edges: [] });
     return false;
   }
 };

@@ -1,8 +1,7 @@
-
 import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-// Define collaboration room types
+// Define collaboration room types for future use
 type Presence = {
   cursor: { x: number; y: number } | null;
   isDrawing: boolean;
@@ -19,7 +18,7 @@ type FabricObject = {
 
 // Make sure storage types work with Liveblocks
 type Storage = {
-  canvasObjects: LiveMap<string, FabricObject>;
+  // Define storage types when needed
 };
 
 type UserMeta = {
@@ -36,13 +35,8 @@ type ThreadMetadata = {
 };
 
 type RoomEvent = {
-  type: "CANVAS_RESET";
-} | {
-  type: "CANVAS_OBJECT_ADDED";
-  objectId: string;
-} | {
-  type: "CANVAS_OBJECT_MODIFIED";
-  objectId: string;
+  type: string;
+  [key: string]: any;
 };
 
 // Create a Liveblocks client with your public API key
@@ -83,5 +77,14 @@ export const {
   }
 } = createRoomContext<Presence, Storage, UserMeta, ThreadMetadata, RoomEvent>(client);
 
-// Export LiveMap for use in other components
-export { LiveMap, LiveObject };
+// Export placeholder for future implementation
+export const RoomProvider = ({ children }: { children: React.ReactNode }) => children;
+export const useMyPresence = () => [null, () => {}];
+export const useUpdateMyPresence = () => () => {};
+export const useRoom = () => null;
+export const useOthers = () => [];
+export const useStorage = () => null;
+
+// Export placeholders for future use
+export const LiveMap = {};
+export const LiveObject = {};

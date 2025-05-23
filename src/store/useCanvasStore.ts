@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { 
   Connection, 
@@ -349,11 +348,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       (nodes: Node[]) => set({ nodes }), 
       (edges: Edge[]) => set({ edges }), 
       (node: Node | null) => set({ selectedNode: node }),
-      () => set({
-        history: [{ nodes: get().nodes, edges: get().edges }],
+      (history: { nodes: Node[], edges: Edge[] }) => set({
+        history: [history],
         historyIndex: 0,
       }),
-      resetNodeIdCounter
+      () => resetNodeIdCounter(get().nodes)
     );
   },
   
