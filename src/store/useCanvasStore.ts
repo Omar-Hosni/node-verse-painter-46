@@ -84,7 +84,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
   
   // Tool selection
-  setActiveTool: (tool: string) => {
+  setActiveTool: (tool: any) => {
     set({ activeTool: tool });
   },
   
@@ -366,6 +366,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   fetchUserCredits: async () => {
     const credits = await fetchCredits();
     set({ credits });
+    return Promise.resolve();
   },
 
   fetchUserSubscription: async () => {

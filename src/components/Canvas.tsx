@@ -1,12 +1,11 @@
 
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ReactFlow, useReactFlow, MiniMap, Controls, Background, Panel } from '@xyflow/react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ToolType } from '@/store/types';
 import { fabric } from 'fabric';
 import { 
   initializeFabricCanvas, 
@@ -47,7 +46,6 @@ export const Canvas = () => {
     updateCanvasFromExternalSource,
     activeTool,
     setActiveTool,
-    addNode,
   } = useCanvasStore();
   
   // Fabric.js canvas ref
@@ -280,7 +278,7 @@ export const Canvas = () => {
         deleteSelectedObjects(fabricCanvasRef.current);
       }
       // Handle delete for flow nodes 
-      else {
+      else if (useCanvasStore.getState().selectedNode) {
         deleteSelectedNode();
         toast.info('Node deleted');
       }
@@ -373,79 +371,55 @@ export const Canvas = () => {
   const panOnDrag = activeTool === 'hand';
   const nodesDraggable = activeTool === 'select';
   
-  // Mode switch between Fabric canvas and React Flow
-  const [showFabricCanvas, setShowFabricCanvas] = useState(true);
-  
   return (
     <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
-      {/* Mode switcher */}
-      <div className="fixed top-24 right-6 z-20 flex gap-2">
-        <Button 
-          variant={showFabricCanvas ? "default" : "outline"}
-          className="bg-blue-600 text-white"
-          onClick={() => setShowFabricCanvas(true)}
-        >
-          Drawing Mode
-        </Button>
-        <Button 
-          variant={!showFabricCanvas ? "default" : "outline"}
-          className={!showFabricCanvas ? "bg-blue-600 text-white" : ""}
-          onClick={() => setShowFabricCanvas(false)}
-        >
-          Workflow Mode
-        </Button>
-      </div>
-      
-      {/* Fabric.js Canvas for drawing */}
-      <div 
-        className={`w-full h-full ${showFabricCanvas ? 'block' : 'hidden'}`}
-        onClick={handleCanvasClick} 
-      >
-        <canvas ref={canvasRef} />
-      </div>
-      
       {/* ReactFlow for workflows */}
-      <div className={`w-full h-full ${!showFabricCanvas ? 'block' : 'hidden'}`}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
-          onPaneClick={onPaneClick}
-          defaultEdgeOptions={defaultEdgeOptions}
-          fitView
-          className="bg-[#151515]"
-          connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
-          snapToGrid={true}
-          snapGrid={[15, 15]}
-          panOnDrag={panOnDrag}
-          panOnScroll={panOnDrag}
-          nodesDraggable={nodesDraggable}
-          selectNodesOnDrag={!panOnDrag}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
+        onPaneClick={onPaneClick}
+        defaultEdgeOptions={defaultEdgeOptions}
+        fitView
+        className="bg-[#151515]"
+        connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
+        panOnDrag={panOnDrag}
+        panOnScroll={panOnDrag}
+        nodesDraggable={nodesDraggable}
+        selectNodesOnDrag={!panOnDrag}
+      >
+        {/* Fabric.js Canvas integrated with ReactFlow */}
+        <div 
+          className="absolute top-0 left-0 w-full h-full pointer-events-auto"
+          onClick={handleCanvasClick}
         >
-          <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
-          <Controls className="bg-[#1A1A1A] border-[#333]" />
-          <Background color="#333333" gap={16} />
-          <Panel position="top-right" className="flex flex-col gap-2">
-            <Button 
-              onClick={handleExportWorkflow}
-              variant="outline"
-              className="bg-[#1A1A1A] text-gray-300 border-[#333]"
-            >
-              Export Workflow
-            </Button>
-            <Button 
-              onClick={handleGenerateImage}
-              className="bg-blue-600 text-white"
-            >
-              Generate Image ({credits !== null ? credits : '...'} credits)
-            </Button>
-          </Panel>
-        </ReactFlow>
-      </div>
+          <canvas ref={canvasRef} className="absolute top-0 left-0" />
+        </div>
+        <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
+        <Controls className="bg-[#1A1A1A] border-[#333]" />
+        <Background color="#333333" gap={16} />
+        <Panel position="top-right" className="flex flex-col gap-2">
+          <Button 
+            onClick={handleExportWorkflow}
+            variant="outline"
+            className="bg-[#1A1A1A] text-gray-300 border-[#333]"
+          >
+            Export Workflow
+          </Button>
+          <Button 
+            onClick={handleGenerateImage}
+            className="bg-blue-600 text-white"
+          >
+            Generate Image ({credits !== null ? credits : '...'} credits)
+          </Button>
+        </Panel>
+      </ReactFlow>
     </div>
   );
 };

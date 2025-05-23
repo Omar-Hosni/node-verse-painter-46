@@ -7,12 +7,12 @@ export const initializeFabricCanvas = (canvasRef: HTMLCanvasElement): fabric.Can
   const fabricCanvas = new fabric.Canvas(canvasRef, {
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#151515'
+    backgroundColor: '#151515',
+    preserveObjectStacking: true
   });
   
   // Configure the canvas
   fabricCanvas.selection = true;
-  fabricCanvas.preserveObjectStacking = true;
   
   return fabricCanvas;
 };
