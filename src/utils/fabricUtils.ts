@@ -1,6 +1,25 @@
-import { Canvas, IObjectOptions, IText, Point, Rect, Circle } from "fabric";
+
+import { Canvas, IText, Point, Rect, Circle } from "fabric";
 import { Edge, Node } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
+
+// Define custom interface for object options with objectId
+interface ObjectOptions {
+  left: number;
+  top: number;
+  fill?: string;
+  width?: number;
+  height?: number;
+  radius?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  strokeDashArray?: number[];
+  transparentCorners?: boolean;
+  cornerColor?: string;
+  objectId: string;
+  fontSize?: number;
+  fontFamily?: string;
+}
 
 // Shape creation functions
 export const createRectangle = (canvas: Canvas, pointer: Point) => {
@@ -15,7 +34,7 @@ export const createRectangle = (canvas: Canvas, pointer: Point) => {
     transparentCorners: false,
     cornerColor: '#0096FF',
     objectId: `rect-${Date.now()}`,
-  } as IObjectOptions);
+  } as ObjectOptions);
 
   canvas.add(rect);
   canvas.setActiveObject(rect);
@@ -34,7 +53,7 @@ export const createCircle = (canvas: Canvas, pointer: Point) => {
     transparentCorners: false,
     cornerColor: '#FF80FF',
     objectId: `circle-${Date.now()}`,
-  } as IObjectOptions);
+  } as ObjectOptions);
 
   canvas.add(circle);
   canvas.setActiveObject(circle);
@@ -55,7 +74,7 @@ export const createFrame = (canvas: Canvas, pointer: Point) => {
     transparentCorners: false,
     cornerColor: '#FF8C00',
     objectId: `frame-${Date.now()}`,
-  } as IObjectOptions);
+  } as ObjectOptions);
 
   canvas.add(frame);
   canvas.setActiveObject(frame);
@@ -71,16 +90,13 @@ export const createText = (canvas: Canvas, pointer: Point) => {
     fontSize: 24,
     fontFamily: 'Arial',
     objectId: `text-${Date.now()}`,
-  } as IObjectOptions);
+  } as ObjectOptions);
 
   canvas.add(text);
   canvas.setActiveObject(text);
   syncShapeToRemote(text);
   return text;
 };
-
-// Initialize Fabric canvas - remove the problematic line
-// export const initFabricCanvas = initializeFabric;
 
 // Actual initialization function
 export const initializeFabric = (
@@ -118,7 +134,7 @@ export const initializeFabric = (
 
 // Resize canvas to match container
 export const resizeFabricCanvas = (
-  fabricCanvas: fabric.Canvas | null,
+  fabricCanvas: Canvas | null,
   reactFlowContainer: HTMLDivElement | null
 ) => {
   if (!fabricCanvas || !reactFlowContainer) return;
@@ -132,7 +148,7 @@ export const resizeFabricCanvas = (
 
 // Sync Fabric zoom and pan with ReactFlow
 export const syncFabricWithReactFlow = (
-  fabricCanvas: fabric.Canvas | null,
+  fabricCanvas: Canvas | null,
   zoom: number,
   position: { x: number, y: number }
 ) => {
@@ -142,11 +158,12 @@ export const syncFabricWithReactFlow = (
   fabricCanvas.setZoom(zoom);
   
   // Apply pan transformation
-  fabricCanvas.absolutePan(new fabric.Point(-position.x, -position.y));
+  const point = new Point(-position.x, -position.y);
+  fabricCanvas.absolutePan(point);
 };
 
 // Save shape data to remote storage (Supabase)
-export const syncShapeToRemote = async (object: fabric.Object) => {
+export const syncShapeToRemote = async (object: any) => {
   if (!object || !('objectId' in object)) return;
   
   const objectId = object.objectId as string;
@@ -188,7 +205,7 @@ export const deleteShapeFromRemote = async (objectId: string) => {
 };
 
 // Load all shapes from remote storage
-export const loadShapesFromRemote = async (fabricCanvas: fabric.Canvas, projectId: string) => {
+export const loadShapesFromRemote = async (fabricCanvas: Canvas, projectId: string) => {
   if (!fabricCanvas) return;
   
   try {
@@ -208,9 +225,10 @@ export const loadShapesFromRemote = async (fabricCanvas: fabric.Canvas, projectI
       
       // Load each shape
       data.forEach(item => {
-        fabric.util.enlivenObjects([item.shape_data], (objects) => {
-          if (objects && objects[0]) {
-            fabricCanvas.add(objects[0]);
+        const objects = [item.shape_data];
+        Canvas.util.enlivenObjects(objects, (enlivenedObjects) => {
+          if (enlivenedObjects && enlivenedObjects[0]) {
+            fabricCanvas.add(enlivenedObjects[0]);
           }
         });
       });
@@ -223,7 +241,7 @@ export const loadShapesFromRemote = async (fabricCanvas: fabric.Canvas, projectI
 };
 
 // Set up real-time subscription for canvas shapes
-export const setupRealTimeSubscription = (fabricCanvas: fabric.Canvas, projectId: string) => {
+export const setupRealTimeSubscription = (fabricCanvas: Canvas, projectId: string) => {
   const channel = supabase
     .channel(`canvas-shapes-${projectId}`)
     .on(
@@ -247,7 +265,7 @@ export const setupRealTimeSubscription = (fabricCanvas: fabric.Canvas, projectId
           
           if (existingObject) {
             // Update existing object
-            fabric.util.enlivenObjects([shapeData], (objects) => {
+            Canvas.util.enlivenObjects([shapeData], (objects) => {
               if (objects && objects[0]) {
                 fabricCanvas.remove(existingObject);
                 fabricCanvas.add(objects[0]);
@@ -256,7 +274,7 @@ export const setupRealTimeSubscription = (fabricCanvas: fabric.Canvas, projectId
             });
           } else {
             // Add new object
-            fabric.util.enlivenObjects([shapeData], (objects) => {
+            Canvas.util.enlivenObjects([shapeData], (objects) => {
               if (objects && objects[0]) {
                 fabricCanvas.add(objects[0]);
                 fabricCanvas.renderAll();
@@ -283,7 +301,7 @@ export const setupRealTimeSubscription = (fabricCanvas: fabric.Canvas, projectId
 };
 
 // Frame an XYFlow node with a Fabric shape
-export const frameNode = (canvas: fabric.Canvas, node: Node) => {
+export const frameNode = (canvas: Canvas, node: Node) => {
   // Get node's position and dimensions
   const { position, width = 150, height = 40 } = node;
   
@@ -300,7 +318,7 @@ export const frameNode = (canvas: fabric.Canvas, node: Node) => {
     transparentCorners: false,
     cornerColor: '#FF8C00',
     objectId: `frame-node-${node.id}-${Date.now()}`,
-  } as IObjectOptions);
+  } as ObjectOptions);
 
   canvas.add(frame);
   canvas.setActiveObject(frame);
