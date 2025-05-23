@@ -21,6 +21,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['@liveblocks/client', '@liveblocks/react']
+    include: ['@liveblocks/client', '@liveblocks/react', 'fabric']
   }
 }));

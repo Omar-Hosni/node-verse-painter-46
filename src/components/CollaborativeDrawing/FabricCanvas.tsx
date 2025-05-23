@@ -12,7 +12,7 @@ import {
   useMyPresence,
   useUpdateMyPresence,
   RoomProvider,
-  LiveMap
+  LiveMap,
 } from '@/integrations/liveblocks/client';
 import { 
   initializeFabric, 

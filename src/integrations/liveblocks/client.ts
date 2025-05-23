@@ -1,5 +1,5 @@
 
-import { createClient, LiveMap } from "@liveblocks/client";
+import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 // Define collaboration room types
@@ -82,3 +82,6 @@ export const {
     useRemoveReaction,
   }
 } = createRoomContext<Presence, Storage, UserMeta, ThreadMetadata, RoomEvent>(client);
+
+// Export LiveMap for use in other components
+export { LiveMap, LiveObject };
