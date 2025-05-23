@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      canvas_shapes: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          shape_data: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          project_id: string
+          shape_data: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          shape_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           canvas_data: Json

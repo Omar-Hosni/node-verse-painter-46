@@ -82,7 +82,7 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({
     
     const canvas = fabricRef.current;
     
-    // Disable freehand drawing mode unless 'hand' tool is active
+    // Disable freehand drawing mode unless 'draw' tool is active
     canvas.isDrawingMode = activeTool === 'draw';
     
     if (activeTool === 'draw') {
@@ -148,15 +148,6 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({
     <canvas 
       ref={canvasRef} 
       className="fabric-layer"
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'auto',
-        zIndex: 10,
-      }}
     />
   );
 };

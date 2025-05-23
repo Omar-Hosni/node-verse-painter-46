@@ -143,20 +143,11 @@ export const Canvas = () => {
         y: window.innerHeight / 2
       });
       
-      // Map current active tool to node type
-      const nodeTypeMap: Record<string, any> = {
-        'circle': 'controlnet-pose',
-        'rectangle': 'controlnet-canny',
-        'text': 'input-text',
-        'frame': 'output-preview'
-      };
+      // Add the node based on active tool
+      addNode(activeTool, position);
       
-      if (nodeTypeMap[activeTool]) {
-        addNode(nodeTypeMap[activeTool], position);
-        
-        // After adding the node, switch back to select tool
-        setActiveTool('select');
-      }
+      // After adding the node, switch back to select tool
+      setActiveTool('select');
     } else {
       // Normal behavior for select/hand tools
       setSelectedNode(null);

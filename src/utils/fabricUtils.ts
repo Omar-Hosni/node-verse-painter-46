@@ -1,5 +1,5 @@
 
-import { fabric } from 'fabric';
+import { fabric } from "fabric";
 import { Edge, Node } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -81,7 +81,7 @@ export const createText = (canvas: fabric.Canvas, pointer: fabric.Point) => {
 };
 
 // Initialize Fabric canvas
-export const initFabricCanvas = (
+export const initializeFabric = (
   canvasRef: HTMLCanvasElement | null, 
   reactFlowContainer: HTMLDivElement | null,
   onShapeChange: () => void,
@@ -149,15 +149,17 @@ export const syncShapeToRemote = async (object: fabric.Object) => {
   
   const objectId = object.objectId as string;
   const jsonData = object.toJSON(['objectId']);
+  const projectId = window.location.pathname.split('/').pop();
   
   try {
     const { error } = await supabase
       .from('canvas_shapes')
       .upsert({ 
         id: objectId,
+        project_id: projectId || 'default',
         shape_data: jsonData,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      });
       
     if (error) {
       console.error('Error syncing shape:', error);
@@ -230,7 +232,7 @@ export const setupRealTimeSubscription = (fabricCanvas: fabric.Canvas, projectId
         table: 'canvas_shapes',
         filter: `project_id=eq.${projectId}`,
       },
-      (payload) => {
+      (payload: any) => {
         // Handle shape changes in real-time
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const shapeData = payload.new.shape_data;
