@@ -1,4 +1,3 @@
-
 import { Node, Edge } from '@xyflow/react';
 
 export type NodeType = 
@@ -23,6 +22,8 @@ export type Collaborator = {
   last_name?: string;
   avatar_url?: string;
   last_active: string;
+  tool?: string;
+  color?: string;
 };
 
 export type Json =
@@ -60,6 +61,15 @@ export interface UserSubscription {
   tier: string;
   status: string;
   expires_at?: string;
+}
+
+export interface CollaborativeFabricObject {
+  id: string;
+  type: string;
+  version: number;
+  props: {
+    [key: string]: any;
+  };
 }
 
 export interface CanvasState {
@@ -120,4 +130,13 @@ export interface CanvasState {
   // API operations
   generateImageFromNodes: () => Promise<void>;
   sendWorkflowToAPI: () => Promise<any>;
+  
+  // New properties for drawing collaboration
+  fabricObjects: CollaborativeFabricObject[];
+  
+  // New methods for drawing collaboration
+  addFabricObject: (object: CollaborativeFabricObject) => void;
+  updateFabricObject: (objectId: string, props: any) => void;
+  deleteFabricObject: (objectId: string) => void;
+  resetFabricObjects: () => void;
 }

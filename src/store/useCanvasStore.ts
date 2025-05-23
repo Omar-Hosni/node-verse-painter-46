@@ -59,6 +59,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   isLocalUpdate: false,
   externalUpdateInProgress: false,
   collaborators: [],
+  fabricObjects: [],
   
   // Real-time collaboration helpers
   setIsLocalUpdate: (isLocal: boolean) => {
@@ -340,11 +341,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
   
-  // Fix the loadProject function to match the signature in dbUtils.ts
+  // Fix the loadProject function to match the correct signature
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes) => set({ nodes }), 
+      (nodes: Node[]) => set({ nodes }), // Fix the signature here
       (edges) => set({ edges }), 
       (node) => set({ selectedNode: node }),
       () => set({
@@ -398,5 +399,32 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       get().updateNodeData,
       get().nodes
     );
+  },
+  
+  // New methods for drawing collaboration
+  addFabricObject: (object) => {
+    set(state => ({
+      fabricObjects: [...state.fabricObjects, object]
+    }));
+  },
+  
+  updateFabricObject: (objectId, props) => {
+    set(state => ({
+      fabricObjects: state.fabricObjects.map(obj => 
+        obj.id === objectId 
+          ? { ...obj, props: { ...obj.props, ...props }, version: obj.version + 1 }
+          : obj
+      )
+    }));
+  },
+  
+  deleteFabricObject: (objectId) => {
+    set(state => ({
+      fabricObjects: state.fabricObjects.filter(obj => obj.id !== objectId)
+    }));
+  },
+  
+  resetFabricObjects: () => {
+    set({ fabricObjects: [] });
   }
 }));
