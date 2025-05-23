@@ -1,24 +1,42 @@
 
 import React, { useCallback, useRef, useEffect } from 'react';
+import {
+  ReactFlow,
+  NodeTypes,
+  EdgeTypes,
+  useReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  Panel,
+  ConnectionLineType,
+} from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { ReactFlow, useReactFlow, MiniMap, Controls, Background, Panel } from '@xyflow/react';
+import { ModelNode } from './nodes/ModelNode';
+import { LoraNode } from './nodes/LoraNode';
+import { ControlnetNode } from './nodes/ControlnetNode';
+import { PreviewNode } from './nodes/PreviewNode';
+import { InputNode } from './nodes/InputNode';
+import CustomEdge from './edges/CustomEdge';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { fabric } from 'fabric';
-import { 
-  initializeFabricCanvas, 
-  createCircle, 
-  createRectangle, 
-  createText, 
-  createFrame,
-  handleResize,
-  deleteSelectedObjects,
-  clearCanvas
-} from '@/lib/fabricUtils';
+import { ToolType } from '@/store/types';
 
 import '@xyflow/react/dist/style.css';
+
+const nodeTypes: NodeTypes = {
+  modelNode: ModelNode,
+  loraNode: LoraNode,
+  controlnetNode: ControlnetNode,
+  previewNode: PreviewNode,
+  inputNode: InputNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  custom: CustomEdge,
+};
 
 export const Canvas = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -46,11 +64,9 @@ export const Canvas = () => {
     updateCanvasFromExternalSource,
     activeTool,
     setActiveTool,
+    addNode,
   } = useCanvasStore();
   
-  // Fabric.js canvas ref
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   
@@ -113,67 +129,34 @@ export const Canvas = () => {
     setSelectedEdge(edge);
   }, [setSelectedNode, setSelectedEdge]);
 
-  // Initialize Fabric.js canvas
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // Initialize Fabric canvas
-    fabricCanvasRef.current = initializeFabricCanvas(canvasRef.current);
-    
-    // Handle window resize
-    const resizeHandler = () => handleResize(fabricCanvasRef.current);
-    window.addEventListener('resize', resizeHandler);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('resize', resizeHandler);
-      if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.dispose();
-        fabricCanvasRef.current = null;
-      }
-    };
-  }, []);
-
-  // Handle canvas click based on the active tool
-  const handleCanvasClick = useCallback((event: React.MouseEvent) => {
-    if (!fabricCanvasRef.current) return;
-    
-    // Convert mouse coordinates to canvas coordinates
-    const canvas = fabricCanvasRef.current;
-    const pointer = canvas.getPointer(event);
-    
-    switch (activeTool) {
-      case 'circle':
-        createCircle(canvas, { x: pointer.x, y: pointer.y });
-        toast.info('Circle added');
-        break;
-      case 'rectangle':
-        createRectangle(canvas, { x: pointer.x, y: pointer.y });
-        toast.info('Rectangle added');
-        break;
-      case 'text':
-        createText(canvas, { x: pointer.x, y: pointer.y });
-        toast.info('Text added');
-        break;
-      case 'frame':
-        createFrame(canvas, { x: pointer.x, y: pointer.y });
-        toast.info('Frame added');
-        break;
-      default:
-        // For select and hand tools, do nothing special
-        break;
-    }
-    
-    // After adding a shape, switch back to select tool
-    if (activeTool !== 'select' && activeTool !== 'hand') {
-      setActiveTool('select');
-    }
-  }, [activeTool, setActiveTool]);
-
   const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-    setSelectedEdge(null);
-  }, [setSelectedNode, setSelectedEdge]);
+    if (activeTool !== 'select' && activeTool !== 'hand') {
+      // If a shape tool is active, add the appropriate node
+      const position = reactFlowInstance.screenToFlowPosition({ 
+        x: window.innerWidth / 2, 
+        y: window.innerHeight / 2
+      });
+      
+      // Map current active tool to node type
+      const nodeTypeMap: Record<string, any> = {
+        'circle': 'controlnet-pose',
+        'rectangle': 'controlnet-canny',
+        'text': 'input-text',
+        'frame': 'output-preview'
+      };
+      
+      if (nodeTypeMap[activeTool]) {
+        addNode(nodeTypeMap[activeTool], position);
+        
+        // After adding the node, switch back to select tool
+        setActiveTool('select');
+      }
+    } else {
+      // Normal behavior for select/hand tools
+      setSelectedNode(null);
+      setSelectedEdge(null);
+    }
+  }, [setSelectedNode, setSelectedEdge, activeTool, addNode, reactFlowInstance, setActiveTool]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -271,17 +254,9 @@ export const Canvas = () => {
           break;
       }
     } else if (key === 'Delete' || key === 'Backspace') {
-      // Handle delete/backspace for fabric objects
-      if (fabricCanvasRef.current && 
-          fabricCanvasRef.current.getActiveObjects().length > 0) {
-        event.preventDefault();
-        deleteSelectedObjects(fabricCanvasRef.current);
-      }
-      // Handle delete for flow nodes 
-      else if (useCanvasStore.getState().selectedNode) {
-        deleteSelectedNode();
-        toast.info('Node deleted');
-      }
+      // Only handle Delete/Backspace when not in an input field
+      deleteSelectedNode();
+      toast.info('Node deleted');
     }
   }, [
     copySelectedNode, 
@@ -370,10 +345,9 @@ export const Canvas = () => {
   // Determine the pannable/draggable state based on the active tool
   const panOnDrag = activeTool === 'hand';
   const nodesDraggable = activeTool === 'select';
-  
+
   return (
     <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
-      {/* ReactFlow for workflows */}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -383,10 +357,13 @@ export const Canvas = () => {
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         className="bg-[#151515]"
         connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
+        connectionLineType={ConnectionLineType.SmoothStep}
         snapToGrid={true}
         snapGrid={[15, 15]}
         panOnDrag={panOnDrag}
@@ -394,13 +371,6 @@ export const Canvas = () => {
         nodesDraggable={nodesDraggable}
         selectNodesOnDrag={!panOnDrag}
       >
-        {/* Fabric.js Canvas integrated with ReactFlow */}
-        <div 
-          className="absolute top-0 left-0 w-full h-full pointer-events-auto"
-          onClick={handleCanvasClick}
-        >
-          <canvas ref={canvasRef} className="absolute top-0 left-0" />
-        </div>
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />
         <Background color="#333333" gap={16} />
