@@ -23,6 +23,7 @@ import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ToolType } from '@/store/types';
+import FabricCanvas from './FabricCanvas';
 
 import '@xyflow/react/dist/style.css';
 
@@ -40,6 +41,8 @@ const edgeTypes: EdgeTypes = {
 
 export const Canvas = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const reactFlowContainerRef = useRef<HTMLDivElement>(null);
+  
   const { 
     nodes, 
     edges, 
@@ -130,8 +133,11 @@ export const Canvas = () => {
   }, [setSelectedNode, setSelectedEdge]);
 
   const onPaneClick = useCallback(() => {
-    if (activeTool !== 'select' && activeTool !== 'hand') {
-      // If a shape tool is active, add the appropriate node
+    if (activeTool !== 'select' && activeTool !== 'hand' && 
+        activeTool !== 'rectangle' && activeTool !== 'circle' && 
+        activeTool !== 'text' && activeTool !== 'frame' && 
+        activeTool !== 'draw') {
+      // If a workflow node tool is active, add the appropriate node
       const position = reactFlowInstance.screenToFlowPosition({ 
         x: window.innerWidth / 2, 
         y: window.innerHeight / 2
@@ -203,6 +209,11 @@ export const Canvas = () => {
           event.preventDefault();
           setActiveTool('frame');
           toast.info('Frame tool activated');
+          break;
+        case 'd': // Draw tool
+          event.preventDefault();
+          setActiveTool('draw');
+          toast.info('Draw tool activated');
           break;
         case '+': // Zoom in
           event.preventDefault();
@@ -345,9 +356,15 @@ export const Canvas = () => {
   // Determine the pannable/draggable state based on the active tool
   const panOnDrag = activeTool === 'hand';
   const nodesDraggable = activeTool === 'select';
+  
+  // Disable ReactFlow interactions when drawing tools are active
+  const isDrawingToolActive = ['rectangle', 'circle', 'text', 'frame', 'draw'].includes(activeTool);
 
   return (
-    <div className="flex-1 h-screen bg-[#121212]" ref={reactFlowWrapper}>
+    <div 
+      className="flex-1 h-screen bg-[#121212]" 
+      ref={reactFlowContainerRef}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -361,15 +378,17 @@ export const Canvas = () => {
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
-        className="bg-[#151515]"
+        className="bg-[#151515] xyflow-layer"
         connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
         connectionLineType={ConnectionLineType.SmoothStep}
         snapToGrid={true}
         snapGrid={[15, 15]}
-        panOnDrag={panOnDrag}
-        panOnScroll={panOnDrag}
-        nodesDraggable={nodesDraggable}
-        selectNodesOnDrag={!panOnDrag}
+        panOnDrag={panOnDrag && !isDrawingToolActive}
+        panOnScroll={panOnDrag && !isDrawingToolActive}
+        nodesDraggable={nodesDraggable && !isDrawingToolActive}
+        selectNodesOnDrag={!panOnDrag && !isDrawingToolActive}
+        ref={reactFlowWrapper}
+        style={{ zIndex: 5 }}
       >
         <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
         <Controls className="bg-[#1A1A1A] border-[#333]" />
@@ -390,6 +409,13 @@ export const Canvas = () => {
           </Button>
         </Panel>
       </ReactFlow>
+      
+      {/* Overlay Fabric.js canvas */}
+      <FabricCanvas 
+        activeTool={activeTool} 
+        reactFlowContainerRef={reactFlowContainerRef}
+        projectId={projectId}
+      />
     </div>
   );
 };

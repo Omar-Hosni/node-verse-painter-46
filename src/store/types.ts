@@ -16,7 +16,7 @@ export type NodeType =
   | 'controlnet-segment'
   | 'output-preview';
 
-export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame';
+export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame' | 'draw';
 
 export type Collaborator = {
   id: string;

@@ -11,7 +11,8 @@ import {
   Circle as CircleIcon,
   RectangleHorizontal,
   Text,
-  Frame
+  Frame,
+  PenLine
 } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ToolType } from '@/store/types';
@@ -29,7 +30,7 @@ export const Toolbar = () => {
   return (
     <>
       {/* Bottom toolbar */}
-      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-10">
+      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-20">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -96,7 +97,7 @@ export const Toolbar = () => {
       </div>
       
       {/* Top center shape tools */}
-      <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10">
+      <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-20">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -158,6 +159,22 @@ export const Toolbar = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>Frame (F)</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                size="icon" 
+                variant={activeTool === 'draw' ? "default" : "ghost"}
+                className={`rounded-md ${activeTool === 'draw' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+                onClick={() => handleToolChange('draw')}
+              >
+                <PenLine className="h-4 w-4 text-white" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Draw (D)</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
