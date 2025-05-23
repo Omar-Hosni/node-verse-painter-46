@@ -1,3 +1,4 @@
+
 import { Node, Edge } from '@xyflow/react';
 
 export type NodeType = 
@@ -13,16 +14,7 @@ export type NodeType =
   | 'controlnet-depth'
   | 'controlnet-pose'
   | 'controlnet-segment'
-  | 'output-preview'
-  | 'select'
-  | 'hand'
-  | 'circle'
-  | 'rectangle'
-  | 'text'
-  | 'frame'
-  | 'draw';
-
-export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame' | 'draw';
+  | 'output-preview';
 
 export type Collaborator = {
   id: string;
@@ -84,7 +76,6 @@ export interface CanvasState {
   isLocalUpdate: boolean;
   externalUpdateInProgress: boolean;
   collaborators: Collaborator[];
-  activeTool: string;
   
   // Helper functions for real-time collaboration
   setIsLocalUpdate: (isLocal: boolean) => void;
@@ -92,9 +83,6 @@ export interface CanvasState {
   updateCanvasFromExternalSource: (nodes: Node[], edges: Edge[]) => void;
   updateCollaborators: (collaborators: Collaborator[]) => void;
 
-  // Tool selection
-  setActiveTool: (tool: string) => void;
-  
   // Node operations
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;

@@ -59,7 +59,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   isLocalUpdate: false,
   externalUpdateInProgress: false,
   collaborators: [],
-  activeTool: 'select',
   
   // Real-time collaboration helpers
   setIsLocalUpdate: (isLocal: boolean) => {
@@ -80,11 +79,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   
   updateCollaborators: (collaborators: Collaborator[]) => {
     set({ collaborators });
-  },
-  
-  // Tool selection
-  setActiveTool: (tool: string) => {
-    set({ activeTool: tool });
   },
   
   // Node operations
@@ -346,27 +340,17 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
   
+  // Fix the loadProject function to match the signature in dbUtils.ts
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes: Node[]) => {
-        set({ nodes });
-        return nodes;
-      },
-      (edges: Edge[]) => {
-        set({ edges });
-        return edges;
-      },
-      (node: Node | null) => {
-        set({ selectedNode: node });
-        return node;
-      },
-      () => {
-        set({
-          history: [{ nodes: get().nodes, edges: get().edges }],
-          historyIndex: 0,
-        });
-      },
+      (nodes) => set({ nodes }), 
+      (edges) => set({ edges }), 
+      (node) => set({ selectedNode: node }),
+      () => set({
+        history: [{ nodes: get().nodes, edges: get().edges }],
+        historyIndex: 0,
+      }),
       resetNodeIdCounter
     );
   },
