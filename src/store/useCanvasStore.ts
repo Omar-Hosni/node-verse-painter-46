@@ -345,7 +345,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   loadProject: async (projectId) => {
     return await loadProjectFromDb(
       projectId,
-      (nodes: Node[]) => set({ nodes }), // Fix the signature here
+      (nodes) => set({ nodes }), // Fixed signature to accept nodes parameter
       (edges) => set({ edges }), 
       (node) => set({ selectedNode: node }),
       () => set({

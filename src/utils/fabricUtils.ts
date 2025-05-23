@@ -2,8 +2,10 @@
 import { Canvas, Circle, Rect, IEvent, Object as FabricObject } from "fabric";
 import { type Json } from "@/store/types";
 
+// Extend FabricObject with id property
 interface FabricObjectWithId extends FabricObject {
   id: string;
+  _fromSync?: boolean; // Add _fromSync property
 }
 
 // Helper function to generate a unique ID
@@ -13,7 +15,8 @@ export const generateId = (): string => {
 
 // Convert a Fabric.js object to a serializable object
 export const serializeFabricObject = (obj: FabricObjectWithId): Record<string, any> => {
-  const serialized = obj.toObject();
+  // Use JSON serialization instead of toObject()
+  const serialized = JSON.parse(JSON.stringify(obj));
   return {
     ...serialized,
     id: obj.id,
@@ -109,7 +112,7 @@ export const initializeFabric = (
   // Listen for object modifications
   fabricCanvas.on('object:modified', (e: IEvent) => {
     const modifiedObj = e.target as FabricObjectWithId;
-    if (modifiedObj && modifiedObj.id) {
+    if (modifiedObj && modifiedObj.id && !modifiedObj._fromSync) {
       onObjectModified(modifiedObj);
     }
   });
@@ -117,7 +120,7 @@ export const initializeFabric = (
   // Listen for new objects
   fabricCanvas.on('object:added', (e: IEvent) => {
     const addedObj = e.target as FabricObjectWithId;
-    if (addedObj && addedObj.id) {
+    if (addedObj && addedObj.id && !addedObj._fromSync) {
       onObjectAdded(addedObj);
     }
   });

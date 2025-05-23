@@ -21,7 +21,7 @@ import {
   deleteSelectedObject,
   serializeFabricObject
 } from '@/utils/fabricUtils';
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 interface FabricCanvasProps {
   activeTool: 'select' | 'rectangle' | 'circle' | 'freehand' | 'highlight';
@@ -33,6 +33,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   const [fabricInstance, setFabricInstance] = useState<FabricCanvas | null>(null);
   const { projectId } = useParams<{ projectId: string }>();
   const reactFlowInstance = useReactFlow();
+  const viewportChangeListener = useRef<any>(null);
 
   // Liveblocks hooks
   const canvasObjects = useStorage((root) => root.canvasObjects);
@@ -116,17 +117,30 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
       canvas.setViewportTransform([zoom, 0, 0, zoom, x, y]);
     };
     
-    // Listen to the viewport changes
-    reactFlowInstance.on('viewportChange', handleViewportChange);
-
+    // Add listener using a manual approach since reactFlowInstance.on is not available
+    viewportChangeListener.current = handleViewportChange;
+    
+    // Set up a MutationObserver to watch for viewport changes
+    const observer = new MutationObserver(() => {
+      if (viewportChangeListener.current) {
+        viewportChangeListener.current();
+      }
+    });
+    
+    // Observe the ReactFlow container
+    const reactFlowContainer = document.querySelector('.react-flow');
+    if (reactFlowContainer) {
+      observer.observe(reactFlowContainer, { attributes: true, childList: true, subtree: true });
+    }
+    
     // Initial sync
     handleViewportChange();
     
     return () => {
-      reactFlowInstance.off('viewportChange', handleViewportChange);
+      observer.disconnect();
       canvas.dispose();
     };
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, addObject, updateObject]);
 
   // Set drawing mode based on active tool
   useEffect(() => {
@@ -174,7 +188,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
     updateMyPresence({ tool: activeTool });
     
     fabricInstance.renderAll();
-  }, [activeTool, activeColor, fabricInstance]);
+  }, [activeTool, activeColor, fabricInstance, updateMyPresence]);
 
   // Set up click handlers for creating shapes
   useEffect(() => {
@@ -310,7 +324,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [fabricInstance, undo, redo]);
+  }, [fabricInstance, undo, redo, deleteObject]);
 
   // Provide reset canvas method
   const handleResetCanvas = useCallback(() => {
@@ -342,7 +356,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
     return () => {
       delete (window as any).fabricActions;
     };
-  }, [fabricInstance, handleResetCanvas, undo, redo]);
+  }, [fabricInstance, handleResetCanvas, undo, redo, deleteObject]);
 
   // Resize handler
   useEffect(() => {
@@ -376,7 +390,11 @@ interface CollaborativeCanvasProps extends FabricCanvasProps {
 
 export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projectId, ...props }) => {
   return (
-    <RoomProvider id={`fabric-canvas-${projectId}`} initialStorage={{ canvasObjects: new Map() }}>
+    <RoomProvider 
+      id={`fabric-canvas-${projectId}`}
+      initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
+      initialStorage={{ canvasObjects: new Map() }}
+    >
       <FabricDrawingLayer {...props} />
     </RoomProvider>
   );

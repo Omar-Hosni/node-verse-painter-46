@@ -2,9 +2,9 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-// Create a Liveblocks client with default settings
+// Create a Liveblocks client with your public API key
 const client = createClient({
-  publicApiKey: "pk_dev_xxxxxxxxxxx", // Replace with your public API key
+  publicApiKey: "pk_dev_aUfwRFjobfGZgRsiQvOa4rIGvTxyN7SvtiT2pYWHPEb28VXfDH358BV81gfR4YYV",
   throttle: 16, // Throttle update rate (60fps)
 });
 
@@ -24,7 +24,7 @@ type FabricObject = {
 };
 
 type Storage = {
-  canvasObjects: LiveMap<string, FabricObject>;
+  canvasObjects: Map<string, FabricObject>;
 };
 
 type UserMeta = {
@@ -71,8 +71,6 @@ export const {
     useBroadcastEvent,
     useEventListener,
     useErrorListener,
-    useRoomNotificationSettings,
-    useRoomNotifications,
     useThreads,
     useCreateThread,
     useEditThreadMetadata,
@@ -81,8 +79,5 @@ export const {
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
-    useThreadSubscription,
-    useMarkThreadAsRead,
-    useRoomInfo,
   }
 } = createRoomContext<Presence, Storage, UserMeta, ThreadMetadata, RoomEvent>(client);
