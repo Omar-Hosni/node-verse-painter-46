@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas as FabricCanvas } from 'fabric';
 import { useReactFlow } from '@xyflow/react';
@@ -411,14 +410,11 @@ interface CollaborativeCanvasProps extends FabricCanvasProps {
 }
 
 export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projectId, ...props }) => {
-  // Create a new LiveMap instance for the initial storage
-  const initialCanvasObjects = new LiveMap();
-  
   return (
     <RoomProvider 
       id={`fabric-canvas-${projectId}`}
       initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
-      initialStorage={{ canvasObjects: initialCanvasObjects }}
+      initialStorage={{ canvasObjects: new LiveMap() }}
     >
       <FabricDrawingLayer {...props} />
     </RoomProvider>

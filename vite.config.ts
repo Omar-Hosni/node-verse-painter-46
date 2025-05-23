@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['fabric'],
+    include: ['fabric', '@liveblocks/client', '@liveblocks/react'],
     esbuildOptions: {
       target: 'es2020',
     },

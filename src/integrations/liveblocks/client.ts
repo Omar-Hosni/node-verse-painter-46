@@ -2,6 +2,9 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
+// Import LiveMap and LiveObject for local use
+import { LiveMap, LiveObject } from "@liveblocks/client";
+
 // Define collaboration room types for future use
 type Presence = {
   cursor: { x: number; y: number } | null;
@@ -46,11 +49,11 @@ const client = createClient({
   throttle: 16, // Throttle update rate (60fps)
 });
 
-// Export the LiveMap and LiveObject types
-export type { LiveMap, LiveObject } from "@liveblocks/client";
+// Export types for TypeScript usage
+export type { LiveMap as LiveMapType, LiveObject as LiveObjectType } from "@liveblocks/client";
 
-// Export the createClient function and actual LiveMap and LiveObject for use in components
-export { LiveMap, LiveObject } from "@liveblocks/client";
+// Export the actual classes for runtime usage
+export { LiveMap, LiveObject };
 
 // Create and export the room context
 export const {
