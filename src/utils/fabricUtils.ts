@@ -1,11 +1,10 @@
-
-import { fabric } from "fabric";
+import { Canvas, IObjectOptions, IText, Point, Rect, Circle } from "fabric";
 import { Edge, Node } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Shape creation functions
-export const createRectangle = (canvas: fabric.Canvas, pointer: fabric.Point) => {
-  const rect = new fabric.Rect({
+export const createRectangle = (canvas: Canvas, pointer: Point) => {
+  const rect = new Rect({
     left: pointer.x,
     top: pointer.y,
     width: 100,
@@ -16,7 +15,7 @@ export const createRectangle = (canvas: fabric.Canvas, pointer: fabric.Point) =>
     transparentCorners: false,
     cornerColor: '#0096FF',
     objectId: `rect-${Date.now()}`,
-  });
+  } as IObjectOptions);
 
   canvas.add(rect);
   canvas.setActiveObject(rect);
@@ -24,8 +23,8 @@ export const createRectangle = (canvas: fabric.Canvas, pointer: fabric.Point) =>
   return rect;
 };
 
-export const createCircle = (canvas: fabric.Canvas, pointer: fabric.Point) => {
-  const circle = new fabric.Circle({
+export const createCircle = (canvas: Canvas, pointer: Point) => {
+  const circle = new Circle({
     left: pointer.x,
     top: pointer.y,
     radius: 40,
@@ -35,7 +34,7 @@ export const createCircle = (canvas: fabric.Canvas, pointer: fabric.Point) => {
     transparentCorners: false,
     cornerColor: '#FF80FF',
     objectId: `circle-${Date.now()}`,
-  });
+  } as IObjectOptions);
 
   canvas.add(circle);
   canvas.setActiveObject(circle);
@@ -43,8 +42,8 @@ export const createCircle = (canvas: fabric.Canvas, pointer: fabric.Point) => {
   return circle;
 };
 
-export const createFrame = (canvas: fabric.Canvas, pointer: fabric.Point) => {
-  const frame = new fabric.Rect({
+export const createFrame = (canvas: Canvas, pointer: Point) => {
+  const frame = new Rect({
     left: pointer.x,
     top: pointer.y,
     width: 150,
@@ -56,7 +55,7 @@ export const createFrame = (canvas: fabric.Canvas, pointer: fabric.Point) => {
     transparentCorners: false,
     cornerColor: '#FF8C00',
     objectId: `frame-${Date.now()}`,
-  });
+  } as IObjectOptions);
 
   canvas.add(frame);
   canvas.setActiveObject(frame);
@@ -64,15 +63,15 @@ export const createFrame = (canvas: fabric.Canvas, pointer: fabric.Point) => {
   return frame;
 };
 
-export const createText = (canvas: fabric.Canvas, pointer: fabric.Point) => {
-  const text = new fabric.IText('Text', {
+export const createText = (canvas: Canvas, pointer: Point) => {
+  const text = new IText('Text', {
     left: pointer.x,
     top: pointer.y,
     fill: '#333333',
     fontSize: 24,
     fontFamily: 'Arial',
     objectId: `text-${Date.now()}`,
-  });
+  } as IObjectOptions);
 
   canvas.add(text);
   canvas.setActiveObject(text);
@@ -80,8 +79,8 @@ export const createText = (canvas: fabric.Canvas, pointer: fabric.Point) => {
   return text;
 };
 
-// Initialize Fabric canvas
-export const initFabricCanvas = initializeFabric;
+// Initialize Fabric canvas - remove the problematic line
+// export const initFabricCanvas = initializeFabric;
 
 // Actual initialization function
 export const initializeFabric = (
@@ -93,7 +92,7 @@ export const initializeFabric = (
   if (!canvasRef || !reactFlowContainer) return null;
   
   // Create Fabric.js canvas
-  const fabricCanvas = new fabric.Canvas(canvasRef, {
+  const fabricCanvas = new Canvas(canvasRef, {
     width: reactFlowContainer.clientWidth,
     height: reactFlowContainer.clientHeight,
     backgroundColor: 'transparent',
@@ -289,7 +288,7 @@ export const frameNode = (canvas: fabric.Canvas, node: Node) => {
   const { position, width = 150, height = 40 } = node;
   
   // Create a frame around the node
-  const frame = new fabric.Rect({
+  const frame = new Rect({
     left: position.x - 10,
     top: position.y - 10,
     width: (width as number) + 20,
@@ -301,7 +300,7 @@ export const frameNode = (canvas: fabric.Canvas, node: Node) => {
     transparentCorners: false,
     cornerColor: '#FF8C00',
     objectId: `frame-node-${node.id}-${Date.now()}`,
-  });
+  } as IObjectOptions);
 
   canvas.add(frame);
   canvas.setActiveObject(frame);

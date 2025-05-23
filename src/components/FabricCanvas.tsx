@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useReactFlow } from '@xyflow/react';
@@ -14,7 +13,7 @@ import {
   loadShapesFromRemote,
   deleteShapeFromRemote
 } from '@/utils/fabricUtils';
-import { fabric } from "fabric";
+import { Canvas as FabricCanvas } from "fabric";
 
 interface FabricCanvasProps {
   activeTool: string;
@@ -22,13 +21,13 @@ interface FabricCanvasProps {
   projectId?: string;
 }
 
-const FabricCanvas: React.FC<FabricCanvasProps> = ({ 
+const FabricCanvasComponent: React.FC<FabricCanvasProps> = ({ 
   activeTool, 
   reactFlowContainerRef,
   projectId
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const fabricRef = useRef<fabric.Canvas | null>(null);
+  const fabricRef = useRef<FabricCanvas | null>(null);
   const { getZoom, getViewport } = useReactFlow();
   const [isDrawing, setIsDrawing] = useState(false);
   const { projectId: routeProjectId } = useParams<{ projectId: string }>();
@@ -152,4 +151,4 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({
   );
 };
 
-export default FabricCanvas;
+export default FabricCanvasComponent;
