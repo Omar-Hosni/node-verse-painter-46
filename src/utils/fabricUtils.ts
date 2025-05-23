@@ -101,13 +101,9 @@ export const initializeFabric = (
     renderOnAddRemove: true,
   });
   
-  // Sync with XYFlow's zoom and pan
-  const syncWithReactFlow = () => {
-    if (reactFlowInstance) {
-      const { x, y, zoom } = reactFlowInstance.getViewport();
-      fabricCanvas.setViewportTransform([zoom, 0, 0, zoom, x, y]);
-    }
-  };
+  // Initialize the freeDrawingBrush right after canvas creation
+  fabricCanvas.freeDrawingBrush.color = "#000000";
+  fabricCanvas.freeDrawingBrush.width = 2;
   
   // Listen for object modifications
   fabricCanvas.on('object:modified', (e: IEvent) => {

@@ -11,7 +11,8 @@ import {
   useRoom,
   useMyPresence,
   useUpdateMyPresence,
-  RoomProvider
+  RoomProvider,
+  LiveMap
 } from '@/integrations/liveblocks/client';
 import { 
   initializeFabric, 
@@ -44,25 +45,28 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   
   // Liveblocks mutations
   const addObject = useMutation(({ storage }, object) => {
-    if (storage && storage.get("canvasObjects")) {
-      storage.get("canvasObjects").set(object.id, {
-        id: object.id,
-        type: object.type,
-        version: 1,
-        props: object.props
-      });
+    if (storage) {
+      const canvasObjects = storage.get("canvasObjects");
+      if (canvasObjects) {
+        canvasObjects.set(object.id, {
+          id: object.id,
+          type: object.type,
+          version: 1,
+          props: object.props
+        });
+      }
     }
   }, []);
   
   const updateObject = useMutation(({ storage }, objectId, props) => {
     if (!storage) return;
     
-    const objectsMap = storage.get("canvasObjects");
-    if (!objectsMap) return;
+    const canvasObjects = storage.get("canvasObjects");
+    if (!canvasObjects) return;
     
-    const object = objectsMap.get(objectId);
+    const object = canvasObjects.get(objectId);
     if (object) {
-      objectsMap.set(objectId, {
+      canvasObjects.set(objectId, {
         ...object,
         version: object.version + 1,
         props: { ...object.props, ...props }
@@ -71,20 +75,24 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   }, []);
   
   const deleteObject = useMutation(({ storage }, objectId) => {
-    if (storage && storage.get("canvasObjects")) {
-      storage.get("canvasObjects").delete(objectId);
+    if (storage) {
+      const canvasObjects = storage.get("canvasObjects");
+      if (canvasObjects) {
+        canvasObjects.delete(objectId);
+      }
     }
   }, []);
   
   const resetAllObjects = useMutation(({ storage }) => {
     if (!storage) return;
     
-    const objects = storage.get("canvasObjects");
-    if (!objects) return;
+    const canvasObjects = storage.get("canvasObjects");
+    if (!canvasObjects) return;
     
     // Clear all objects
-    objects.forEach((_, key) => {
-      objects.delete(key);
+    const keys = Array.from(canvasObjects.keys());
+    keys.forEach(key => {
+      canvasObjects.delete(key);
     });
   }, []);
 
@@ -272,7 +280,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
               fill: objectData.props.fill || '#aaaaaa',
               id: id
             });
-            rect._fromSync = true;
+            if (rect) rect._fromSync = true;
           } else if (objectData.type === 'circle') {
             const circle = createCircle(fabricInstance, {
               left: objectData.props.left || 0,
@@ -281,7 +289,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
               fill: objectData.props.fill || '#aaaaaa',
               id: id
             });
-            circle._fromSync = true;
+            if (circle) circle._fromSync = true;
           }
         }
       } catch (error) {
@@ -407,7 +415,7 @@ export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projec
     <RoomProvider 
       id={`fabric-canvas-${projectId}`}
       initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
-      initialStorage={{ canvasObjects: {} }}
+      initialStorage={{ canvasObjects: new LiveMap() }}
     >
       <FabricDrawingLayer {...props} />
     </RoomProvider>

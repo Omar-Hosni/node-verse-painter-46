@@ -1,7 +1,6 @@
 
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import type { LsonObject } from "@liveblocks/client";
 
 // Define collaboration room types
 type Presence = {
@@ -20,11 +19,8 @@ type FabricObject = {
 
 // Make sure storage types work with Liveblocks
 type Storage = {
-  canvasObjects: LiveblocksMap<string, FabricObject>;
+  canvasObjects: LiveMap<string, FabricObject>;
 };
-
-// Import LiveblocksMap type to satisfy type constraints
-type LiveblocksMap<K extends string, V> = Record<K, V>;
 
 type UserMeta = {
   id: string;
