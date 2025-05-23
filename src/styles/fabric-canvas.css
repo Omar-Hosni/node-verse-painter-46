@@ -1,5 +1,4 @@
 
-/* Fabric.js Canvas Styles */
 .fabric-layer {
   position: absolute;
   top: 0;
@@ -12,16 +11,4 @@
 
 .xyflow-layer {
   z-index: 5;
-}
-
-/* Active Tool Styles */
-.tool-active {
-  background-color: rgb(37, 99, 235) !important;
-  color: white;
-}
-
-/* Add CSS to make shape controls more visible on dark background */
-.canvas-container .fabric-object-controls {
-  stroke: #ffffff;
-  fill: #333333;
 }

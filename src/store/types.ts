@@ -1,4 +1,3 @@
-
 import { Node, Edge } from '@xyflow/react';
 
 export type NodeType = 
@@ -14,7 +13,14 @@ export type NodeType =
   | 'controlnet-depth'
   | 'controlnet-pose'
   | 'controlnet-segment'
-  | 'output-preview';
+  | 'output-preview'
+  | 'select'
+  | 'hand'
+  | 'circle'
+  | 'rectangle'
+  | 'text'
+  | 'frame'
+  | 'draw';
 
 export type ToolType = 'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame' | 'draw';
 

@@ -81,6 +81,9 @@ export const createText = (canvas: fabric.Canvas, pointer: fabric.Point) => {
 };
 
 // Initialize Fabric canvas
+export const initFabricCanvas = initializeFabric;
+
+// Actual initialization function
 export const initializeFabric = (
   canvasRef: HTMLCanvasElement | null, 
   reactFlowContainer: HTMLDivElement | null,

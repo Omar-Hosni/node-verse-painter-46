@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
 import { 
-  initFabricCanvas, 
+  initializeFabric, 
   resizeFabricCanvas,
   syncFabricWithReactFlow,
   createRectangle,
@@ -14,7 +14,7 @@ import {
   loadShapesFromRemote,
   deleteShapeFromRemote
 } from '@/utils/fabricUtils';
-import { fabric } from 'fabric';
+import { fabric } from "fabric";
 
 interface FabricCanvasProps {
   activeTool: string;
@@ -39,7 +39,7 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({
     if (!canvasRef.current || !reactFlowContainerRef.current) return;
     
     // Initialize the Fabric canvas
-    const fabricCanvas = initFabricCanvas(
+    const fabricCanvas = initializeFabric(
       canvasRef.current, 
       reactFlowContainerRef.current,
       () => {
