@@ -1,6 +1,9 @@
 
-import { Canvas, Circle, Rect, IEvent, Object as FabricObject } from "fabric";
+//import { Canvas, Circle, Rect, IEvent, Object as FabricObject } from "fabric";
+import { fabric } from "fabric";
+
 import { type Json } from "@/store/types";
+export type FabricObject = fabric.Object;
 
 // Extend FabricObject with id property
 interface FabricObjectWithId extends FabricObject {
@@ -25,7 +28,7 @@ export const serializeFabricObject = (obj: FabricObjectWithId): Record<string, a
 
 // Create a rectangle
 export const createRectangle = (
-  canvas: Canvas, 
+  canvas: fabric.Canvas, 
   options: {
     left: number;
     top: number;
@@ -36,7 +39,7 @@ export const createRectangle = (
   }
 ): FabricObjectWithId => {
   const id = options.id || generateId();
-  const rect = new Rect({
+  const rect = new fabric.Rect({
     left: options.left,
     top: options.top,
     width: options.width,
@@ -57,7 +60,7 @@ export const createRectangle = (
 
 // Create a circle
 export const createCircle = (
-  canvas: Canvas,
+  canvas: fabric.Canvas,
   options: {
     left: number;
     top: number;
@@ -67,7 +70,7 @@ export const createCircle = (
   }
 ): FabricObjectWithId => {
   const id = options.id || generateId();
-  const circle = new Circle({
+  const circle = new fabric.Circle({
     left: options.left,
     top: options.top,
     radius: options.radius,
@@ -91,8 +94,8 @@ export const initializeFabric = (
   reactFlowInstance: any, 
   onObjectAdded: (object: FabricObjectWithId) => void,
   onObjectModified: (object: FabricObjectWithId) => void
-): Canvas => {
-  const fabricCanvas = new Canvas(canvasRef, {
+): fabric.Canvas => {
+  const fabricCanvas = new fabric.Canvas(canvasRef, {
     width: canvasRef.width,
     height: canvasRef.height,
     backgroundColor: 'transparent',
@@ -100,21 +103,21 @@ export const initializeFabric = (
     preserveObjectStacking: true,
     renderOnAddRemove: true,
   });
-  
-  // Initialize the freeDrawingBrush right after canvas creation
-  fabricCanvas.freeDrawingBrush.color = "#000000";
-  fabricCanvas.freeDrawingBrush.width = 2;
-  
-  // Listen for object modifications
-  fabricCanvas.on('object:modified', (e: IEvent) => {
+
+  // Initialize free drawing brush if not null
+  if (fabricCanvas.freeDrawingBrush) {
+    fabricCanvas.freeDrawingBrush.color = "#000000";
+    fabricCanvas.freeDrawingBrush.width = 2;
+  }
+
+  fabricCanvas.on('object:modified', (e: fabric.IEvent) => {
     const modifiedObj = e.target as FabricObjectWithId;
     if (modifiedObj && modifiedObj.id && !modifiedObj._fromSync) {
       onObjectModified(modifiedObj);
     }
   });
-  
-  // Listen for new objects
-  fabricCanvas.on('object:added', (e: IEvent) => {
+
+  fabricCanvas.on('object:added', (e: fabric.IEvent) => {
     const addedObj = e.target as FabricObjectWithId;
     if (addedObj && addedObj.id && !addedObj._fromSync) {
       onObjectAdded(addedObj);
@@ -124,9 +127,10 @@ export const initializeFabric = (
   return fabricCanvas;
 };
 
+
 // Create or update a fabric object based on data from Liveblocks
 export const createOrUpdateFabricObject = (
-  canvas: Canvas, 
+  canvas: fabric.Canvas, 
   objectData: Record<string, any>
 ): void => {
   // Check if the object already exists in the canvas
@@ -165,14 +169,14 @@ export const createOrUpdateFabricObject = (
 };
 
 // Reset the canvas
-export const resetCanvas = (canvas: Canvas): void => {
+export const resetCanvas = (canvas: fabric.Canvas): void => {
   canvas.clear();
   canvas.backgroundColor = 'transparent';
   canvas.renderAll();
 };
 
 // Function to delete selected object
-export const deleteSelectedObject = (canvas: Canvas): string | null => {
+export const deleteSelectedObject = (canvas: fabric.Canvas): string | null => {
   const activeObject = canvas.getActiveObject() as FabricObjectWithId | undefined;
   
   if (activeObject) {

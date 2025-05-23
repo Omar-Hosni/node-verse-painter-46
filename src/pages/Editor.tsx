@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas } from '@/components/Canvas';
 import { LeftSidebar } from '@/components/LeftSidebar';
@@ -10,6 +10,7 @@ import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Collaborator } from '@/store/types';
+import { DrawingLayer } from '@/components/CollaborativeDrawing/DrawingLayer';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -254,7 +255,11 @@ const Editor = () => {
         </div>
         <RightSidebar />
       </div>
-      <Toolbar />
+      {/* <Toolbar /> */}
+      <Toolbar/>
+      {/* <Suspense fallback={<div className=" text-white text-center mt-4">Loading collaborative canvas...</div>}>
+        <DrawingLayer />
+      </Suspense> */}
     </div>
   );
 };

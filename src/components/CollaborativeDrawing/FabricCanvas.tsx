@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import { Canvas as FabricCanvas } from 'fabric';
 import { useReactFlow } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
@@ -38,6 +38,10 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   // Liveblocks hooks - safely accessing storage with proper typing
   const canvasObjects = useStorage((root) => root?.canvasObjects);
   const room = useRoom();
+  useEffect(() => {
+  console.log("Liveblocks Room status:", room.getStatus());
+}, [room]);
+  console.log("test")
   const [myPresence, updateMyPresence] = useMyPresence();
   const undo = useUndo();
   const redo = useRedo();
@@ -358,26 +362,50 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
 
   // Expose methods for the toolbar
   React.useEffect(() => {
-    // Add methods to window for the parent component to access
+    if (!fabricInstance) return;
+
+    (window as any).fabricCanvasInstance = fabricInstance;
+
     (window as any).fabricActions = {
       resetCanvas: handleResetCanvas,
       undoCanvas: undo,
       redoCanvas: redo,
       deleteSelected: () => {
-        if (fabricInstance) {
-          const deletedId = deleteSelectedObject(fabricInstance);
-          if (deletedId) {
-            deleteObject(deletedId);
-            toast.info('Object deleted');
-          }
+        const deletedId = deleteSelectedObject(fabricInstance);
+        if (deletedId) {
+          deleteObject(deletedId);
+          toast.info('Object deleted');
         }
-      }
+      },
+      createRectangle: (pointer: { x: number; y: number }) => {
+        const rect = createRectangle(fabricInstance, {
+          left: pointer.x - 50,
+          top: pointer.y - 50,
+          width: 100,
+          height: 100,
+          fill: activeColor,
+        });
+        addObject(rect);
+        toast.success('Rectangle added');
+      },
+      createCircle: (pointer: { x: number; y: number }) => {
+        const circle = createCircle(fabricInstance, {
+          left: pointer.x - 50,
+          top: pointer.y - 50,
+          radius: 50,
+          fill: activeColor,
+        });
+        addObject(circle);
+        toast.success('Circle added');
+      },
     };
-    
+
     return () => {
       delete (window as any).fabricActions;
+      delete (window as any).fabricCanvasInstance;
     };
-  }, [fabricInstance, handleResetCanvas, undo, redo, deleteObject]);
+  }, [fabricInstance, handleResetCanvas, undo, redo, deleteObject, addObject, activeColor]);
+
 
   // Resize handler
   useEffect(() => {
@@ -399,6 +427,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   return (
     <canvas 
       ref={fabricCanvasRef} 
+      style={{ border: '1px solid red' }}
       className="absolute top-0 left-0 w-full h-full pointer-events-auto z-10"
     />
   );
@@ -409,6 +438,7 @@ interface CollaborativeCanvasProps extends FabricCanvasProps {
   projectId: string;
 }
 
+
 export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projectId, ...props }) => {
   return (
     <RoomProvider 
@@ -416,7 +446,10 @@ export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projec
       initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
       initialStorage={{ canvasObjects: new LiveMap() }}
     >
-      <FabricDrawingLayer {...props} />
+      <Suspense fallback={<div className="text-white text-center mt-4">Connecting to room...</div>}>
+        <FabricDrawingLayer {...props} />
+      </Suspense>
     </RoomProvider>
   );
 };
+
