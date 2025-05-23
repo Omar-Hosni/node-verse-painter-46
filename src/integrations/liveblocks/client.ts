@@ -1,12 +1,7 @@
 
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-
-// Create a Liveblocks client with your public API key
-const client = createClient({
-  publicApiKey: "pk_dev_aUfwRFjobfGZgRsiQvOa4rIGvTxyN7SvtiT2pYWHPEb28VXfDH358BV81gfR4YYV",
-  throttle: 16, // Throttle update rate (60fps)
-});
+import type { LsonObject } from "@liveblocks/client";
 
 // Define collaboration room types
 type Presence = {
@@ -23,9 +18,13 @@ type FabricObject = {
   props: Record<string, any>;
 };
 
+// Make sure storage types work with Liveblocks
 type Storage = {
-  canvasObjects: Map<string, FabricObject>;
+  canvasObjects: LiveblocksMap<string, FabricObject>;
 };
+
+// Import LiveblocksMap type to satisfy type constraints
+type LiveblocksMap<K extends string, V> = Record<K, V>;
 
 type UserMeta = {
   id: string;
@@ -49,6 +48,12 @@ type RoomEvent = {
   type: "CANVAS_OBJECT_MODIFIED";
   objectId: string;
 };
+
+// Create a Liveblocks client with your public API key
+const client = createClient({
+  publicApiKey: "pk_dev_aUfwRFjobfGZgRsiQvOa4rIGvTxyN7SvtiT2pYWHPEb28VXfDH358BV81gfR4YYV",
+  throttle: 16, // Throttle update rate (60fps)
+});
 
 export const {
   suspense: {

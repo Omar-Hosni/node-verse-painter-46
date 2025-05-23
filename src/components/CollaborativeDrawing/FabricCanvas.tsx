@@ -36,7 +36,7 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   const viewportChangeListener = useRef<any>(null);
 
   // Liveblocks hooks
-  const canvasObjects = useStorage((root) => root.canvasObjects);
+  const canvasObjects = useStorage((root) => root?.canvasObjects);
   const room = useRoom();
   const [myPresence, updateMyPresence] = useMyPresence();
   const undo = useUndo();
@@ -44,18 +44,25 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   
   // Liveblocks mutations
   const addObject = useMutation(({ storage }, object) => {
-    storage.get("canvasObjects").set(object.id, {
-      id: object.id,
-      type: object.type,
-      version: 1,
-      props: object.props
-    });
+    if (storage && storage.get("canvasObjects")) {
+      storage.get("canvasObjects").set(object.id, {
+        id: object.id,
+        type: object.type,
+        version: 1,
+        props: object.props
+      });
+    }
   }, []);
   
   const updateObject = useMutation(({ storage }, objectId, props) => {
-    const object = storage.get("canvasObjects").get(objectId);
+    if (!storage) return;
+    
+    const objectsMap = storage.get("canvasObjects");
+    if (!objectsMap) return;
+    
+    const object = objectsMap.get(objectId);
     if (object) {
-      storage.get("canvasObjects").set(objectId, {
+      objectsMap.set(objectId, {
         ...object,
         version: object.version + 1,
         props: { ...object.props, ...props }
@@ -64,11 +71,18 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   }, []);
   
   const deleteObject = useMutation(({ storage }, objectId) => {
-    storage.get("canvasObjects").delete(objectId);
+    if (storage && storage.get("canvasObjects")) {
+      storage.get("canvasObjects").delete(objectId);
+    }
   }, []);
   
   const resetAllObjects = useMutation(({ storage }) => {
+    if (!storage) return;
+    
     const objects = storage.get("canvasObjects");
+    if (!objects) return;
+    
+    // Clear all objects
     objects.forEach((_, key) => {
       objects.delete(key);
     });
@@ -393,7 +407,7 @@ export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projec
     <RoomProvider 
       id={`fabric-canvas-${projectId}`}
       initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
-      initialStorage={{ canvasObjects: new Map() }}
+      initialStorage={{ canvasObjects: {} }}
     >
       <FabricDrawingLayer {...props} />
     </RoomProvider>
