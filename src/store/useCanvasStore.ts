@@ -341,19 +341,38 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     return await saveProjectToDb(name, description, get().nodes, get().edges);
   },
   
-  // Fix the loadProject function to match the correct signature
+  // Fixed loadProject function to match the correct signature
   loadProject: async (projectId) => {
-    return await loadProjectFromDb(
-      projectId,
-      (nodes: Node[]) => set({ nodes }), 
-      (edges: Edge[]) => set({ edges }), 
-      (node: Node | null) => set({ selectedNode: node }),
-      (history: { nodes: Node[], edges: Edge[] }) => set({
-        history: [history],
-        historyIndex: 0,
-      }),
-      () => resetNodeIdCounter(get().nodes)
-    );
+    try {
+      // We wrap the callback-based implementation in a promise to properly handle errors
+      return await loadProjectFromDb(
+        projectId,
+        (nodes) => {
+          if (nodes) set({ nodes });
+        }, 
+        (edges) => {
+          if (edges) set({ edges });
+        }, 
+        (node) => set({ selectedNode: node }),
+        (history) => {
+          if (history) {
+            set({
+              history: [history],
+              historyIndex: 0,
+            });
+          }
+        },
+        () => {
+          const { nodes } = get();
+          if (nodes && nodes.length > 0) {
+            resetNodeIdCounter(nodes);
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error loading project:", error);
+      return false;
+    }
   },
   
   fetchUserCredits: async () => {

@@ -36,26 +36,26 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   const reactFlowInstance = useReactFlow();
   const viewportChangeListener = useRef<any>(null);
 
-  // Liveblocks hooks
+  // Liveblocks hooks - safely accessing storage with proper typing
   const canvasObjects = useStorage((root) => root?.canvasObjects);
   const room = useRoom();
   const [myPresence, updateMyPresence] = useMyPresence();
   const undo = useUndo();
   const redo = useRedo();
   
-  // Liveblocks mutations
+  // Liveblocks mutations with proper typing
   const addObject = useMutation(({ storage }, object) => {
-    if (storage) {
-      const canvasObjects = storage.get("canvasObjects");
-      if (canvasObjects) {
-        canvasObjects.set(object.id, {
-          id: object.id,
-          type: object.type,
-          version: 1,
-          props: object.props
-        });
-      }
-    }
+    if (!storage) return;
+    
+    const canvasObjects = storage.get("canvasObjects");
+    if (!canvasObjects) return;
+    
+    canvasObjects.set(object.id, {
+      id: object.id,
+      type: object.type,
+      version: 1,
+      props: object.props
+    });
   }, []);
   
   const updateObject = useMutation(({ storage }, objectId, props) => {
@@ -75,12 +75,12 @@ export const FabricDrawingLayer: React.FC<FabricCanvasProps> = ({ activeTool, ac
   }, []);
   
   const deleteObject = useMutation(({ storage }, objectId) => {
-    if (storage) {
-      const canvasObjects = storage.get("canvasObjects");
-      if (canvasObjects) {
-        canvasObjects.delete(objectId);
-      }
-    }
+    if (!storage) return;
+    
+    const canvasObjects = storage.get("canvasObjects");
+    if (!canvasObjects) return;
+    
+    canvasObjects.delete(objectId);
   }, []);
   
   const resetAllObjects = useMutation(({ storage }) => {
@@ -411,11 +411,14 @@ interface CollaborativeCanvasProps extends FabricCanvasProps {
 }
 
 export const CollaborativeCanvas: React.FC<CollaborativeCanvasProps> = ({ projectId, ...props }) => {
+  // Create a new LiveMap instance for the initial storage
+  const initialCanvasObjects = new LiveMap();
+  
   return (
     <RoomProvider 
       id={`fabric-canvas-${projectId}`}
       initialPresence={{ cursor: null, isDrawing: false, tool: 'select', color: '#ff0000' }}
-      initialStorage={{ canvasObjects: new LiveMap() }}
+      initialStorage={{ canvasObjects: initialCanvasObjects }}
     >
       <FabricDrawingLayer {...props} />
     </RoomProvider>

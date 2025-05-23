@@ -1,4 +1,5 @@
-import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
+
+import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 // Define collaboration room types for future use
@@ -18,7 +19,7 @@ type FabricObject = {
 
 // Make sure storage types work with Liveblocks
 type Storage = {
-  // Define storage types when needed
+  canvasObjects: LiveMap<string, FabricObject>;
 };
 
 type UserMeta = {
@@ -45,6 +46,13 @@ const client = createClient({
   throttle: 16, // Throttle update rate (60fps)
 });
 
+// Export the LiveMap and LiveObject types
+export type { LiveMap, LiveObject } from "@liveblocks/client";
+
+// Export the createClient function and actual LiveMap and LiveObject for use in components
+export { LiveMap, LiveObject } from "@liveblocks/client";
+
+// Create and export the room context
 export const {
   suspense: {
     RoomProvider,
@@ -76,15 +84,3 @@ export const {
     useRemoveReaction,
   }
 } = createRoomContext<Presence, Storage, UserMeta, ThreadMetadata, RoomEvent>(client);
-
-// Export placeholder for future implementation
-export const RoomProvider = ({ children }: { children: React.ReactNode }) => children;
-export const useMyPresence = () => [null, () => {}];
-export const useUpdateMyPresence = () => () => {};
-export const useRoom = () => null;
-export const useOthers = () => [];
-export const useStorage = () => null;
-
-// Export placeholders for future use
-export const LiveMap = {};
-export const LiveObject = {};

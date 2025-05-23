@@ -21,6 +21,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['fabric']
+    include: ['fabric'],
+    esbuildOptions: {
+      target: 'es2020',
+    },
+  },
+  build: {
+    target: 'es2020',
   }
 }));
