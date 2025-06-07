@@ -80,6 +80,7 @@ export const InputNode = ({ id, data, selected }: InputNodeProps) => {
         id="input-out"
         className="!bg-white !border-2 !border-blue-300 w-3 h-3"
       />
+      
     </div>
   );
 };

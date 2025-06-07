@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
@@ -18,11 +18,14 @@ import {
   Search,
   PlusCircle
 } from 'lucide-react';
+
+
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -32,6 +35,14 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Node } from '@xyflow/react';
 import { NodeType } from '@/store/types';
+
+import { DndContext } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'; // Use sortable's arrayMove for consistency
+import { CSS } from '@dnd-kit/utilities'; // Optional for smooth animations
+import Sortable from 'sortablejs';
+import { getHighestOrder } from '@/store/nodeActions';
+
+
 
 type NodeOption = {
   type: NodeType;
@@ -52,10 +63,19 @@ type AssetItem = {
   image?: string;
 };
 
-export const LeftSidebar = () => {
+export const LeftSidebar = ({activeTab, setActiveTab}) => {
+
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
-  const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Insert');
+  const {getNodes, setNodes} = useReactFlow()
+  
+  // Get nodes from the canvas
+  const canvasNodes = useCanvasStore(state => state.nodes);
+  const canvasEdges = useCanvasStore(state => state.edges);
+  const [currentSelectedNode, setCurrentSelectedNode] = useState(null);
+  const { setSelectedNode, setSelectedNodeById } = useCanvasStore();
+
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     'Inputs': true,
@@ -69,7 +89,19 @@ export const LeftSidebar = () => {
   });
 
   // Track expanded nodes in the outline view
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  const [expandedNodes, setExpandedNodes] = useState({});
+  const sortableRef = useRef(null);
+  const [hierarchy, setHierarchy] = useState({ topLevelNodes: [], parentToChildrenMap: {} });
+
+  useEffect(() => {
+    const result = organizeHierarchy();
+    setHierarchy(result);
+  }, [canvasNodes, canvasEdges]);
+
+  useEffect(()=>{
+
+  },[getNodes(), getNodes().length])
+  
   
   const insertCategories: NodeCategory[] = [
     { 
@@ -216,13 +248,10 @@ export const LeftSidebar = () => {
       ] as AssetItem[]
     }
   ];
-
-  // Get nodes from the canvas
-  const canvasNodes = useCanvasStore(state => state.nodes);
-  const canvasEdges = useCanvasStore(state => state.edges);
   
   // Toggle expanded state of a node
   const toggleNodeExpanded = (nodeId: string) => {
+    console.log('toggle node expanded attempted')
     setExpandedNodes(prev => ({
       ...prev,
       [nodeId]: !prev[nodeId]
@@ -248,89 +277,305 @@ export const LeftSidebar = () => {
    * - Any node that receives connections from other nodes is considered a parent
    * - This creates a natural hierarchy based on dataflow in the canvas
    */
-  const organizeHierarchy = () => {
-    // Create a map of target nodes to source nodes (parents to children)
-    const parentToChildrenMap: Record<string, Node[]> = {};
-    
-    // Create a set to track nodes that are children of other nodes
-    const childrenSet = new Set<string>();
-    
-    // Build the parent-child relationships based on edge connections
-    canvasEdges.forEach(edge => {
-      const sourceNode = canvasNodes.find(n => n.id === edge.source);
-      const targetNode = canvasNodes.find(n => n.id === edge.target);
-      
-      if (sourceNode && targetNode) {
-        // Add source as child of target (target is parent)
-        if (!parentToChildrenMap[targetNode.id]) {
-          parentToChildrenMap[targetNode.id] = [];
-        }
-        
-        // Only add if not already added
-        if (!parentToChildrenMap[targetNode.id].some(n => n.id === sourceNode.id)) {
-          parentToChildrenMap[targetNode.id].push(sourceNode);
-        }
-        
-        childrenSet.add(sourceNode.id);
+
+  const SortableNode = ({ node, parentToChildrenMap, level }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: node.id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      paddingLeft: `${level * 16 + 8}px`
+      };
+      const hasChildren = parentToChildrenMap[node.id]?.length > 0;
+
+      return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+          {renderNode(node, parentToChildrenMap, level)}
+        </div>
+      );
+  };
+
+
+  // const handleDragEnd = ({ active, over }) => {
+  //   if (!active || !over || active.id === over.id) return;
+
+  //   const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
+  //   const nodes = useCanvasStore.getState().nodes;
+
+  //   const findSubtree = (nodeId, subtree = []) => {
+  //     const node = nodes.find(n => n.id === nodeId);
+  //     if (node) subtree.push(node);
+  //     const children = parentToChildrenMap[nodeId] || [];
+  //     children.forEach(child => findSubtree(child.id, subtree));
+  //     return subtree;
+  //   };
+
+  //   // Create a flat list of all nodes
+  //   const flatList = [...topLevelNodes];
+  //   Object.keys(parentToChildrenMap).forEach(parentId => {
+  //     parentToChildrenMap[parentId].forEach(child => {
+  //       if (!flatList.includes(child)) flatList.push(child);
+  //     });
+  //   });
+
+  //   // Build a mapping of nodeId to its subtree or just itself
+  //   const nodeToSubtree = {};
+  //   flatList.forEach(node => {
+  //     if (parentToChildrenMap[node.id]) {
+  //       nodeToSubtree[node.id] = findSubtree(node.id);
+  //     } else if (!Object.values(parentToChildrenMap).flat().some(n => n.id === node.id)) {
+  //       nodeToSubtree[node.id] = [node]; // Independent node
+  //     }
+  //   });
+
+  //   // Rebuild the ordered list
+  //   const oldIndex = flatList.findIndex(n => n.id === active.id);
+  //   const newIndex = flatList.findIndex(n => n.id === over.id);
+  //   const updatedList = [...flatList];
+
+  //   const [movedNodes] = updatedList.splice(oldIndex, 1);
+  //   const subtree = nodeToSubtree[active.id] || [movedNodes];
+  //   updatedList.splice(newIndex, 0, ...subtree);
+
+  //   // Deduplicate by node ID
+  //   const deduped = [];
+  //   const seen = new Set();
+  //   updatedList.forEach(node => {
+  //     if (!seen.has(node.id)) {
+  //       deduped.push(node);
+  //       seen.add(node.id);
+  //     }
+  //   });
+
+  //   // Update orders
+  //   deduped.map((node, idx) => {
+  //     node.data = { ...node.data, order: deduped.length - idx };
+  //   });
+
+  //   setNodes(deduped);
+  // };
+
+
+  const handleDragEnd = ({ active, over }) => {
+    if (!active || !over || active.id === over.id) return;
+
+    const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
+    const nodes = useCanvasStore.getState().nodes;
+
+    const findSubtree = (nodeId, subtree = []) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) subtree.push(node);
+      const children = parentToChildrenMap[nodeId] || [];
+      children.forEach(child => findSubtree(child.id, subtree));
+      return subtree;
+    };
+
+    // Create a flat list preserving hierarchy grouping
+    let flatList = [];
+    topLevelNodes.forEach(topNode => {
+      if (parentToChildrenMap[topNode.id]) {
+        flatList.push(...findSubtree(topNode.id));
+      } else {
+        flatList.push(topNode);
       }
     });
-    
-    // Find top-level nodes (nodes that are not children of any other node)
-    const topLevelNodes = canvasNodes.filter(node => !childrenSet.has(node.id));
-    
+
+    // Find the subtree of the node being moved
+    const activeSubtree = findSubtree(active.id);
+
+    // Remove all nodes in the active subtree from the flat list
+    flatList = flatList.filter(node => !activeSubtree.some(subNode => subNode.id === node.id));
+
+    // Find the index of the target node in the flat list
+    const overIndex = flatList.findIndex(n => n.id === over.id);
+
+    // Insert the active subtree at the new index
+    flatList.splice(overIndex, 0, ...activeSubtree);
+
+    // Deduplicate to prevent scattered nodes
+    const seen = new Set();
+    const deduped = flatList.filter(node => {
+      if (seen.has(node.id)) return false;
+      seen.add(node.id);
+      return true;
+    });
+
+    // Update orders (maintain parent-child relative order)
+    deduped.forEach((node, idx) => {
+      node.data = { ...node.data, order: idx }; // 0-based order
+    });
+
+    // Set updated nodes
+    setNodes(deduped);
+  };
+
+
+  const organizeHierarchy = () => {
+    const parentToChildrenMap: Record<string, Node[]> = {};
+    const childrenSet = new Set<string>();
+
+    const frames = canvasNodes.filter(n => n.type === 'labeledFrameGroupNode');
+
+    const isNodeInsideFrame = (node: Node, frame: Node): boolean => {
+      if (!frame.width || !frame.height) return false;
+      return (
+        node.position.x >= frame.position.x &&
+        node.position.y >= frame.position.y &&
+        node.position.x <= frame.position.x + frame.width &&
+        node.position.y <= frame.position.y + frame.height
+      );
+    };
+
+    // 🏠 Add nodes inside frames to hierarchy
+    canvasNodes.forEach(node => {
+      if (node.type !== 'labeledFrameGroupNode') {
+        const parentFrame = frames.find(frame => isNodeInsideFrame(node, frame));
+        if (parentFrame) {
+          if (!parentToChildrenMap[parentFrame.id]) parentToChildrenMap[parentFrame.id] = [];
+          parentToChildrenMap[parentFrame.id].push(node);
+          childrenSet.add(node.id);
+        }
+      }
+    });
+
+    // 🔗 Edge-based grouping (as-is)
+    canvasEdges.forEach(edge => {
+      const source = canvasNodes.find(n => n.id === edge.source);
+      const target = canvasNodes.find(n => n.id === edge.target);
+      if (source && target) {
+        if (!parentToChildrenMap[target.id]) parentToChildrenMap[target.id] = [];
+        if (!parentToChildrenMap[target.id].some(n => n.id === source.id)) {
+          parentToChildrenMap[target.id].push(source);
+          childrenSet.add(source.id);
+        }
+      }
+    });
+
+    // 🔢 Top-level nodes
+    const topLevelNodes = canvasNodes
+      .filter(n => !childrenSet.has(n.id))
+      .sort((a, b) => (b.data?.order ?? 0) - (a.data?.order ?? 0));
+
     return { topLevelNodes, parentToChildrenMap };
   };
-  
-  // Render a node and its children
-  const renderNode = (node: Node, parentToChildrenMap: Record<string, Node[]>, level: number = 0) => {
-    const nodeId = node.id;
-    const hasChildren = parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId].length > 0;
-    const isExpanded = expandedNodes[nodeId] !== false; // Default to expanded
+
+
+
+
+
+  useEffect(() => {
+    if (sortableRef.current) {
+      const sortable = Sortable.create(sortableRef.current, {
+        animation: 150,
+        onEnd: (evt) => {
+          handleDragEnd({ 
+            active: { id: sortableRef.current.children[evt.oldIndex].dataset.id },
+            over: { id: sortableRef.current.children[evt.newIndex].dataset.id }
+          });
+        }
+
+      });
+
+      return () => sortable.destroy();
+    }
+  }, [hierarchy.topLevelNodes]);
+
+
+
+  const moveNodeInOrder = (draggedId, targetId) => {
+    const nodes = [...useCanvasStore.getState().nodes];
+    const dragged = nodes.find(n => n.id === draggedId);
+    const target = nodes.find(n => n.id === targetId);
+    if (!dragged || !target) return;
+
+    // Swap their order values
+    const temp = dragged.data?.order ?? 0;
+    dragged.data = { ...dragged.data, order: target.data?.order ?? 0 };
+    target.data = { ...target.data, order: temp };
+
+    useCanvasStore.getState().setNodes(nodes);
+  };
+
+
+  // const renderNode = (node: Node, parentToChildrenMap: Record<string, Node[]>, level: number = 0) => {
     
+  //   const nodeId = node.id;
+  //   const hasChildren = parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId]?.length > 0;
+  //   const isExpanded = expandedNodes[nodeId] !== false;
+  //   const order = node.data?.order ?? 0;
+
+  //   return (
+  //     <div key={nodeId} className="mb-1" style={{ order: order * -1 }}> {/* Reverse ordering for CSS flex/grid */}
+  //       <div
+  //         className={`p-2 rounded-md flex items-center cursor-pointer transition-colors duration-150
+  //           ${useCanvasStore.getState().selectedNode?.id === nodeId ? 
+  //               'bg-blue-900/40 text-blue-200'
+  //             : 'hover:bg-gray-700/50 text-gray-200'}`}
+  //         style={{ paddingLeft: `${level * 16 + 8}px` }}
+  //         onClick={() => {
+  //            const selected = canvasNodes.find(n => n.id === nodeId);
+  //            if (selected) {
+  //              useCanvasStore.getState().setSelectedNode(selected);
+  //              useCanvasStore.getState().setSelectedNodeById(nodeId);
+  //          }
+  //         }}
+  //       >
+  //         {hasChildren ? (
+  //           <Button
+  //             className="mr-1 p-1 rounded-sm hover:bg-gray-600/50"
+  //             onClick={() => {
+  //               console.log("Left Side bar Chevron Down Clicked")
+  //               toggleNodeExpanded(nodeId);
+  //             }}
+  //           >
+  //             {isExpanded ? <ChevronDown className="h-3 w-3 text-gray-400" onClick={()=>console.log('test')}/> 
+  //               : 
+  //               <ChevronRight className="h-3 w-3 text-gray-400" />}
+  //           </Button>
+  //         ) : <div className="w-4 mr-1 bg-red-500" />}
+
+  //         {getNodeIcon(node.type)}
+  //         <span className="text-sm font-medium truncate flex-1">
+  //           {String(node.data?.displayName || node.type || node.id)}
+  //         </span>
+  //       </div>
+
+  //       {hasChildren && isExpanded && parentToChildrenMap[nodeId].map(childNode =>
+  //         renderNode(childNode, parentToChildrenMap, level + 1)
+  //       )}
+  //     </div>
+  //   );
+  // };
+
+  const renderNode = (node, level = 0) => {
+    const hasChildren = parentToChildrenMap[node.id]?.length > 0;
+    const isExpanded = expandedNodes[node.id] !== false;
+
     return (
-      <div key={nodeId} className="mb-1">
-        <div 
-          className={`p-2 rounded-md flex items-center cursor-pointer transition-colors duration-150
-            ${useCanvasStore.getState().selectedNode?.id === nodeId 
-              ? 'bg-blue-900/40 text-blue-200' 
-              : 'hover:bg-gray-700/50 text-gray-200'}`}
+      <div key={node.id} className="mb-1" data-id={node.id}>
+        <div
+          className={node.selected ? 
+            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md bg-blue-600  border-t border-white" : 
+            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md hover:bg-gray-800/50 hover:border-t hover:border-white"}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
-            // Select the node when clicked
-            const node = canvasNodes.find(n => n.id === nodeId);
-            if (node) {
-              useCanvasStore.getState().setSelectedNode(node);
+            const selected = canvasNodes.find(n => n.id === node.id);
+            if (selected) {              
+              setSelectedNode(selected)
+              setSelectedNodeById(selected)
+              setCurrentSelectedNode(selected)
             }
           }}
         >
-          {hasChildren && (
-            <button 
-              className="mr-1 p-1 rounded-sm hover:bg-gray-600/50"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleNodeExpanded(nodeId);
-              }}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-3 w-3 text-gray-400" />
-              ) : (
-                <ChevronRight className="h-3 w-3 text-gray-400" />
-              )}
+          {hasChildren ? (
+            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1">
+              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </button>
-          )}
-          
-          {!hasChildren && <div className="w-4 mr-1" />}
-          
-          {getNodeIcon(node.type)}
-          
-          <span className="text-sm font-medium truncate flex-1">
-            {String(node.data?.displayName || node.type || node.id)}
-          </span>
+          ) : <span className="w-4 mr-1" />}
+          <span>{node.data?.displayName || node.type}</span>
         </div>
-        
-        {hasChildren && isExpanded && parentToChildrenMap[nodeId].map(childNode => (
-          renderNode(childNode, parentToChildrenMap, level + 1)
-        ))}
+        {hasChildren && isExpanded && parentToChildrenMap[node.id].map(child =>
+          renderNode(child, level + 1)
+        )}
       </div>
     );
   };
@@ -354,7 +599,6 @@ export const LeftSidebar = () => {
   
   // Create a flat list of all options for search
   const allNodeOptions = insertCategories.flatMap(category => category.options);
-  
   const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
 
   // Handler for adding a node
@@ -371,55 +615,53 @@ export const LeftSidebar = () => {
       y: center.y
     });
     
-    addNode(nodeType, position);
+    const order = getHighestOrder(getNodes())+1;
+    addNode(nodeType, position, order);
   };
   
   return (
     <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
       {/* Tab selector */}
-      <div className="flex border-b border-gray-700 bg-sidebar-accent">
-        <button 
-          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Outline' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
-          onClick={() => setActiveTab('Outline')}
-        >
-          <div className="flex flex-col items-center justify-center">
-            <LayoutList className="h-5 w-5 mb-1" />
-            <span className="hidden lg:inline">Outline</span>
-          </div>
-        </button>
-        <button 
-          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Insert' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
-          onClick={() => setActiveTab('Insert')}
-        >
-          <div className="flex flex-col items-center justify-center">
-            <SquarePlus className="h-5 w-5 mb-1" />
-            <span className="hidden lg:inline">Insert</span>
-          </div>
-        </button>
-        <button 
-          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Assets' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
-          onClick={() => setActiveTab('Assets')}
-        >
-          <div className="flex flex-col items-center justify-center">
-            <FileImage className="h-5 w-5 mb-1" />
-            <span className="hidden lg:inline">Assets</span>
-          </div>
-        </button>
+      <div className="flex justify-center items-center bg-transparent py-2">
+        <div className="flex bg-[#1f1f1f] rounded-full p-1">
+          {['Outline', 'Insert', 'Assets'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as 'Outline' | 'Insert' | 'Assets')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+                ${activeTab === tab
+                  ? 'bg-white text-black shadow'
+                  : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
+
       
       {/* Search bar */}
       <div className="p-2 border-b border-gray-700">
         <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
             type="text"
-            placeholder="Search components..."
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 bg-gray-800 border-gray-700 text-sm h-9"
+            className="
+              w-full pl-10 pr-4 py-2 
+              bg-[#1f1f1f] text-sm text-white 
+              placeholder:text-gray-400 
+              border-none rounded-full 
+              focus:ring-2 focus:ring-blue-500 focus:outline-none
+              transition duration-200 ease-in-out
+            "
           />
         </div>
       </div>
+
       
       {/* Scrollable content area - implementing the user's solution */}
       <ScrollArea className="h-[calc(90vh-112px)] overflow-y-auto">
@@ -437,15 +679,9 @@ export const LeftSidebar = () => {
                 </Button>
               </h3>
               
-              <div className="space-y-1 mt-4">
-                {topLevelNodes.length > 0 ? (
-                  topLevelNodes.map(node => renderNode(node, parentToChildrenMap))
-                ) : (
-                  <div className="text-gray-500 text-sm p-2 italic">
-                    No components in workflow yet. Add some from the Insert tab.
-                  </div>
-                )}
-              </div>
+          <div ref={sortableRef}>
+            {topLevelNodes.map(node => renderNode(node))}
+          </div>
             </div>
           )}
           

@@ -23,7 +23,8 @@ import {
   handleNodesChange, 
   updateNodeDataHelper,
   resetNodeIdCounter,
-  deleteEdgeHelper
+  deleteEdgeHelper,
+  renumberOrdersEnhanced
 } from './nodeActions';
 
 import { 
@@ -135,11 +136,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     });
   },
   
-  addNode: (nodeType: NodeType, position) => {
+  addNode: (nodeType: NodeType, position, order) => {
     // Save state before adding node
     get().saveToHistory();
     
-    const newNode = createNode(nodeType, position);
+    const newNode = createNode(nodeType, position, order);
 
     set({ 
       nodes: [...get().nodes, newNode],
@@ -158,6 +159,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       get().selectedNode
     );
     
+    //attempt a renumberOrdersEnhanced here
+    //const loadedNodes = renumberOrdersEnhanced(updatedNodes)
+    
     set({
       nodes: updatedNodes,
       selectedNode: updatedSelectedNode,
@@ -168,6 +172,18 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ selectedNode: node });
   },
 
+  setSelectedNodeById: (_node: Node) => {
+    const id = _node.id
+    set((state) => ({
+      nodes: state.nodes.map((node) => ({
+        ...node,
+        selected: node.id === id,
+      })),
+        selectedNode: state.nodes.find((node) => node.id === id) || null,
+      }));
+  },
+
+
   setSelectedEdge: (edge) => {
     set({ selectedEdge: edge });
   },
@@ -175,6 +191,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   setRunwayApiKey: (apiKey) => {
     set({ runwayApiKey: apiKey });
   },
+
 
   uploadControlNetImage: async (nodeId: string, imageData: File) => {
     await uploadControlNetImage(

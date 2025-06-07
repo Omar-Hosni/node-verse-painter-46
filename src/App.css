@@ -40,3 +40,25 @@
 .read-the-docs {
   color: #888;
 }
+
+.react-flow__node {
+  width: 400px; /* <-- this will break resizable sizing */
+}
+
+canvas {
+  touch-action: none;
+  background-color: transparent;
+}
+
+.node-content {
+  user-select: none;
+  cursor: grab;
+}
+
+.node-content:active {
+  cursor: grabbing;
+}
+
+.selected-node {
+  outline: 2px solid #3b82f6;
+}

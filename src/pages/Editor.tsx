@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Collaborator } from '@/store/types';
 import { DrawingLayer } from '@/components/CollaborativeDrawing/DrawingLayer';
+import {DrawingOverlay} from '@/components/DrawingOverlay';
+import {FloatingPaintCanvas} from '@/components/FloatingPaintCanvas';
+import { useReactFlow } from '@xyflow/react';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -18,7 +21,7 @@ const Editor = () => {
   const [projectName, setProjectName] = useState('Untitled Project');
   const [loading, setLoading] = useState(true);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  
+  const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Outline');
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
   const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
@@ -27,6 +30,8 @@ const Editor = () => {
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
   const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
   
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'frame' | 'triangle' | 'labeledGroup'>('select');
+
   useEffect(() => {
     // Check authentication and redirect if not authenticated
     const checkAuth = async () => {
@@ -232,6 +237,7 @@ const Editor = () => {
     navigate('/auth');
   };
 
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-[#121212]">
       <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
@@ -239,7 +245,7 @@ const Editor = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#121212] text-white">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#121212] text-white text-sm">
       <AppHeader 
         projectName={projectName} 
         onSave={handleSave} 
@@ -249,17 +255,19 @@ const Editor = () => {
         projectId={projectId}
       />
       <div className="flex flex-1 relative">
-        <LeftSidebar />
-        <div className="flex-1 relative">
-          <Canvas />
+        <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab}/>
+        <div className="flex-1 relative" id="canvas-area">
+          <Canvas activeTool={activeTool} setActiveTool={setActiveTool}/>
+          <div id="canvas-wrapper" className="absolute inset-0 pointer-events-none">
+            <FloatingPaintCanvas isPainting={activeTool === 'paint'} />
+          </div>
         </div>
+
         <RightSidebar />
       </div>
       {/* <Toolbar /> */}
-      <Toolbar/>
-      {/* <Suspense fallback={<div className=" text-white text-center mt-4">Loading collaborative canvas...</div>}>
-        <DrawingLayer />
-      </Suspense> */}
+      <Toolbar activeTool={activeTool} onToolChange={(tool) => setActiveTool(tool)} setActiveTab={setActiveTab}/>
+
     </div>
   );
 };

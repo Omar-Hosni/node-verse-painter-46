@@ -1,17 +1,23 @@
-
-import React, { useState } from 'react';
+// Toolbar.tsx
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useReactFlow } from '@xyflow/react';
+import { Input } from "@/components/ui/input";
+import { ZoomControl } from './ZoomControl';
 import {
   Hand, 
   MousePointer, 
-  ZoomIn, 
-  ZoomOut,
   Circle as CircleIcon,
   RectangleHorizontal,
+  Triangle,
   Text,
-  Frame
+  Frame,
+  Paintbrush,
+  Group,
+  MessageCirclePlus,
+  Plus,
+  Tally1
 } from 'lucide-react';
 import { 
   Popover,
@@ -19,77 +25,229 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export const Toolbar = () => {
-  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'circle' | 'rectangle' | 'text' | 'frame'>('select');
+type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame';
+
+interface ToolbarProps {
+  activeTool: ToolType;
+  onToolChange: (tool: ToolType) => void;
+  setActiveTab: (tab) => void;
+}
+
+
+export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setActiveTab }) => {
+  const [isPainting, setIsPainting] = useState(false);
   const addNode = useCanvasStore(state => state.addNode);
-  const reactFlowInstance = useReactFlow();
-  
-  const handleToolChange = (tool: typeof activeTool) => {
-    setActiveTool(tool);
+  const {getNodes} = useReactFlow()
+  const reactFlowInstance = useReactFlow(); //for adding the shapes
+
+  const [sectionWidth, setSectionWidth] = useState(800);
+  const [sectionHeight, setSectionHeight] = useState(600);
+
+  const nodes = getNodes()
+  const highestNodeOrder = nodes.length > 0 ? Math.max(...nodes.map(node => node?.data?.order)) : 0;
+
+
+  const handleOpenInsertTab = () => {
+    setActiveTab('Insert'); // Assuming you have this function
+  };
+
+
+  const handleToolChange = (tool: ToolType) => {
+      onToolChange(tool); // notify parent
+      // const isInteractive = tool !== 'select';
+      // reactFlowInstance.setInteractive?.(isInteractive);
   };
   
-  const handleAddShape = (type: 'circle' | 'rectangle' | 'text' | 'frame') => {
-    // Get the center of the viewport
+  const handleAddCommentNode = () => {
+
+    addNode('comment-node', {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      data: {
+        type: 'comment-node',
+        text: 'New Comment',
+        color: '#fcd34d',
+        order: highestNodeOrder + 1
+      }
+    });
+  };
+
+
+  const handleAddShape = (
+    type: 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame',
+    dimensions?: { width: number; height: number }
+    ) => {
     const center = {
       x: window.innerWidth / 2,
-      y: window.innerHeight / 2
+      y: window.innerHeight / 2,
+  };
+
+  const position = reactFlowInstance.screenToFlowPosition(center);
+
+  if (type === 'frame') {
+    const frameLabelNode = {
+      id: `labeled-frame-node-${Date.now()}`,
+      type: 'labeledFrameGroupNode', // Matches nodeTypes registration
+      position,
+      data: {
+        label: "Frame's Label",
+        order: highestNodeOrder + 1
+       },
+      width: 300,
+      height: 200,
+    };
+    reactFlowInstance.addNodes?.(frameLabelNode);
+    return;
+  }
+
+  if (type === 'section') {
+    const selectedNodes = reactFlowInstance.getNodes().filter(n => n.selected);
+    const padding = 40;
+    const width = dimensions?.width || 400;
+    const height = dimensions?.height || 300;
+
+    const sectionNode = {
+      id: `section-${Date.now()}`,
+      type: 'section-node',
+      position: selectedNodes.length
+        ? {
+            x: Math.min(...selectedNodes.map(n => n.position.x)) - padding,
+            y: Math.min(...selectedNodes.map(n => n.position.y)) - padding,
+          }
+        : position,
+      style: {
+        width,
+        height,
+        border: '2px dashed #999',
+        backgroundColor: '#1a1a1a88',
+        zIndex: -1,
+      },
+      data: {
+        width,
+        height,
+        order: highestNodeOrder + 1
+      },
     };
 
-    // Convert screen coordinates to flow coordinates
-    const position = reactFlowInstance.screenToFlowPosition({
-      x: center.x,
-      y: center.y
-    });
-    
-    // Map shape types to node types
-    const nodeTypeMap = {
-      'circle': 'controlnet-pose' as const,
-      'rectangle': 'controlnet-canny' as const,
-      'text': 'input-text' as const,
-      'frame': 'output-preview' as const
+    reactFlowInstance.addNodes?.(sectionNode);
+    return;
+  }
+
+  if (type === 'text') {
+    const order = getNodes()?.length > 0 ? getNodes().length : 0;
+    addNode('input-text', position, order);
+    return;
+  }
+
+  const shapeNodeTypeMap = {
+    rectangle: 'shape-rectangle',
+    circle: 'shape-circle',
+    triangle: 'shape-triangle',
+    labeledFrameGroupNode: 'labeledFrameGroupNode'
+  };
+
+
+  const nodeType = shapeNodeTypeMap[type];
+    if (!nodeType) return;
+
+    const newNode = {
+      id: `${nodeType}-${Date.now()}`,
+      type: nodeType,
+      position,
+      data: {
+        order: highestNodeOrder + 1
+      },
+      width: 380,
+      height: 200,
     };
-    
-    addNode(nodeTypeMap[type], position);
+
+    reactFlowInstance.addNodes?.(newNode);
   };
 
   return (
     <>
       {/* Bottom toolbar */}
-      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-full px-2 py-1 flex gap-1 z-10">
-        <Button 
-          size="icon" 
-          variant={activeTool === 'select' ? "default" : "ghost"}
-          className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-          onClick={() => handleToolChange('select')}
+      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-2xl px-2 py-2 flex z-100">
+        
+        <Button
+          className=" hover:bg-gray-600"
+          onClick={handleOpenInsertTab}
         >
-          <MousePointer className="h-4 w-4 text-white" />
+          <Plus strokeWidth={2} color='gray'/>
         </Button>
-        <Button 
-          size="icon" 
-          variant={activeTool === 'hand' ? "default" : "ghost"} 
-          className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-          onClick={() => handleToolChange('hand')}
-        >
-          <Hand className="h-4 w-4 text-white" />
-        </Button>
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className="rounded-full hover:bg-gray-700"
-        >
-          <ZoomIn className="h-4 w-4 text-white" />
-        </Button>
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className="rounded-full hover:bg-gray-700"
-        >
-          <ZoomOut className="h-4 w-4 text-white" />
-        </Button>
+        
+        <svg viewBox="0 0 24 24" width="35">
+          <path d="M12 4v16" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+        </svg>
+
+        <Button
+          size="icon"
+          variant={activeTool === 'comment' ? "default" : "ghost"}
+          className={`rounded-full ${activeTool === 'comment' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={()=>{
+            handleToolChange('comment')
+            handleAddCommentNode()
+          }}
+          >
+            <MessageCirclePlus
+              className="h-4 w-4 text-white"
+              color={activeTool === 'comment' ? 'white' : 'gray'}/>
+          </Button>
+
+          <Button 
+            size="icon" 
+            variant={activeTool === 'select' ? "default" : "ghost"}
+            className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            onClick={() => handleToolChange('select')}
+          >
+            <MousePointer 
+              className="h-4 w-4 text-white" 
+              color={activeTool === 'select' ? 'white' : 'gray'}/>
+          </Button>
+
+          <Button 
+            size="icon" 
+            variant={activeTool === 'hand' ? "default" : "ghost"} 
+            className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            onClick={() => handleToolChange('hand')}
+          >
+            <Hand 
+              className="h-4 w-4 text-white"
+              color={activeTool === 'hand' ? 'white' : 'gray'}/>
+          </Button>
+
+        <svg viewBox="0 0 24 24" width="35">
+          <path d="M12 4v16" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
+        </svg>
+
+        {/* <Tally1 size={30} style={{ transform: 'translateX(30%)', marginTop:'2px', color:"rgba(255, 255, 255, 0.1)"}} /> */}
+
+          <ZoomControl />
       </div>
       
       {/* Top center shape tools */}
       <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
+              variant={activeTool === 'triangle' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'triangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('triangle')}
+            >
+              <Triangle className="h-4 w-4 text-white" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddShape('triangle')}>
+                <Triangle className="h-4 w-4 mr-2 " />
+                Triangle
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Popover>
           <PopoverTrigger asChild>
             <Button 
@@ -103,11 +261,7 @@ export const Toolbar = () => {
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => handleAddShape('rectangle')}
-              >
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('rectangle')}>
                 <RectangleHorizontal className="h-4 w-4 mr-2" />
                 Rectangle
               </Button>
@@ -128,18 +282,14 @@ export const Toolbar = () => {
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => handleAddShape('circle')}
-              >
-                <CircleIcon className="h-4 w-4 mr-2" />
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('circle')}>
+                <CircleIcon className="h-4 w-4 mr-2 " />
                 Circle
               </Button>
             </div>
           </PopoverContent>
         </Popover>
-        
+
         <Popover>
           <PopoverTrigger asChild>
             <Button 
@@ -153,42 +303,104 @@ export const Toolbar = () => {
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => handleAddShape('text')}
-              >
-                <Text className="h-4 w-4 mr-2" />
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('text')}>
+                <Text className="h-4 w-4 mr-2 " />
                 Text Input
               </Button>
             </div>
           </PopoverContent>
         </Popover>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'frame' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('frame')}
-            >
-              <Frame className="h-4 w-4 text-white" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => handleAddShape('frame')}
-              >
-                <Frame className="h-4 w-4 mr-2" />
-                Frame
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+
+       <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            size="icon"
+            variant={activeTool === 'section' ? "default" : "ghost"}
+            className={`rounded-md ${activeTool === 'section' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            onClick={() => handleToolChange('section')}
+          >
+            <Frame className="h-4 w-4 text-white" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
+          <div>
+            <label className="text-xs text-gray-300">Section Width</label>
+            <input
+              type="number"
+              value={sectionWidth}
+              onChange={(e) => setSectionWidth(parseInt(e.target.value))}
+              className="w-full bg-gray-700 border border-gray-600 text-white rounded px-2 py-1 text-sm"
+              min={100}
+              max={2000}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-300">Section Height</label>
+            <input
+              type="number"
+              value={sectionHeight}
+              onChange={(e) => setSectionHeight(parseInt(e.target.value))}
+              className="w-full bg-gray-700 border border-gray-600 text-white rounded px-2 py-1 text-sm"
+              min={100}
+              max={2000}
+            />
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleAddShape('section', { width: sectionWidth, height: sectionHeight })}
+            className="w-full mt-2 hover:bg-white hover:text-black"
+          >
+            Add Section
+          </Button>
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            size="icon"
+            variant={activeTool === 'paint' ? "default" : "ghost"}
+            className={`rounded-full ${activeTool === 'paint' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            onClick={() => handleToolChange('paint')}
+          >
+            <Paintbrush className="h-4 w-4 text-white" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleToolChange('paint')}
+            className="w-full mt-2 hover:bg-white hover:text-black"
+          >
+            Paint Brush
+          </Button>
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            size="icon"
+            variant={activeTool === 'frame' ? "default" : "ghost"}
+            className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            onClick={() => handleToolChange('frame')}
+          >
+            <Group className="h-4 w-4 text-white" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleAddShape('frame')}
+            className="w-full mt-2 hover:bg-white hover:text-black"
+          >
+            Frame 
+          </Button>
+        </PopoverContent>
+      </Popover>
       </div>
     </>
   );

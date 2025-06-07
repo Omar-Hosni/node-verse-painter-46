@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect, Suspense  } from 'react';
+import React, { useCallback, useRef, useEffect, Suspense, useState  } from 'react';
 import {
   ReactFlow,
   NodeTypes,
@@ -9,7 +9,11 @@ import {
   Background,
   Panel,
   ConnectionLineType,
+  SelectionMode,
+  NodePositionChange,
+  NodeDimensionChange
 } from '@xyflow/react';
+
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { ModelNode } from './nodes/ModelNode';
 import { LoraNode } from './nodes/LoraNode';
@@ -22,8 +26,21 @@ import { Button } from './ui/button';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DrawingLayer } from './CollaborativeDrawing/DrawingLayer';
+import { RectangleNode } from './nodes/RectangleNode';
+import { CircleNode } from './nodes/CircleNode';
+import { SectionNode } from './nodes/SectionNode';
+import { CommentNode } from './nodes/CommentNode';
 
 import '@xyflow/react/dist/style.css';
+import { TriangleNode } from './nodes/TriangleNode';
+import { DrawingNode } from './nodes/DrawingNode';
+import {LabeledFrameGroupNodeWrapper} from './nodes/LabeledFrameGroupNodeWrapper';
+
+import { getSubtree } from '@/utils/nodeHierarchy';
+import { getHighestOrder } from '@/store/nodeActions';
+
+import AlignmentGuides from './AlignmentGuides';
+import { calculateAlignmentGuides, snapNodeToGuides, AlignmentGuide } from '@/utils/alignmentUtils';
 
 const nodeTypes: NodeTypes = {
   modelNode: ModelNode,
@@ -31,13 +48,20 @@ const nodeTypes: NodeTypes = {
   controlnetNode: ControlnetNode,
   previewNode: PreviewNode,
   inputNode: InputNode,
+  labeledFrameGroupNode: LabeledFrameGroupNodeWrapper,
+  'shape-rectangle': RectangleNode,
+  'shape-circle': CircleNode,
+  'shape-triangle': TriangleNode,
+  'section-node': SectionNode,
+  'drawing-node': DrawingNode,
+  'comment-node': CommentNode,
 };
 
 const edgeTypes: EdgeTypes = {
   custom: CustomEdge,
 };
 
-export const Canvas = () => {
+export const Canvas = ({activeTool, setActiveTool}) => {
   const { projectId } = useParams<{ projectId: string }>();
   const { 
     nodes, 
@@ -65,7 +89,23 @@ export const Canvas = () => {
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
+  const {setNodes, getNodes} = useReactFlow();
+  const [previousNodes, setPreviousNodes] = useState(nodes);
+
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+
+  const highestNodeOrder = nodes.length > 0 ? Math.max(...nodes.map(node => node?.data?.order)) : 0;
+
+  useEffect(()=>{
+
+  },[activeTool])
+
+  const isSelectTool = activeTool === 'select';
+  const isHandTool = activeTool === 'hand';
   
+
   // Add real-time subscriptions
   useEffect(() => {
     if (!projectId) return;
@@ -118,6 +158,7 @@ export const Canvas = () => {
   const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
     setSelectedEdge(null);
+    setActiveTool('select')
   }, [setSelectedNode, setSelectedEdge]);
 
   const onEdgeClick = useCallback((event: React.MouseEvent, edge: any) => {
@@ -260,29 +301,303 @@ export const Canvas = () => {
     style: { strokeWidth: 2, stroke: '#666' }
   };
 
+
+  const isNodeInsideFrame = (node: Node, frame: Node): boolean => {
+    const frameWidth = frame.width ?? 300; // Default to 300 if undefined
+    const frameHeight = frame.height ?? 200; // Default to 200 if undefined
+    const nodeWidth = node.width ?? 80; // Default to 80 if undefined
+    const nodeHeight = node.height ?? 80; // Default to 80 if undefined
+
+    // Calculate the node's bounding box
+    const nodeLeft = node.position.x;
+    const nodeTop = node.position.y;
+    const nodeRight = nodeLeft + nodeWidth;
+    const nodeBottom = nodeTop + nodeHeight;
+
+    // Calculate the frame's bounding box
+    const frameLeft = frame.position.x;
+    const frameTop = frame.position.y;
+    const frameRight = frameLeft + frameWidth;
+    const frameBottom = frameTop + frameHeight;
+
+    // Check if the entire node is within the frame boundaries
+    const isInside =
+      nodeLeft >= frameLeft && // Node's left edge inside frame's left edge
+      nodeTop >= frameTop && // Node's top edge inside frame's top edge
+      nodeRight <= frameRight && // Node's right edge inside frame's right edge
+      nodeBottom <= frameBottom; // Node's bottom edge inside frame's bottom edge
+
+    return isInside;
+  };
+
+
+  // Updated onNodeDragStop (Canvas.tsx)
+  const onNodeDragStop = (event, draggedNode) => {
+    const currentNodes = reactFlowInstance.getNodes();
+    const frames = currentNodes.filter(n => n.type === 'labeledFrameGroupNode');
+
+    const updatedNodes = currentNodes.map(node => {
+      if (node.type === 'labeledFrameGroupNode') return node;
+
+      const matchedFrame = frames.find(frame => isNodeInsideFrame(node, frame));
+      const currentGroupedWith = node.data?.groupedWith;
+
+      if (matchedFrame && currentGroupedWith !== matchedFrame.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            groupedWith: matchedFrame.id,
+          },
+        };
+      } else if (!matchedFrame && currentGroupedWith) {
+        const newData = { ...node.data };
+        delete newData.groupedWith;
+        return {
+          ...node,
+          data: newData,
+        };
+      }
+
+      return node;
+    });
+
+    reactFlowInstance.setNodes(updatedNodes);
+  };
+
+
+  const updateNodeGrouping = (nodes: Node[]): Node[] => {
+    const frames = nodes.filter(node => node.type === 'labeledFrameGroupNode');
+    const childNodes = nodes.filter(node => node.type !== 'labeledFrameGroupNode');
+
+    // Update grouping relationships
+    const updatedNodes = nodes.map(node => {
+      if (node.type !== 'labeledFrameGroupNode') {
+        const parentFrame = frames.find(frame => frame.id !== node.id && isNodeInsideFrame(node, frame));
+
+        if (parentFrame) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              groupedWith: parentFrame.id,
+            },
+          };
+        } else {
+          const newData = { ...node.data };
+          delete (newData as any).groupedWith;
+          return {
+            ...node,
+            data: newData,
+          };
+        }
+      }
+      return node;
+    });
+
+    // Handle frame movements
+    const frameMovements = new Map<string, { deltaX: number; deltaY: number }>();
+
+    frames.forEach(frame => {
+      const oldFrame = nodes.find(n => n.id === frame.id);
+      if (oldFrame && (oldFrame.position.x !== frame.position.x || oldFrame.position.y !== frame.position.y)) {
+        frameMovements.set(frame.id, {
+          deltaX: frame.position.x - oldFrame.position.x,
+          deltaY: frame.position.y - oldFrame.position.y,
+        });
+      }
+    });
+
+    return updatedNodes.map(node => {
+      const groupedWith = (node.data as any)?.groupedWith;
+      if (groupedWith && frameMovements.has(groupedWith)) {
+        const movement = frameMovements.get(groupedWith);
+        return {
+          ...node,
+          position: {
+            x: node.position.x + movement.deltaX,
+            y: node.position.y + movement.deltaY,
+          },
+        };
+      }
+      return node;
+    });
+  };
+
+
+
+  const handleNodesChange = useCallback((changes) => {
+    onNodesChange(changes); //library updates
+
+    //other custom updates
+    const positionChanges = changes.filter(
+      (c) => c.type === 'position' && c.position && c.dragging !== undefined
+    );
+
+    const dimensionChanges = changes.filter((c) => c.type === 'dimensions');
+
+    if (positionChanges.length > 0) {
+
+      const draggingChange = positionChanges.find(c => c.dragging !== undefined);
+      if (draggingChange) {
+        setIsDragging(draggingChange.dragging);
+        setDraggedNodeId(draggingChange.id);
+      }
+      reactFlowInstance.setNodes((currentNodes) => {
+        // Build a map of previous node positions
+        const prevMap = new Map(previousNodes.map(node => [node.id, node]));
+
+        // Update node positions first, so we get accurate deltas
+        let updatedNodes = currentNodes.map(node => {
+          const change = positionChanges.find(c => c.id === node.id);
+          if (change && change.position) {
+            return { ...node, position: change.position };
+          }
+          return node;
+        });
+
+        // Now calculate frame movement deltas
+        const frameMovements = new Map();
+        updatedNodes.forEach(node => {
+          const prevNode = prevMap.get(node.id);
+          if (node.type === 'labeledFrameGroupNode' && prevNode) {
+            const deltaX = node.position.x - prevNode.position.x;
+            const deltaY = node.position.y - prevNode.position.y;
+            if (deltaX !== 0 || deltaY !== 0) {
+              frameMovements.set(node.id, { deltaX, deltaY });
+            }
+          }
+        });
+
+        // Apply frame movements to grouped nodes
+        if (frameMovements.size > 0) {
+          updatedNodes = updatedNodes.map(node => {
+            const groupedWith = (node.data as any)?.groupedWith;
+            if (groupedWith && frameMovements.has(groupedWith)) {
+              const move = frameMovements.get(groupedWith);
+              return {
+                ...node,
+                position: {
+                  x: node.position.x + move.deltaX,
+                  y: node.position.y + move.deltaY,
+                },
+              };
+            }
+            return node;
+          });
+        }
+
+        if (isDragging && draggedNodeId) {
+          const draggedNode = updatedNodes.find(n => n.id === draggedNodeId);
+          if (draggedNode) {
+            const guides = calculateAlignmentGuides(draggedNode, updatedNodes);
+            setAlignmentGuides(guides);
+
+            const snappedPos = snapNodeToGuides(draggedNode, guides);
+            updatedNodes = updatedNodes.map(n =>
+              n.id === draggedNodeId ? { ...n, position: snappedPos } : n
+            );
+          }
+        } else {
+          setAlignmentGuides([]); // Clear guides when not dragging
+        }
+
+        const frames = updatedNodes.filter(n => n.type === 'labeledFrameGroupNode');
+
+        updatedNodes = updatedNodes.map(node => {
+          if (node.type === 'labeledFrameGroupNode') return node;
+
+          const matchedFrame = frames.find(frame => isNodeInsideFrame(node, frame));
+          const currentGroupedWith = (node.data as any)?.groupedWith;
+
+          if (matchedFrame) {
+            // Update only if different
+            if (currentGroupedWith !== matchedFrame.id) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  groupedWith: matchedFrame.id,
+                },
+              };
+            }
+          } else if (currentGroupedWith) {
+            // Node is no longer inside any frame, remove grouping
+            const newData = { ...node.data };
+            delete (newData as any).groupedWith;
+            return {
+              ...node,
+              data: newData,
+            };
+          }
+
+          return node;
+        });
+
+        setPreviousNodes(updatedNodes);
+        return updatedNodes;
+      });
+    }
+
+    if (dimensionChanges.length > 0) {
+      reactFlowInstance.setNodes((currentNodes) => {
+        const updatedNodes = updateNodeGrouping(currentNodes);
+        setPreviousNodes(updatedNodes);
+        return updatedNodes;
+      });
+    }
+  }, [onNodesChange, reactFlowInstance, previousNodes]);
+
+
+
+  //The following could be used after any operation that affects Ordering
+  // After adding/removing nodes in store actions:
+  //setNodes(renumberOrders(updatedNodes));
+  // After loading a project:
+  //const loadedNodes = renumberOrdersEnhanced(nodesFromProject);
+  //set({ nodes: loadedNodes });
+
+
+  const nodesOrdered = [...useCanvasStore.getState().nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
+
+  console.log(nodes)
+  
   return (
     <div className="flex-1 h-screen bg-[#121212] relative" ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodesOrdered}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        selectionOnDrag={isSelectTool}
+        selectionMode={SelectionMode.Partial}
+        panOnDrag={isHandTool ? true : [1, 2]}  // true = any button (including left click)
+        panOnScroll
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
+        zoomActivationKeyCode="Meta"         // Zoom with Meta key (Cmd on Mac)
+        multiSelectionKeyCode={['Meta', 'Shift']} // Multi-select with Cmd or Shift
+        selectNodesOnDrag={false}            // Disables default selection on drag
+        onNodeDragStop={onNodeDragStop}
         fitView
+        nodesDraggable={isSelectTool}
+        nodesConnectable
+        nodesFocusable
         className="bg-[#151515]"
         connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
-        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineType={ConnectionLineType.Bezier}
         snapToGrid={true}
         snapGrid={[15, 15]}
       >
-        <MiniMap style={{ backgroundColor: '#1A1A1A' }} />
-        <Controls className="bg-[#1A1A1A] border-[#333]" />
+        {/*Canva Visualizer and Zoom in Zoom Out buttons*/}
+        {/* <MiniMap style={{ backgroundColor: '#1A1A1A' }} /> */}
+        <Controls className="text-black mb-20 bg-[#1A1A1A] border-[#333]" />
+        
         <Background color="#333333" gap={16} />
         <Panel position="top-right" className="flex flex-col gap-2">
           <Button 
@@ -299,6 +614,14 @@ export const Canvas = () => {
             Generate Image ({credits !== null ? credits : '...'} credits)
           </Button>
         </Panel>
+
+        {isDragging && alignmentGuides.length > 0 && (
+            <AlignmentGuides 
+              guides={alignmentGuides} 
+              viewport={reactFlowInstance?.getViewport() || { x: 0, y: 0, zoom: 1 }} 
+            />
+          )}
+
       </ReactFlow>
     </div>
   );

@@ -21,6 +21,9 @@ const config = {
         sans: ["Inter var", "Inter", ...fontFamily.sans],
         mono: ["SF Mono", "Menlo", ...fontFamily.mono],
       },
+      fontSize: {
+        base: '14px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

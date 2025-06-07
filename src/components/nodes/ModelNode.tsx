@@ -1,12 +1,6 @@
-
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { HelpCircle } from 'lucide-react';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { User } from 'lucide-react'; // You can change this to your desired icon
 
 interface ModelNodeProps {
   id: string;
@@ -30,88 +24,29 @@ interface ModelNodeProps {
 }
 
 export const ModelNode = ({ data, selected }: ModelNodeProps) => {
-  // Determine the model image based on model type
-  let modelImage = '/lovable-uploads/df1cf4c1-198e-4bd9-8827-57cc3a331657.png'; // Default to SDXL
-  
-  if (data.modelType === 'flux') {
-    modelImage = '/lovable-uploads/334c0c60-a16b-41af-8e36-3ce5c24b1205.png';
-  } else if (data.modelType === 'hidream') {
-    modelImage = '/lovable-uploads/19b91c24-3fce-4587-a291-d38f8d7b359a.png';
-  }
-  
-  // Get the tutorial content for each model type
-  const getTutorialContent = () => {
-    switch (data.modelType) {
-      case 'flux':
-        return {
-          title: "Flux Model",
-          description: "The Flux model is specialized for dynamic and fluid-like image generation, perfect for creating abstract and flowing artwork."
-        };
-      case 'hidream':
-        return {
-          title: "HiDream Model",
-          description: "HiDream is designed for highly detailed dream-like imagery, with enhanced capabilities for surreal and vivid scenes."
-        };
-      default:
-        return {
-          title: "SDXL Model",
-          description: "Stable Diffusion XL is the main model that transforms text prompts into high-quality images with detailed control over the generation process."
-        };
-    }
-  };
-  
-  const tutorialContent = getTutorialContent();
+  const modelImage = 'https://preview.redd.it/sd-looks-better-than-flux-in-some-cases-v0-qg8b1dxh4agd1.png?width=1024&format=png&auto=webp&s=79fb1950a0c8f38b67b1087c8a3bd18e63f0e5a2'; // Change as needed
 
   return (
-    <div 
-      className={`relative rounded-xl ${selected ? 'ring-2 ring-blue-500' : ''}`}
+    <div
+      className={`flex items-center justify-between bg-[#111] rounded-full px-3 py-2 shadow-lg ${selected ? 'ring-2 ring-white' : ''}`}
       style={{ width: 220 }}
     >
-      <div 
-        className="p-3 flex items-center justify-between"
-        style={{ backgroundColor: data.color || '#1a365d' }}
-      >
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
-            <span className="text-xl">{data.emoji || '🎨'}</span>
-          </div>
-          <span className="text-lg font-medium text-white">
-            {data.displayName || 'Model'}
-          </span>
-        </div>
-
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <button className="text-white hover:text-gray-200">
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-white">
-            <div className="space-y-2">
-              <h4 className="text-lg font-semibold">{tutorialContent.title}</h4>
-              <p className="text-sm text-gray-300">{tutorialContent.description}</p>
-              <div className="mt-2 bg-gray-900 rounded overflow-hidden">
-                <img 
-                  src={modelImage}
-                  alt={`${data.displayName} example`}
-                  className="w-full h-auto"
-                />
-              </div>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
+      {/* Left section: Icon and Label */}
+      <div className="flex items-center space-x-2">
+        <User className="h-4 w-4 text-white" /> {/* Replace with desired icon */}
+        <span className="text-white text-sm font-medium">{data.displayName || 'Pose controller'}</span>
       </div>
-      
-      <div className="bg-gray-800 p-2">
-        <img 
+
+      {/* Right section: Circular Image */}
+      <div className="w-8 h-8 rounded-full overflow-hidden">
+        <img
           src={modelImage}
           alt={data.displayName}
-          className="w-full h-auto rounded object-cover"
-          style={{ maxHeight: '120px' }}
+          className="w-full h-full object-cover"
         />
       </div>
-      
-      {/* Horizontal handles with improved positioning */}
+
+      {/* Handle for connection */}
       <Handle
         type="source"
         position={Position.Right}

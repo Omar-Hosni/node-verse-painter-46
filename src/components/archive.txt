@@ -1,0 +1,275 @@
+import icons 
+
+import {
+  // Basic UI Icons
+  Cpu, Layers, Image as ImageIcon, Type, FileOutput, HelpCircle,
+  ChevronDown, ChevronRight, LayoutList, SquarePlus, FileImage, Shuffle,
+  Search, PlusCircle, Paintbrush, Text, Frame, Triangle, RectangleHorizontal, Circle,
+  // Additional Lucide Icons matching your new UI
+  User, // for Face Control
+  Aperture, // for Pose Control
+  Sun, // for Lighting
+  Eye, // for Depth Control
+  SquareStack, // for Layers or Segments
+  Grid, // for Grids/References
+  RefreshCw, // for Re-rendering tools
+  Scissors, // for Remove Background
+  ArrowUp, ArrowDown, // for Import/Export
+  Wand2, // for AI-based Tools
+  Compass, // for Navigation / Scene control
+  Ruler, // for Inpainting/Outpainting
+  ZoomIn, ZoomOut, // for scaling
+  Settings, Upload, Download, RotateCw, PlayCircle
+} from 'lucide-react';
+
+
+
+
+
+left sidebar data
+
+const insertCategories: NodeCategory[] = [
+  {
+    name: 'Controllers',
+    icon: Compass,
+    options: [
+      { type: 'control-pose', label: 'Pose Control', icon: Aperture, description: 'Control pose of the subject' },
+      { type: 'control-edge', label: 'Edge Control', icon: Ruler, description: 'Edge control for better boundaries' },
+      { type: 'control-light', label: 'Light Control', icon: Sun, description: 'Lighting adjustments' },
+      { type: 'control-face', label: 'Face Control', icon: User, description: 'Face expressions control' },
+      { type: 'control-segments', label: 'Segments', icon: SquareStack, description: 'Segmentation mapping' },
+      { type: 'control-depth', label: 'Depth Control', icon: Eye, description: 'Depth information guidance' },
+      { type: 'control-reference', label: 'Reference', icon: Grid, description: 'Reference images and guidance' },
+    ],
+  },
+  {
+    name: 'Re-rendering',
+    icon: RefreshCw,
+    options: [
+      { type: 'reimagine', label: 'Re-Imagine', icon: Wand2, description: 'Reimagine image with different style' },
+      { type: 'rescene', label: 'Re-Scene', icon: Compass, description: 'Change scene of the image' },
+      { type: 'relight', label: 'Relight', icon: Sun, description: 'Relighting of the scene' },
+      { type: 'reangle', label: 'Re-Angle', icon: RotateCw, description: 'Change angle of the image' },
+    ],
+  },
+  {
+    name: 'Tools',
+    icon: Settings,
+    options: [
+      { type: 'remove-bg', label: 'Remove BG', icon: Scissors, description: 'Remove background from image' },
+      { type: 'upscale', label: 'Upscale', icon: ZoomIn, description: 'Upscale image resolution' },
+      { type: 'inpainting', label: 'In-Painting', icon: Ruler, description: 'Fill missing areas in images' },
+      { type: 'outpainting', label: 'Out-Painting', icon: Ruler, description: 'Expand image with surrounding context' },
+      { type: 'text-prompt', label: 'Text Prompt', icon: Text, description: 'Input prompt for AI generation' },
+      { type: 'merger', label: 'Merger', icon: Layers, description: 'Merge multiple layers' },
+      { type: 'router', label: 'Router', icon: SquareStack, description: 'Route outputs between nodes' },
+    ],
+  },
+  {
+    name: 'Render',
+    icon: FileOutput,
+    options: [
+      { type: 'image-output', label: 'Image Output', icon: ImageIcon, description: 'Final image output' },
+      { type: 'real-time', label: 'Real-Time', icon: PlayCircle, description: 'Real-time rendering output' },
+    ],
+  },
+];
+
+
+options design
+{activeTab === 'Insert' && !searchTerm && (
+    <div className="">
+        {insertCategories.map((category) => (
+        <div key={category.name} className="mb-8">
+            <div className="text-sm font-semibold text-gray-600 mb-2 flex items-center">
+            <category.icon className="h-4 w-4 mr-2" />
+            {category.name}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+            {category.options.map(option => (
+                <div 
+                key={option.type}
+                onClick={() => handleAddNode(option.type)}
+                className="bg-neutral-900 rounded-lg flex flex-col items-center justify-center py-6 px-4 cursor-pointer hover:bg-neutral-800 transition-colors"
+                >
+                <option.icon className="h-6 w-6 text-gray-400 mb-1" />
+                <span className="text-xs text-center text-gray-400 font-medium">{option.label}</span>
+                </div>
+            ))}
+            </div>
+        </div>
+        ))}
+    </div>
+)}
+
+
+
+
+old side bar tab selector and search bar
+
+
+      {/* Tab selector */}
+      <div className="flex border-b border-gray-700 bg-sidebar-accent">
+        <button 
+          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Outline' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
+          onClick={() => setActiveTab('Outline')}
+        >
+          <div className="flex flex-col items-center justify-center">
+            <LayoutList className="h-5 w-5 mb-1" />
+            <span className="hidden lg:inline">Outline</span>
+          </div>
+        </button>
+        <button 
+          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Insert' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
+          onClick={() => setActiveTab('Insert')}
+        >
+          <div className="flex flex-col items-center justify-center">
+            <SquarePlus className="h-5 w-5 mb-1" />
+            <span className="hidden lg:inline">Insert</span>
+          </div>
+        </button>
+        <button 
+          className={`flex-1 py-3 px-2 text-center text-sm font-medium ${activeTab === 'Assets' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'}`}
+          onClick={() => setActiveTab('Assets')}
+        >
+          <div className="flex flex-col items-center justify-center">
+            <FileImage className="h-5 w-5 mb-1" />
+            <span className="hidden lg:inline">Assets</span>
+          </div>
+        </button>
+      </div>
+      
+      {/* Search bar */}
+      <div className="p-2 border-b border-gray-700">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input 
+            type="text"
+            placeholder="Search components..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 bg-gray-800 border-gray-700 text-sm h-9"
+          />
+        </div>
+      </div>
+
+
+
+
+what i am essentially trying to achieve is to build a reordering logic to sort the nodes in a manner that when given to ReactFlow it decides their depths on the canvas. same logic to layering panel to photoshop. the current left sidebar logic works, however it might not be the most robust or reliable logic found. I will give you the left sidebar code and the logic of adding new node on canvas and need you to investigate if there will be scenarios of colliding node orders(depth in canvas) or other scenarios where an unexpected issue could occur.
+
+some current issues I need to fix:
+
+1-reordering of depth works most of the times, but sometimes it doesn't
+2-when I reorder, the grouped child nodes inside labeled frame suddenly moves or gets ungrouped (despite in the useCanvasStore state it is still grouped)
+3-investigate more possilbe occurring issues with the current logic of reordering and assigning new order to newly placed nodes
+4-use the sortablejs library for the leftsidebar panel or other library, and don't use dnd library
+5-enhance the logic of grouping child nodes into the labeledFrameNode and fix the order incase the child node's order is smaller than the labeledframegroup node
+
+
+
+old labeled frame group node logic 
+
+// 🧹 Group node into a labeled frame and adjust z-index/order
+const groupNodeIntoLabel = (childId, labelId) => {
+  if (childId === labelId) {
+    console.warn("Cannot group a label node inside itself!");
+    return;
+  }
+
+  const nodes = getNodes();
+  const labelNode = nodes.find(n => n.id === labelId);
+  const childNode = nodes.find(n => n.id === childId);
+
+  if (!labelNode || !childNode) {
+    console.warn("Label or child node not found!");
+    return;
+  }
+
+  // Get max order of existing children
+  const currentChildren = nodes.filter(n => n.parentId === labelId);
+  
+  const maxChildOrLabelOrder = currentChildren.length > 0
+    ? Math.max(...currentChildren.map(n => n.data?.order ?? 0)) + 1
+    : (labelNode.data?.order ?? 0) + 1;
+  
+  const highestNodeOrder = getHighestOrder(nodes)
+  const newChildOrder = highestNodeOrder > maxChildOrLabelOrder ? highestNodeOrder : maxChildOrLabelOrder; //could be used for order as well
+  
+  // Get the entire subtree of the child (if it has children)
+  const subtree = getSubtree(childId, nodes);
+  
+  // Update all nodes in the subtree
+  const updatedNodes = nodes.map(node => {
+    if (subtree.some(n => n.id === node.id)) {
+      return {
+        ...node,
+        parentId: node.id === childId ? labelId : node.parentId,
+        extent: node.id === childId ? 'parent' : node.extent,
+        data: {
+          ...node.data,
+          order: newChildOrder - (node.id === childId ? 0 : 0.001) // Slightly offset children
+        }
+      };
+    }
+    return node;
+  });
+
+  setNodes(updatedNodes);
+  console.log(`Grouped ${childId} into ${labelId} with order ${newChildOrder}`);
+};
+
+console.log(nodes)
+
+// 🧲 Handle drag stop and check for frame containment
+const onNodeDragStop = (event, node) => {
+  const nodes = reactFlowInstance.getNodes();
+  const labelNodes = nodes.filter(n => n.type === 'labeledFrameGroupNode');
+
+  const nodeBounds = {
+    x: node.position.x,
+    y: node.position.y,
+    width: node.width ?? 100,
+    height: node.height ?? 50,
+  };
+  const nodeCenter = {
+    x: nodeBounds.x + nodeBounds.width / 2,
+    y: nodeBounds.y + nodeBounds.height / 2,
+  };
+
+  let grouped = false;
+
+  for (const labelNode of labelNodes) {
+    const labelBounds = {
+      x: labelNode.position.x,
+      y: labelNode.position.y,
+      width: labelNode.width ?? 300,
+      height: labelNode.height ?? 200,
+    };
+
+    const isInside =
+      nodeCenter.x >= labelBounds.x &&
+      nodeCenter.x <= labelBounds.x + labelBounds.width &&
+      nodeCenter.y >= labelBounds.y &&
+      nodeCenter.y <= labelBounds.y + labelBounds.height;
+
+    if (isInside) {
+      groupNodeIntoLabel(node.id, labelNode.id);
+      grouped = true;
+      break;
+    }
+  }
+
+  if (!grouped) {
+    // Reset parent and order if not grouped into any frame
+    useCanvasStore.getState().updateNodeData(node.id, {
+      parentId: null,
+      extent: undefined,
+      data: {
+        ...node.data,
+        order: 0, // Or reset to a default order
+      }
+    });
+    console.log(`Node ${node.id} reset to top level`);
+  }
+};

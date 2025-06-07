@@ -7,6 +7,10 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    font-size: 14px;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -253,4 +257,11 @@
 .node-category-title {
   @apply text-sm font-medium text-gray-300 mb-3 flex items-center;
   @apply tracking-wide uppercase;
+}
+
+/* styles/globals.css or tailwind.css */
+.react-flow__node {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }

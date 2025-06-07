@@ -1,0 +1,13 @@
+/* react-flow-overrides.css */
+
+.react-flow__node {
+  background-color: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.react-flow__node-group {
+  background-color: transparent !important;
+  border: none !important;
+}

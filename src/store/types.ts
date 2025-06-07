@@ -1,6 +1,7 @@
 import { Node, Edge } from '@xyflow/react';
 
 export type NodeType = 
+  | 'comment-node'
   | 'input-text' 
   | 'input-image' 
   | 'model-sdxl' 
@@ -97,9 +98,10 @@ export interface CanvasState {
   onNodesChange: (changes: any) => void;
   onEdgesChange: (changes: any) => void;
   onConnect: (connection: any) => void;
-  addNode: (nodeType: NodeType, position: { x: number, y: number }) => void;
+  addNode: (nodeType: NodeType, position: { x: number, y: number }, order: Number | any) => void;
   updateNodeData: (nodeId: string, newData: any) => void;
   setSelectedNode: (node: Node | null) => void;
+  setSelectedNodeById: (node: Node | null) => void;
   setSelectedEdge: (edge: Edge | null) => void;
   setRunwayApiKey: (apiKey: string) => void;
   uploadControlNetImage: (nodeId: string, imageData: File) => Promise<void>;

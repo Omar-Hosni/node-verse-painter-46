@@ -123,6 +123,24 @@ export const RightSidebar = () => {
     );
   };
   
+  const renderColorInput = (label: string, property: string) => {
+    if (!selectedNode?.data) return null;
+
+    const value = selectedNode.data[property] ?? '#000000';
+
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
+          className="w-full h-10 p-0 border-none bg-transparent"
+        />
+      </div>
+    );
+  };
+
   const renderSlider = (
     label: string,
     property: string,
@@ -191,6 +209,46 @@ export const RightSidebar = () => {
     if (!selectedNode) return null;
     
     switch (selectedNode.type) {
+
+      // Label Node Controls
+      case 'labeledFrameGroupNode':
+      return (
+        <>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Label Name</label>
+          <input
+            type="text"
+            value={selectedNode.data.label || ''}
+            onChange={(e) =>
+              useCanvasStore.getState().updateNodeData(selectedNode.id, {
+                label: e.target.value,
+              })
+            }
+            className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          {renderColorInput('Color', 'color')}
+        </>
+      );
+
+      
+      // Frame Node Controls      
+      case 'frame-node':
+      return (
+        <>
+          {renderNumericInput('Frame Width', 'width', 100, 2000, 10)}
+          {renderNumericInput('Frame Height', 'height', 100, 2000, 10)}
+        </>
+      );
+
+      // Comment Node Controls
+      case 'commentNode':
+      return (
+        <>
+          {renderTextInput('Comment Text', 'text')}
+          {renderColorInput('Background Color', 'color')}
+        </>
+      );
+
+
       // Model node controls
       case 'modelNode':
         return (
@@ -386,6 +444,7 @@ export const RightSidebar = () => {
       </div>
     );
   };
+
   
   // Helper function to get node color
   const getNodeColor = () => {
@@ -411,18 +470,18 @@ export const RightSidebar = () => {
   const renderEmptyState = () => {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-        <Settings className="h-16 w-16 text-gray-600 mb-4" />
+        {/* <Settings className="h-16 w-16 text-gray-600 mb-4" />
         <h3 className="text-xl font-medium text-gray-400 mb-2">No Selection</h3>
         <p className="text-sm text-gray-500">
           Select a node or edge on the canvas to view and edit its properties.
-        </p>
+        </p> */}
       </div>
     );
   };
 
   // Main render
   return (
-    <div className="w-80 h-full bg-sidebar border-l border-field flex flex-col overflow-hidden">
+    <div className={selectedNode ? "w-80 h-full bg-sidebar border-l border-field flex flex-col overflow-hidden" : "w-80 h-full"}>
       {/* Header */}
       <div className="bg-sidebar-accent border-b border-field p-4">
         <h2 className="text-lg font-medium text-white">Properties</h2>
@@ -439,7 +498,7 @@ export const RightSidebar = () => {
                   className="w-4 h-4 rounded-full mr-2"
                   style={{ backgroundColor: getNodeColor() }}
                 />
-                <h2 className="text-lg font-medium text-white truncate" 
+                <h2 className="text-lg font-medium text-white truncate " 
                     title={selectedNode.data?.displayName && typeof selectedNode.data.displayName === 'string' 
                       ? selectedNode.data.displayName 
                       : selectedNode.id}>
