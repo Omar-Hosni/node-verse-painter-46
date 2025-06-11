@@ -33,44 +33,184 @@ const insertCategories: NodeCategory[] = [
     name: 'Controllers',
     icon: Compass,
     options: [
-      { type: 'control-pose', label: 'Pose Control', icon: Aperture, description: 'Control pose of the subject' },
-      { type: 'control-edge', label: 'Edge Control', icon: Ruler, description: 'Edge control for better boundaries' },
-      { type: 'control-light', label: 'Light Control', icon: Sun, description: 'Lighting adjustments' },
-      { type: 'control-face', label: 'Face Control', icon: User, description: 'Face expressions control' },
-      { type: 'control-segments', label: 'Segments', icon: SquareStack, description: 'Segmentation mapping' },
-      { type: 'control-depth', label: 'Depth Control', icon: Eye, description: 'Depth information guidance' },
-      { type: 'control-reference', label: 'Reference', icon: Grid, description: 'Reference images and guidance' },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-pose',
+        label: 'Pose Control',
+        icon: Aperture,
+        description: 'Control pose of the subject',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-edge',
+        label: 'Edge Control',
+        icon: Ruler,
+        description: 'Edge detection via Canny map',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-lights',
+        label: 'Light Control',
+        icon: Sun,
+        description: 'Custom lighting map control',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-face',
+        label: 'Face Control',
+        icon: User,
+        description: 'Facial expressions and identity',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-segments',
+        label: 'Segments',
+        icon: SquareStack,
+        description: 'Segment maps for regions',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-depth',
+        label: 'Depth Control',
+        icon: Eye,
+        description: 'Depth map control for composition',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'control-net',
+        type: 'control-net-reference',
+        label: 'Reference',
+        icon: Grid,
+        description: 'Reference faces, styles, or objects',
+      },
     ],
   },
   {
     name: 'Re-rendering',
     icon: RefreshCw,
     options: [
-      { type: 'reimagine', label: 'Re-Imagine', icon: Wand2, description: 'Reimagine image with different style' },
-      { type: 'rescene', label: 'Re-Scene', icon: Compass, description: 'Change scene of the image' },
-      { type: 'relight', label: 'Relight', icon: Sun, description: 'Relighting of the scene' },
-      { type: 'reangle', label: 'Re-Angle', icon: RotateCw, description: 'Change angle of the image' },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-re-imagine',
+        label: 'Re-Imagine',
+        icon: Wand2,
+        description: 'Recreate image with new style',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-re-scene',
+        label: 'Re-Scene',
+        icon: Compass,
+        description: 'Change scene and object context',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-object-relight',
+        label: 'Re-Light',
+        icon: Sun,
+        description: 'Change the lighting of the scene',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-reangle',
+        label: 'Re-Angle',
+        icon: RotateCw,
+        description: 'Change the camera angle',
+      },
     ],
   },
   {
     name: 'Tools',
     icon: Settings,
     options: [
-      { type: 'remove-bg', label: 'Remove BG', icon: Scissors, description: 'Remove background from image' },
-      { type: 'upscale', label: 'Upscale', icon: ZoomIn, description: 'Upscale image resolution' },
-      { type: 'inpainting', label: 'In-Painting', icon: Ruler, description: 'Fill missing areas in images' },
-      { type: 'outpainting', label: 'Out-Painting', icon: Ruler, description: 'Expand image with surrounding context' },
-      { type: 'text-prompt', label: 'Text Prompt', icon: Text, description: 'Input prompt for AI generation' },
-      { type: 'merger', label: 'Merger', icon: Layers, description: 'Merge multiple layers' },
-      { type: 'router', label: 'Router', icon: SquareStack, description: 'Route outputs between nodes' },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-removebg',
+        label: 'Remove BG',
+        icon: Scissors,
+        description: 'Erase image background',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-upscale',
+        label: 'Upscale',
+        icon: ZoomIn,
+        description: 'Increase image resolution',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-inpainting',
+        label: 'In-Painting',
+        icon: Ruler,
+        description: 'Fill missing areas in the image',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-inpainting',
+        label: 'Out-Painting',
+        icon: Ruler,
+        description: 'Extend content beyond original image',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'input',
+        type: 'input-text',
+        label: 'Text Prompt',
+        icon: Text,
+        description: 'Input text prompt for generation',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-merger',
+        label: 'Merger',
+        icon: Layers,
+        description: 'Merge multiple images with weights',
+      },
+      {
+        design: 'custom-router',
+        functionality: 'helper',
+        type: 'connector',
+        label: 'Router',
+        icon: Share2,
+        description: 'Route connections in workflows',
+      },
     ],
   },
   {
     name: 'Render',
     icon: FileOutput,
     options: [
-      { type: 'image-output', label: 'Image Output', icon: ImageIcon, description: 'Final image output' },
-      { type: 'real-time', label: 'Real-Time', icon: PlayCircle, description: 'Real-time rendering output' },
+      {
+        design: 'image-node',
+        functionality: 'preview',
+        type: 'preview-image',
+        label: 'Image Output',
+        icon: ImageIcon,
+        description: 'Final rendered image',
+      },
+      {
+        design: 'image-node',
+        functionality: 'preview',
+        type: 'preview-realtime',
+        label: 'Real-Time Preview',
+        icon: PlayCircle,
+        description: 'Live preview during generation',
+      },
     ],
   },
 ];
@@ -273,3 +413,111 @@ const onNodeDragStop = (event, node) => {
     console.log(`Node ${node.id} reset to top level`);
   }
 };
+
+
+ const organizeHierarchy = () => {
+    const parentToChildrenMap: Record<string, Node[]> = {};
+    const childrenSet = new Set<string>();
+
+    const getBounds = (node: Node) => ({
+      x: node.position.x,
+      y: node.position.y,
+      width: node.width ?? 100,
+      height: node.height ?? 100,
+      area: (node.width ?? 100) * (node.height ?? 100),
+    });
+
+    // 🔗 Edge-based grouping (as-is)
+    canvasEdges.forEach(edge => {
+      const source = canvasNodes.find(n => n.id === edge.source);
+      const target = canvasNodes.find(n => n.id === edge.target);
+      if (source && target) {
+        if (!parentToChildrenMap[target.id]) parentToChildrenMap[target.id] = [];
+        if (!parentToChildrenMap[target.id].some(n => n.id === source.id)) {
+          parentToChildrenMap[target.id].push(source);
+        }
+        childrenSet.add(source.id);
+      }
+    });
+
+    // 🏠 Explicit parentId grouping (NEW!)
+    canvasNodes.forEach(node => {
+      if (node.parentId) {
+        const parent = canvasNodes.find(n => n.id === node.parentId);
+        if (parent) {
+          if (!parentToChildrenMap[parent.id]) parentToChildrenMap[parent.id] = [];
+          if (!parentToChildrenMap[parent.id].some(n => n.id === node.id)) {
+            parentToChildrenMap[parent.id].push(node);
+            childrenSet.add(node.id);
+          }
+        }
+      }
+    });
+
+    // 🔢 Ordering nodes by 'order' (for non-grouped nodes)
+    const orderedNodes = [...canvasNodes]
+      .filter(n => !childrenSet.has(n.id))
+      .sort((a, b) => (b.data?.order ?? 0) - (a.data?.order ?? 0));
+    
+    return { topLevelNodes: orderedNodes, parentToChildrenMap };
+  };
+
+
+  const handleDragEnd = ({ active, over }) => {
+    if (!active || !over || active.id === over.id) return;
+
+    const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
+    const nodes = useCanvasStore.getState().nodes;
+
+    const findSubtree = (nodeId, subtree = []) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) subtree.push(node);
+      const children = parentToChildrenMap[nodeId] || [];
+      children.forEach(child => findSubtree(child.id, subtree));
+      return subtree;
+    };
+
+    // Create a flat list of all nodes
+    const flatList = [...topLevelNodes];
+    Object.keys(parentToChildrenMap).forEach(parentId => {
+      parentToChildrenMap[parentId].forEach(child => {
+        if (!flatList.includes(child)) flatList.push(child);
+      });
+    });
+
+    // Build a mapping of nodeId to its subtree or just itself
+    const nodeToSubtree = {};
+    flatList.forEach(node => {
+      if (parentToChildrenMap[node.id]) {
+        nodeToSubtree[node.id] = findSubtree(node.id);
+      } else if (!Object.values(parentToChildrenMap).flat().some(n => n.id === node.id)) {
+        nodeToSubtree[node.id] = [node]; // Independent node
+      }
+    });
+
+    // Rebuild the ordered list
+    const oldIndex = flatList.findIndex(n => n.id === active.id);
+    const newIndex = flatList.findIndex(n => n.id === over.id);
+    const updatedList = [...flatList];
+
+    const [movedNodes] = updatedList.splice(oldIndex, 1);
+    const subtree = nodeToSubtree[active.id] || [movedNodes];
+    updatedList.splice(newIndex, 0, ...subtree);
+
+    // Deduplicate by node ID
+    const deduped = [];
+    const seen = new Set();
+    updatedList.forEach(node => {
+      if (!seen.has(node.id)) {
+        deduped.push(node);
+        seen.add(node.id);
+      }
+    });
+
+    // Update orders
+    deduped.map((node, idx) => {
+      node.data = { ...node.data, order: deduped.length - idx };
+    });
+
+    setNodes(deduped);
+  };

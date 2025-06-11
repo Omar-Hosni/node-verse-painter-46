@@ -235,13 +235,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
               className={`rounded-md ${activeTool === 'triangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
               onClick={() => handleToolChange('triangle')}
             >
-              <Triangle className="h-4 w-4 text-white" />
+              <Triangle className={`h-4 w-4 ${activeTool === 'triangle' ? "text-white" : "text-gray-400"}`} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
               <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddShape('triangle')}>
-                <Triangle className="h-4 w-4 mr-2 " />
+                <Triangle className="h-4 w-4 mr-2" />
                 Triangle
               </Button>
             </div>
@@ -256,7 +256,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
               className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
               onClick={() => handleToolChange('rectangle')}
             >
-              <RectangleHorizontal className="h-4 w-4 text-white" />
+              <RectangleHorizontal className={`h-4 w-4 ${activeTool === 'rectangle' ? "text-white" : "text-gray-400"}`} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
@@ -277,7 +277,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
               className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
               onClick={() => handleToolChange('circle')}
             >
-              <CircleIcon className="h-4 w-4 text-white" />
+              <CircleIcon className={`h-4 w-4 ${activeTool === 'circle' ? "text-white" : "text-gray-400"}`} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
@@ -298,7 +298,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
               className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
               onClick={() => handleToolChange('text')}
             >
-              <Text className="h-4 w-4 text-white" />
+              <Text className={`h-4 w-4 ${activeTool === 'text' ? "text-white" : "text-gray-400"}`} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
@@ -319,7 +319,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
             className={`rounded-md ${activeTool === 'section' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             onClick={() => handleToolChange('section')}
           >
-            <Frame className="h-4 w-4 text-white" />
+            <Frame className={`h-4 w-4 ${activeTool === 'section' ? "text-white" : "text-gray-400"}`} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
@@ -364,7 +364,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
             className={`rounded-full ${activeTool === 'paint' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             onClick={() => handleToolChange('paint')}
           >
-            <Paintbrush className="h-4 w-4 text-white" />
+            <Paintbrush className={`h-4 w-4 ${activeTool === 'paint' ? "text-white" : "text-gray-400"}`} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
@@ -387,7 +387,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
             className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             onClick={() => handleToolChange('frame')}
           >
-            <Group className="h-4 w-4 text-white" />
+            <Group className={`h-4 w-4 ${activeTool === 'frame' ? "text-white" : "text-gray-400"}`} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">

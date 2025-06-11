@@ -1,0 +1,60 @@
+upon selecting templates
+it shows choices of the ready templates of that control net
+example: ready poses
+
+source it will be preprocessed
+final map means it is already processed
+
+map: to insert the preprocessed output to the canvas
+
+segment and normal map is deprecated so remove it from left sidebar
+
+reference: face, stlyle, object (coming soon)
+
+re-imagine, it takes an image and just re-denoisining
+
+rescene, takes 2 images (scene, object)
+upon connection decide what is the scene and what is the object
+its literally a reference node that takes 2 images
+the way it works in backend is as follows
+
+
+reangle coming soon
+
+removebg, 
+compare will be a node that has a slider that shows the comparison
+between the mask and the original image
+deliver is if you're generating an image or a mask
+
+upsacle, style is doing nothing for now until further notice
+compare will be a slider to show difference between 
+original image and upscaled
+
+inpainting, we need to be able to draw the mask image
+could be soon and not in MVP
+
+3d not doable now
+
+merger, its just using the IPadapter of multiple medias in runware
+
+router, 
+
+image output will be either card shaped or image layer shaped
+
+seed better be same for engines
+
+gears uses tags which are trigger words, it activates 
+certain styles that lora is trained on
+
+conditional rules
+1-no controller can join to engine with a re-rendering
+2-no tools can join to engine with re-rendering
+3-only one re-rendering allowed
+4-only one tools nodes allowed
+5-engine node can not connect to something unless it has a from connection
+6-re-imagine, in-painting, out-painting can only be used if they have a from connection of engine
+
+
+
+
+

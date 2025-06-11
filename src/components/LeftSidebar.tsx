@@ -42,26 +42,10 @@ import { CSS } from '@dnd-kit/utilities'; // Optional for smooth animations
 import Sortable from 'sortablejs';
 import { getHighestOrder } from '@/store/nodeActions';
 
+import { insertCategories, assetCategories } from './nodes/data/left_sidebar';
 
-
-type NodeOption = {
-  type: NodeType;
-  label: string;
-  icon: React.ElementType;
-  description: string;
-};
-
-type NodeCategory = {
-  name: string;
-  icon: React.ElementType;
-  options: NodeOption[];
-};
-
-type AssetItem = {
-  name: string;
-  type: string;
-  image?: string;
-};
+import _3dmaker from './nodes/data/icons/3dmaker.svg'
+import SvgIcon from './SvgIcon';
 
 export const LeftSidebar = ({activeTab, setActiveTab}) => {
 
@@ -102,152 +86,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
 
   },[getNodes(), getNodes().length])
   
-  
-  const insertCategories: NodeCategory[] = [
-    { 
-      name: 'Inputs',
-      icon: Type,
-      options: [
-        { 
-          type: 'input-text', 
-          label: 'Text Input', 
-          icon: Type,
-          description: 'A node that allows entering text which can be used as prompts for models.' 
-        },
-        { 
-          type: 'input-image', 
-          label: 'Image Input', 
-          icon: ImageIcon,
-          description: 'A node that allows uploading images for use in ControlNet or as reference.' 
-        },
-      ]
-    },
-    {
-      name: 'Models',
-      icon: Cpu,
-      options: [
-        { 
-          type: 'model-sdxl', 
-          label: 'SDXL', 
-          icon: Cpu,
-          description: 'Stable Diffusion XL model that generates high-quality images from text prompts.' 
-        },
-        { 
-          type: 'model-flux', 
-          label: 'Flux Model', 
-          icon: Cpu,
-          description: 'Flux model specialized for dynamic and fluid-like image generation.' 
-        },
-        { 
-          type: 'model-hidream', 
-          label: 'HiDream Model', 
-          icon: Cpu,
-          description: 'HiDream model for highly detailed dream-like imagery.' 
-        },
-      ]
-    },
-    {
-      name: 'LoRAs',
-      icon: Layers,
-      options: [
-        { 
-          type: 'lora-realistic', 
-          label: 'Realistic LoRA', 
-          icon: Layers,
-          description: 'LoRA adapter that enhances realism in generated images.' 
-        },
-        { 
-          type: 'lora-cartoon', 
-          label: 'Cartoon LoRA', 
-          icon: Layers,
-          description: 'LoRA adapter that creates cartoon-style imagery.' 
-        },
-        { 
-          type: 'lora-character', 
-          label: 'Character X LoRA', 
-          icon: Layers,
-          description: 'LoRA adapter that specializes in consistent character generation.' 
-        },
-      ]
-    },
-    {
-      name: 'ControlNets',
-      icon: ImageIcon,
-      options: [
-        { 
-          type: 'controlnet-canny', 
-          label: 'Canny ControlNet', 
-          icon: ImageIcon,
-          description: 'ControlNet that uses edge detection to guide image generation.' 
-        },
-        { 
-          type: 'controlnet-depth', 
-          label: 'Depth ControlNet', 
-          icon: ImageIcon,
-          description: 'ControlNet that uses depth information to guide image generation.' 
-        },
-        { 
-          type: 'controlnet-pose', 
-          label: 'Pose ControlNet', 
-          icon: ImageIcon,
-          description: 'ControlNet that uses human pose information to guide image generation.' 
-        },
-        { 
-          type: 'controlnet-segment', 
-          label: 'Segment ControlNet', 
-          icon: ImageIcon,
-          description: 'ControlNet that uses segmentation maps to guide image generation.' 
-        },
-      ]
-    },
-    {
-      name: 'Output',
-      icon: FileOutput,
-      options: [
-        { 
-          type: 'output-preview', 
-          label: 'Preview', 
-          icon: FileOutput,
-          description: 'A node that displays the final generated image output.' 
-        },
-      ]
-    }
-  ];
-
-  // Demo content for Assets tab
-  const assetCategories = [
-    {
-      name: 'Components',
-      icon: LayoutList,
-      items: [
-        { name: 'Component 1', type: 'component' },
-        { name: 'Component 2', type: 'component' },
-        { name: 'Untitled Component', type: 'component' },
-      ] as AssetItem[]
-    },
-    {
-      name: 'Renders',
-      icon: FileImage,
-      items: [
-        { name: 'Render 1', type: 'render', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475' },
-        { name: 'Render 2', type: 'render', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5' },
-        { name: 'Render 3', type: 'render', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158' },
-        { name: 'Render 4', type: 'render', image: 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb' },
-        { name: 'Render 5', type: 'render', image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22' },
-        { name: 'Render 6', type: 'render', image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901' },
-      ] as AssetItem[]
-    },
-    {
-      name: 'Uploaded',
-      icon: Shuffle,
-      items: [
-        { name: 'Upload 1', type: 'upload', image: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7' },
-        { name: 'Upload 2', type: 'upload', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475' },
-        { name: 'Upload 3', type: 'upload', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5' },
-        { name: 'Upload 4', type: 'upload', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158' },
-      ] as AssetItem[]
-    }
-  ];
   
   // Toggle expanded state of a node
   const toggleNodeExpanded = (nodeId: string) => {
@@ -293,66 +131,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
         </div>
       );
   };
-
-
-  // const handleDragEnd = ({ active, over }) => {
-  //   if (!active || !over || active.id === over.id) return;
-
-  //   const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
-  //   const nodes = useCanvasStore.getState().nodes;
-
-  //   const findSubtree = (nodeId, subtree = []) => {
-  //     const node = nodes.find(n => n.id === nodeId);
-  //     if (node) subtree.push(node);
-  //     const children = parentToChildrenMap[nodeId] || [];
-  //     children.forEach(child => findSubtree(child.id, subtree));
-  //     return subtree;
-  //   };
-
-  //   // Create a flat list of all nodes
-  //   const flatList = [...topLevelNodes];
-  //   Object.keys(parentToChildrenMap).forEach(parentId => {
-  //     parentToChildrenMap[parentId].forEach(child => {
-  //       if (!flatList.includes(child)) flatList.push(child);
-  //     });
-  //   });
-
-  //   // Build a mapping of nodeId to its subtree or just itself
-  //   const nodeToSubtree = {};
-  //   flatList.forEach(node => {
-  //     if (parentToChildrenMap[node.id]) {
-  //       nodeToSubtree[node.id] = findSubtree(node.id);
-  //     } else if (!Object.values(parentToChildrenMap).flat().some(n => n.id === node.id)) {
-  //       nodeToSubtree[node.id] = [node]; // Independent node
-  //     }
-  //   });
-
-  //   // Rebuild the ordered list
-  //   const oldIndex = flatList.findIndex(n => n.id === active.id);
-  //   const newIndex = flatList.findIndex(n => n.id === over.id);
-  //   const updatedList = [...flatList];
-
-  //   const [movedNodes] = updatedList.splice(oldIndex, 1);
-  //   const subtree = nodeToSubtree[active.id] || [movedNodes];
-  //   updatedList.splice(newIndex, 0, ...subtree);
-
-  //   // Deduplicate by node ID
-  //   const deduped = [];
-  //   const seen = new Set();
-  //   updatedList.forEach(node => {
-  //     if (!seen.has(node.id)) {
-  //       deduped.push(node);
-  //       seen.add(node.id);
-  //     }
-  //   });
-
-  //   // Update orders
-  //   deduped.map((node, idx) => {
-  //     node.data = { ...node.data, order: deduped.length - idx };
-  //   });
-
-  //   setNodes(deduped);
-  // };
 
 
   const handleDragEnd = ({ active, over }) => {
@@ -460,8 +238,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
 
 
 
-
-
   useEffect(() => {
     if (sortableRef.current) {
       const sortable = Sortable.create(sortableRef.current, {
@@ -478,7 +254,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
       return () => sortable.destroy();
     }
   }, [hierarchy.topLevelNodes]);
-
 
 
   const moveNodeInOrder = (draggedId, targetId) => {
@@ -620,17 +395,17 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
   };
   
   return (
-    <div className="w-16 lg:w-64 h-full bg-sidebar border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
+    <div className="w-16 lg:w-[13%] h-full bg-[#0d0d0d] border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
       {/* Tab selector */}
       <div className="flex justify-center items-center bg-transparent py-2">
-        <div className="flex bg-[#1f1f1f] rounded-full p-1">
+        <div className="flex bg-[#151515] rounded-full p-1">
           {['Outline', 'Insert', 'Assets'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as 'Outline' | 'Insert' | 'Assets')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+              className={`px-5 py-[2.5%] rounded-full text-sm font-medium transition-all duration-200
                 ${activeTab === tab
-                  ? 'bg-white text-black shadow'
+                  ? 'bg-[#2b2b2b] text-white shadow'
                   : 'text-gray-400 hover:text-white'
                 }`}
             >
@@ -662,7 +437,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
         </div>
       </div>
 
-      
       {/* Scrollable content area - implementing the user's solution */}
       <ScrollArea className="h-[calc(90vh-112px)] overflow-y-auto">
         <div className="p-2 lg:p-4">
@@ -687,64 +461,70 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
           
           {/* Insert Tab - Node Categories */}
           {activeTab === 'Insert' && !searchTerm && (
-            <div className="space-y-8">
+            <div>
               {insertCategories.map((category) => (
                 <div key={category.name} className="mb-8">
-                  <div className="node-category-title flex items-center mb-2">
-                    <category.icon className="h-4 w-4 mr-2" />
-                    <span>{category.name}</span>
-                  </div>
-                  <div className="flex flex-col space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      {category.options.map((option) => (
-                        <div 
-                          key={option.type}
-                          onClick={() => handleAddNode(option.type)}
-                          className="node-option bg-gray-800 p-3 rounded-md cursor-pointer hover:bg-gray-700 transition-colors"
-                        >
-                          <div className="flex flex-col items-center">
-                            <div className="node-option-icon mb-2">
-                              <option.icon className="h-6 w-6 text-blue-400" />
-                            </div>
-                            <span className="text-sm text-center font-medium text-white tracking-tight">{option.label}</span>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="flex flex-row items-center mb-3 ml-4">
+                    <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
+                      <category.icon className="h-4 w-4 text-white" />
                     </div>
+                    <div className="text-sm font-semibold text-gray-400">
+                      <span>{category.name}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {category.options.map((option) => (
+                      <div
+                        key={option.type}
+                        onClick={() => handleAddNode(option.type)}
+                        className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
+                      >
+                        <SvgIcon name={option.icon.toString()} className="h-8 w-8 text-[#f3f2f2] mb-2"/>
+                        {/* <option.icon className="h-8 w-8 text-[#f3f2f2] mb-2" /> */} 
+                        <span className="text-xs text-gray-500 text-center font-medium">
+                          {option.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           )}
+
           
           {/* Search Results */}
-          {activeTab === 'Insert' && searchTerm && (
-            <div className="space-y-2">
-              <h3 className="text-sm text-gray-400 mb-3">Search results for "{searchTerm}"</h3>
-              {filterNodeOptions(allNodeOptions).length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {filterNodeOptions(allNodeOptions).map((option) => (
-                    <div 
-                      key={option.type}
-                      onClick={() => handleAddNode(option.type)}
-                      className="node-option p-3 cursor-pointer"
-                    >
-                      <div className="flex flex-col items-center">
-                        <div className="node-option-icon mb-2">
-                          <option.icon className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <span className="text-xs text-center font-medium text-white">{option.label}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 text-sm p-2 italic">
-                  No components match your search.
-                </div>
-              )}
-            </div>
-          )}
+         {activeTab === 'Insert' && searchTerm && (
+          <div>
+            <h3 className="text-sm text-gray-400 mb-3 ml-4">
+              Search results for "{searchTerm}"
+            </h3>
+
+            {filterNodeOptions(allNodeOptions).length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {filterNodeOptions(allNodeOptions).map((option) => (
+                  <div
+                    key={option.type}
+                    onClick={() => handleAddNode(option.type)}
+                    className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
+                  >
+                    <img src={"/nodes/data/icons/placeholder.svg"}/>
+                    {/* <option.icon className="h-8 w-8 text-[#f3f2f2] mb-2" /> */}
+                    <span className="text-xs text-gray-500 text-center font-medium">
+                      {option.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm p-2 italic ml-4">
+                No components match your search.
+              </div>
+            )}
+          </div>
+        )}
+
           
           {/* Assets Tab - Images and Components */}
           {activeTab === 'Assets' && (
