@@ -19,7 +19,6 @@ import {
   PlusCircle
 } from 'lucide-react';
 
-
 import {
   HoverCard,
   HoverCardContent,
@@ -37,8 +36,8 @@ import { Node } from '@xyflow/react';
 import { NodeType } from '@/store/types';
 
 import { DndContext } from '@dnd-kit/core';
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'; // Use sortable's arrayMove for consistency
-import { CSS } from '@dnd-kit/utilities'; // Optional for smooth animations
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Sortable from 'sortablejs';
 import { getHighestOrder } from '@/store/nodeActions';
 
@@ -47,17 +46,27 @@ import { insertCategories, assetCategories } from './nodes/data/left_sidebar';
 import _3dmaker from './nodes/data/icons/3dmaker.svg'
 import SvgIcon from './SvgIcon';
 
-export const LeftSidebar = ({activeTab, setActiveTab}) => {
+interface NodeOption {
+  type: NodeType;
+  label: string;
+  description: string;
+  icon: any;
+}
+
+export const LeftSidebar = ({activeTab, setActiveTab}: {
+  activeTab: 'Outline' | 'Insert' | 'Assets';
+  setActiveTab: (tab: 'Outline' | 'Insert' | 'Assets') => void;
+}) => {
 
   const addNode = useCanvasStore(state => state.addNode);
   const reactFlowInstance = useReactFlow();
-  const {getNodes, setNodes} = useReactFlow()
+  const {getNodes} = useReactFlow()
   
   // Get nodes from the canvas
   const canvasNodes = useCanvasStore(state => state.nodes);
   const canvasEdges = useCanvasStore(state => state.edges);
-  const [currentSelectedNode, setCurrentSelectedNode] = useState(null);
-  const { setSelectedNode, setSelectedNodeById } = useCanvasStore();
+  const [currentSelectedNode, setCurrentSelectedNode] = useState<Node | null>(null);
+  const { setSelectedNode, setSelectedNodeById, onNodesChange } = useCanvasStore();
 
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,9 +82,9 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
   });
 
   // Track expanded nodes in the outline view
-  const [expandedNodes, setExpandedNodes] = useState({});
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const sortableRef = useRef(null);
-  const [hierarchy, setHierarchy] = useState({ topLevelNodes: [], parentToChildrenMap: {} });
+  const [hierarchy, setHierarchy] = useState<{ topLevelNodes: Node[], parentToChildrenMap: Record<string, Node[]> }>({ topLevelNodes: [], parentToChildrenMap: {} });
 
   useEffect(() => {
     const result = organizeHierarchy();
@@ -116,7 +125,7 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
    * - This creates a natural hierarchy based on dataflow in the canvas
    */
 
-  const SortableNode = ({ node, parentToChildrenMap, level }) => {
+  const SortableNode = ({ node, parentToChildrenMap, level }: { node: Node, parentToChildrenMap: Record<string, Node[]>, level: number }) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: node.id });
     const style = {
       transform: CSS.Transform.toString(transform),
@@ -127,19 +136,19 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
 
       return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-          {renderNode(node, parentToChildrenMap, level)}
+          {renderNode(node, level)}
         </div>
       );
   };
 
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = ({ active, over }: { active: any, over: any }) => {
     if (!active || !over || active.id === over.id) return;
 
     const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
     const nodes = useCanvasStore.getState().nodes;
 
-    const findSubtree = (nodeId, subtree = []) => {
+    const findSubtree = (nodeId: string, subtree: Node[] = []): Node[] => {
       const node = nodes.find(n => n.id === nodeId);
       if (node) subtree.push(node);
       const children = parentToChildrenMap[nodeId] || [];
@@ -148,7 +157,7 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
     };
 
     // Create a flat list preserving hierarchy grouping
-    let flatList = [];
+    let flatList: Node[] = [];
     topLevelNodes.forEach(topNode => {
       if (parentToChildrenMap[topNode.id]) {
         flatList.push(...findSubtree(topNode.id));
@@ -182,8 +191,13 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
       node.data = { ...node.data, order: idx }; // 0-based order
     });
 
-    // Set updated nodes
-    setNodes(deduped);
+    // Update nodes using onNodesChange
+    const nodeChanges = deduped.map(node => ({
+      id: node.id,
+      type: 'replace' as const,
+      item: node
+    }));
+    onNodesChange(nodeChanges);
   };
 
 
@@ -231,7 +245,11 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
     // 🔢 Top-level nodes
     const topLevelNodes = canvasNodes
       .filter(n => !childrenSet.has(n.id))
-      .sort((a, b) => (b.data?.order ?? 0) - (a.data?.order ?? 0));
+      .sort((a, b) => {
+        const orderA = typeof a.data?.order === 'number' ? a.data.order : 0;
+        const orderB = typeof b.data?.order === 'number' ? b.data.order : 0;
+        return orderB - orderA;
+      });
 
     return { topLevelNodes, parentToChildrenMap };
   };
@@ -243,12 +261,14 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
       const sortable = Sortable.create(sortableRef.current, {
         animation: 150,
         onEnd: (evt) => {
-          handleDragEnd({ 
-            active: { id: sortableRef.current.children[evt.oldIndex].dataset.id },
-            over: { id: sortableRef.current.children[evt.newIndex].dataset.id }
-          });
+          if (evt.oldIndex !== undefined && evt.newIndex !== undefined && sortableRef.current) {
+            const children = Array.from(sortableRef.current.children) as HTMLElement[];
+            handleDragEnd({ 
+              active: { id: children[evt.oldIndex]?.dataset?.id },
+              over: { id: children[evt.newIndex]?.dataset?.id }
+            });
+          }
         }
-
       });
 
       return () => sortable.destroy();
@@ -256,72 +276,28 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
   }, [hierarchy.topLevelNodes]);
 
 
-  const moveNodeInOrder = (draggedId, targetId) => {
+  const moveNodeInOrder = (draggedId: string, targetId: string) => {
     const nodes = [...useCanvasStore.getState().nodes];
     const dragged = nodes.find(n => n.id === draggedId);
     const target = nodes.find(n => n.id === targetId);
     if (!dragged || !target) return;
 
     // Swap their order values
-    const temp = dragged.data?.order ?? 0;
-    dragged.data = { ...dragged.data, order: target.data?.order ?? 0 };
+    const temp = typeof dragged.data?.order === 'number' ? dragged.data.order : 0;
+    const targetOrder = typeof target.data?.order === 'number' ? target.data.order : 0;
+    dragged.data = { ...dragged.data, order: targetOrder };
     target.data = { ...target.data, order: temp };
 
-    useCanvasStore.getState().setNodes(nodes);
+    const nodeChanges = [dragged, target].map(node => ({
+      id: node.id,
+      type: 'replace' as const,
+      item: node
+    }));
+    onNodesChange(nodeChanges);
   };
 
-
-  // const renderNode = (node: Node, parentToChildrenMap: Record<string, Node[]>, level: number = 0) => {
-    
-  //   const nodeId = node.id;
-  //   const hasChildren = parentToChildrenMap[nodeId] && parentToChildrenMap[nodeId]?.length > 0;
-  //   const isExpanded = expandedNodes[nodeId] !== false;
-  //   const order = node.data?.order ?? 0;
-
-  //   return (
-  //     <div key={nodeId} className="mb-1" style={{ order: order * -1 }}> {/* Reverse ordering for CSS flex/grid */}
-  //       <div
-  //         className={`p-2 rounded-md flex items-center cursor-pointer transition-colors duration-150
-  //           ${useCanvasStore.getState().selectedNode?.id === nodeId ? 
-  //               'bg-blue-900/40 text-blue-200'
-  //             : 'hover:bg-gray-700/50 text-gray-200'}`}
-  //         style={{ paddingLeft: `${level * 16 + 8}px` }}
-  //         onClick={() => {
-  //            const selected = canvasNodes.find(n => n.id === nodeId);
-  //            if (selected) {
-  //              useCanvasStore.getState().setSelectedNode(selected);
-  //              useCanvasStore.getState().setSelectedNodeById(nodeId);
-  //          }
-  //         }}
-  //       >
-  //         {hasChildren ? (
-  //           <Button
-  //             className="mr-1 p-1 rounded-sm hover:bg-gray-600/50"
-  //             onClick={() => {
-  //               console.log("Left Side bar Chevron Down Clicked")
-  //               toggleNodeExpanded(nodeId);
-  //             }}
-  //           >
-  //             {isExpanded ? <ChevronDown className="h-3 w-3 text-gray-400" onClick={()=>console.log('test')}/> 
-  //               : 
-  //               <ChevronRight className="h-3 w-3 text-gray-400" />}
-  //           </Button>
-  //         ) : <div className="w-4 mr-1 bg-red-500" />}
-
-  //         {getNodeIcon(node.type)}
-  //         <span className="text-sm font-medium truncate flex-1">
-  //           {String(node.data?.displayName || node.type || node.id)}
-  //         </span>
-  //       </div>
-
-  //       {hasChildren && isExpanded && parentToChildrenMap[nodeId].map(childNode =>
-  //         renderNode(childNode, parentToChildrenMap, level + 1)
-  //       )}
-  //     </div>
-  //   );
-  // };
-
-  const renderNode = (node, level = 0) => {
+  const renderNode = (node: Node, level = 0) => {
+    const { parentToChildrenMap } = hierarchy;
     const hasChildren = parentToChildrenMap[node.id]?.length > 0;
     const isExpanded = expandedNodes[node.id] !== false;
 
@@ -334,10 +310,11 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
             const selected = canvasNodes.find(n => n.id === node.id);
-            if (selected) {              
+            if (selected) {
+              console.log(selected)              
               setSelectedNode(selected)
-              setSelectedNodeById(selected)
               setCurrentSelectedNode(selected)
+              setSelectedNodeById(selected)
             }
           }}
         >
@@ -379,6 +356,8 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
   // Handler for adding a node
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
+
+    console.log(nodeType)
     const center = {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2
@@ -481,7 +460,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
                         className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
                       >
                         <SvgIcon name={option.icon.toString()} className="h-8 w-8 text-[#f3f2f2] mb-2"/>
-                        {/* <option.icon className="h-8 w-8 text-[#f3f2f2] mb-2" /> */} 
                         <span className="text-xs text-gray-500 text-center font-medium">
                           {option.label}
                         </span>
@@ -510,7 +488,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}) => {
                     className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
                   >
                     <img src={"/nodes/data/icons/placeholder.svg"}/>
-                    {/* <option.icon className="h-8 w-8 text-[#f3f2f2] mb-2" /> */}
                     <span className="text-xs text-gray-500 text-center font-medium">
                       {option.label}
                     </span>

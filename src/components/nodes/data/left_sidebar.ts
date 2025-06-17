@@ -128,7 +128,7 @@ export const insertCategories: NodeCategory[] = [
       {
         design: 'normal-node',
         functionality: 'image-to-image',
-        type: 'image-to-image-re-imagine',
+        type: 'image-to-image-reimagine',
         label: 'Re-Imagine',
         icon: "reimagine",
         description: 'Recreate image with new style',
@@ -136,7 +136,7 @@ export const insertCategories: NodeCategory[] = [
       {
         design: 'normal-node',
         functionality: 'image-to-image',
-        type: 'image-to-image-re-scene',
+        type: 'image-to-image-rescene',
         label: 'Re-Scene',
         icon: "rescene",
         description: 'Change scene and object context',
@@ -144,9 +144,9 @@ export const insertCategories: NodeCategory[] = [
       {
         design: 'normal-node',
         functionality: 'image-to-image',
-        type: 'image-to-image-object-relight',
+        type: 'image-to-image-objectrelight',
         label: 'Object Re-Light',
-        icon: "object_relight",
+        icon: "objectrelight",
         description: 'Change the lighting of the scene',
       },
       {
@@ -236,7 +236,10 @@ export const insertCategories: NodeCategory[] = [
       {
         design: 'image-node',
         functionality: 'preview',
-        type: 'preview-image',
+        type: 'layer-image-node',
+        data:{
+          functionality: 'output',
+        },
         label: 'Image Output',
         icon: "image_output",
         description: 'Final rendered image',
@@ -244,7 +247,10 @@ export const insertCategories: NodeCategory[] = [
       {
         design: 'image-node',
         functionality: 'preview',
-        type: 'preview-realtime',
+        type: 'preview-realtime-node',
+        data:{
+          functionality: 'output'
+        },
         label: 'Real-Time Preview',
         icon: "realtime",
         description: 'Live preview during generation',
@@ -255,44 +261,13 @@ export const insertCategories: NodeCategory[] = [
     name: 'Engines',
     icon: Cog,
     options: [
-      {
-        design: 'normal-node',
-        functionality: 'preview',
-        type: 'preview-image',
-        label: 'Image Output',
-        icon: "image_output",
-        description: 'Final rendered image',
-      },
-      {
-        design: 'image-node',
-        functionality: 'preview',
-        type: 'preview-realtime',
-        label: 'Real-Time Preview',
-        icon: "realtime",
-        description: 'Live preview during generation',
-      },
+
     ],
   },
   {
     name: 'Gears',
     icon: Orbit,
     options: [
-      {
-        design: 'normal-node',
-        functionality: 'preview',
-        type: 'preview-image',
-        label: 'Image Output',
-        icon: "image_output",
-        description: 'Final rendered image',
-      },
-      {
-        design: 'image-node',
-        functionality: 'preview',
-        type: 'preview-realtime',
-        label: 'Real-Time Preview',
-        icon: "realtime",
-        description: 'Live preview during generation',
-      },
     ],
   },
 ];

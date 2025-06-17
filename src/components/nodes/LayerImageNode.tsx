@@ -2,9 +2,8 @@ import React, { useRef } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Image as ImageIcon, Download } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import SvgIcon from '../SvgIcon';
 
-export const PreviewNode: React.FC<NodeProps> = ({ 
+const LayerImageNode: React.FC<NodeProps> = ({ 
   id, 
   data, 
   selected 
@@ -48,6 +47,8 @@ export const PreviewNode: React.FC<NodeProps> = ({
     }
   };
 
+  const isOutputNode = data?.functionality === 'output';
+  const isInputNode = data?.functionality === 'input';
   const hasImage = Boolean(data?.image || data?.imageUrl);
   const imageSource = (data?.image || data?.imageUrl) as string;
 
@@ -65,7 +66,7 @@ export const PreviewNode: React.FC<NodeProps> = ({
           />
           <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 flex items-center justify-between">
             <span>{data?.displayName as string || 'Image Layer'}</span>
-
+            {isOutputNode && (
               <button
                 onClick={handleDownload}
                 className="p-1 hover:bg-white hover:bg-opacity-20 rounded transition-colors"
@@ -73,6 +74,7 @@ export const PreviewNode: React.FC<NodeProps> = ({
               >
                 <Download className="h-3 w-3" />
               </button>
+            )}
           </div>
           {data?.loading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -82,32 +84,58 @@ export const PreviewNode: React.FC<NodeProps> = ({
         </div>
       ) : (
         <div 
-          className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors`}
+          className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors ${
+            isInputNode ? 'cursor-pointer hover:bg-[#222]' : ''
+          }`}
+          onClick={isInputNode ? triggerUpload : undefined}
         >
           {data?.loading || data?.uploading ? (
             <div className="animate-spin text-2xl">⌛</div>
           ) : (
             <>
-              <SvgIcon name="realtime" className="bold mb-3"/>
+              <ImageIcon className="h-8 w-8 mb-2" />
               <span className="text-sm text-center px-2">
-                Generated image will appear here real-time 
+                {isInputNode ? 'Click to upload' : 
+                 isOutputNode ? 'Generated image will appear here' : 
+                 'No image'}
               </span>
             </>
           )}
         </div>
       )}
 
-      {/* Input handle for output nodes */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="input"
-        className="!bg-white !border-none w-3 h-3"
-        style={{ left: -6 }}
-      />
+      {isInputNode && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+      )}
 
+      {/* Input handle for output nodes */}
+      {isOutputNode && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="input"
+          className="!bg-white !border-none w-3 h-3"
+          style={{ left: -6 }}
+        />
+      )}
+
+      {/* Output handle for input nodes */}
+      {isInputNode && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="output"
+          className="!bg-white !border-none w-3 h-3"
+        />
+      )}
     </div>
   );
 };
 
-export default PreviewNode;
+export default LayerImageNode;

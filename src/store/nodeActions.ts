@@ -10,189 +10,70 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
   const id = `${nodeType}-${nodeIdCounter++}`;
   let newNode: Node;
   
-  // Model nodes
-  if (nodeType.startsWith('model-')) {
-    const modelType = nodeType.split('-')[1]; // sdxl, flux, hidream
-    let emoji = "🎨";
-    let color = "#ff69b4";
-    let modelName = "runware:100@1";
-    let displayName = "Model";
+  // Handle nodes based on schema design attribute
+  if (nodeType.startsWith('control-net-') || 
+      nodeType.startsWith('image-to-image-') || 
+      nodeType.startsWith('input-text') ||
+      nodeType.startsWith('connector') ||
+      nodeType.startsWith('engine-')) {
     
-    switch(modelType) {
-      case 'sdxl':
-        emoji = "🚀";
-        color = "#8000ff";
-        modelName = "stabilityai/sdxl";
-        displayName = "SDXL Model";
-        break;
-      case 'flux':
-        emoji = "⚡";
-        color = "#ff8c00";
-        modelName = "flux/model";
-        displayName = "Flux Model";
-        break;
-      case 'hidream':
-        emoji = "✨";
-        color = "#ff1493";
-        modelName = "hidream/model";
-        displayName = "HiDream Model";
-        break;
-    }
-    
+    // These use normal-node design
+    const displayName = getDisplayNameFromType(nodeType);
+    console.log(getFunctionalityFromType(nodeType))
     
     newNode = {
       id,
-      type: 'modelNode',
+      type: 'normal-node',
       position,
       data: {
-        modelName,
-        modelType,
-        width: 512,
-        height: 512,
-        steps: 30,
-        cfgScale: 7.5,
-        prompt: "",
-        negativePrompt: "",
+        type: nodeType,
+        functionality: getFunctionalityFromType(nodeType),
         displayName,
-        emoji,
-        color,
         order,
-        tutorialVideo: "/videos/model-tutorial.mp4", // Path to tutorial video
-        description: `${displayName}: Generates images using the ${modelType.toUpperCase()} architecture. Adjust parameters for different results.`
+        // Add default right_sidebar data based on type
+        right_sidebar:{
+        ...getDefaultDataForType(nodeType)
+        }
       },
-      className: 'node-model',
+      className: 'node-normal',
     };
-  } 
-  // Lora nodes
-  else if (nodeType.startsWith('lora-')) {
-    const loraType = nodeType.split('-')[1]; // realistic, cartoon, character
-    let emoji = "🔧";
-    let color = "#8b5cf6";
-    let loraName = "";
-    let displayName = "LoRA";
-    
-    switch(loraType) {
-      case 'realistic':
-        emoji = "📷";
-        color = "#4b0082";
-        loraName = "realistic-style";
-        displayName = "Realistic LoRA";
-        break;
-      case 'cartoon':
-        emoji = "🎭";
-        color = "#9370db";
-        loraName = "cartoon-style";
-        displayName = "Cartoon LoRA";
-        break;
-      case 'character':
-        emoji = "👤";
-        color = "#800080";
-        loraName = "character-style";
-        displayName = "Character LoRA";
-        break;
-    }
-    
+  }
+  // Layer image nodes
+  else if (nodeType === 'layer-image-node') {
     newNode = {
       id,
-      type: 'loraNode',
+      type: 'layer-image-node',
       position,
       data: {
-        loraName,
-        loraType,
-        strength: 0.8,
-        displayName,
-        emoji,
-        color,
-        order,
-        tutorialVideo: "/videos/lora-tutorial.mp4", // Path to tutorial video
-        description: `${displayName}: Modifies model output with ${loraType} styling. Adjust strength to control effect intensity.`
-      },
-      className: 'node-lora',
-    };
-  } 
-  // ControlNet nodes
-  else if (nodeType.startsWith('controlnet-')) {
-    const controlType = nodeType.replace('controlnet-', ''); // canny, depth, pose, segment
-    let displayName = `${controlType.charAt(0).toUpperCase() + controlType.slice(1)} Control`;
-    
-    const baseControlnetData = {
-      type: controlType,
-      controlNetType: controlType,
-      image: null,
-      imageId: null,
-      uploading: false,
-      strength: 0.8,
-      displayName,
-      
-    };
-
-    // Add Canny specific properties
-    if (controlType === 'canny') {
-      newNode = {
-        id,
-        type: 'controlnetNode',
-        position,
-        data: {
-          ...baseControlnetData,
-          low_threshold: 100,
-          high_threshold: 200,
-          resolution: 512,
-          order
-        },
-        className: 'node-controlnet',
-      };
-    } else {
-      newNode = {
-        id,
-        type: 'controlnetNode',
-        position,
-        data: {...baseControlnetData, order},
-        className: 'node-controlnet',
-      };
-    }
-  } 
-  // Input nodes
-  else if (nodeType.startsWith('input-')) {
-    const inputType = nodeType.split('-')[1]; // text, image
-    let displayName = inputType.charAt(0).toUpperCase() + inputType.slice(1) + ' Input';
-    
-    newNode = {
-      id,
-      type: 'inputNode',
-      position,
-      data: {
-        inputType,
-        // For text input
-        text: inputType === 'text' ? "" : undefined,
-        // For image input
-        image: inputType === 'image' ? null : undefined,
-        imageId: inputType === 'image' ? null : undefined,
-        uploading: inputType === 'image' ? false : undefined,
-        // Common properties
-        displayName,
+        type: nodeType,
+        functionality: 'output',
+        displayName: 'Image Layer',
+        image: null,
+        uploading: false,
+        label: "Image Layer",
         order
       },
-      className: 'node-input',
+      className: 'node-layer-image',
     };
-  } 
-  // Output/Preview node
-  else if (nodeType === 'output-preview') {
+  }
+  //Preview  Node
+  else if (nodeType === 'preview-realtime-node') {
     newNode = {
       id,
-      type: 'previewNode',
+      type: 'preview-realtime-node',
       position,
       data: {
+        type: nodeType,
+        functionality: 'output',
+        displayName: 'Preview Layer',
         image: null,
-        displayName: "Preview",
-        emoji: "🖼️",
-        color: "#f59e0b",
-        order,
-        tutorialVideo: "/videos/preview-tutorial.mp4",
-        description: "Preview: Displays the final generated image. Connect a model node to see the output."
+        uploading: false,
+        label: "Preview Layer",
+        order
       },
-      className: 'node-preview',
+      className: 'node-layer-preview',
     };
-  } 
+  }
   else if (nodeType === 'comment-node') {
     newNode = {
       id,
@@ -212,6 +93,85 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
   }
   
   return newNode;
+};
+
+// Helper functions for node creation
+const getDisplayNameFromType = (nodeType: string): string => {
+  const typeMap: Record<string, string> = {
+    'control-net-pose': 'Pose Control',
+    'control-net-edge': 'Edge Control',
+    'control-net-lights': 'Lights Control',
+    'control-net-face': 'Face Express',
+    'control-net-segments': 'Segments',
+    'control-net-depth': 'Depth Control',
+    'control-net-normal-map': 'Normal Map',
+    'control-net-reference': 'Reference',
+    'image-to-image-re-imagine': 'Re-Imagine',
+    'image-to-image-re-scene': 'Re-Scene',
+    'image-to-image-object-relight': 'Object Re-Light',
+    'image-to-image-reangle': 'Re-Angle',
+    'image-to-image-remove-bg': 'Remove BG',
+    'image-to-image-upscale': 'Upscale',
+    'image-to-image-inpainting': 'In-Painting',
+    'image-to-image-remove-outpainting': 'Out-Painting',
+    'image-to-image-3d-maker': '3D Maker',
+    'input-text': 'Text Prompt',
+    'image-to-image-merger': 'Merger',
+    'connector': 'Router',
+    'preview-image': 'Image Output',
+    'preview-realtime': 'Real-Time Preview',
+  };
+  return typeMap[nodeType] || nodeType;
+};
+
+const getFunctionalityFromType = (nodeType: string): string => {
+  if (nodeType.startsWith('control-net-')) return 'control-net';
+  if (nodeType.startsWith('image-to-image-')) return 'image-to-image';
+  if (nodeType === 'input-text') return 'input';
+  if (nodeType === 'connector') return 'helper';
+  if (nodeType.startsWith('preview-')) return 'preview';
+  if (nodeType.startsWith('engine-')) return 'engine';
+  return 'unknown';
+};
+
+const getDefaultDataForType = (nodeType: string): Record<string, any> => {
+  // Return default right_sidebar data based on node type from schema
+  const defaults: Record<string, any> = {
+    'control-net-pose': {
+      pose: '',
+      source: '',
+      fingers: { left: 0, right: 0 },
+      shoulders: { left: 0, right: 0 },
+      elbow: { left: 0, right: 0 },
+      hip: { left: 0, right: 0 },
+      knee: { left: 0, right: 0 },
+      ankle: { left: 0, right: 0 },
+      neck: 0,
+      head: 0,
+    },
+    'control-net-edge': {
+      image: '',
+      type: 'source',
+      source: '',
+      map: ''
+    },
+    'image-to-image-re-imagine': {
+      creativity: 50
+    },
+    'input-text': {
+      prompt: '',
+      negative: '',
+      enhance: false
+    },
+    'preview-image': {
+      preview: '',
+      quality: 100,
+      ratio: 'Outpaint',
+      accident: 0
+    }
+  };
+  
+  return defaults[nodeType] || {};
 };
 
 export const getHighestOrder = (nodes: Node[]): number => {

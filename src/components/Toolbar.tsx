@@ -17,7 +17,8 @@ import {
   Group,
   MessageCirclePlus,
   Plus,
-  Tally1
+  Tally1,
+  Image
 } from 'lucide-react';
 import { 
   Popover,
@@ -25,7 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame';
+type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'image' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -73,8 +74,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
   };
 
 
-  const handleAddShape = (
-    type: 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame',
+  const handleAddLayer = (
+    type: 'image' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame',
     dimensions?: { width: number; height: number }
     ) => {
     const center = {
@@ -84,7 +85,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
 
   const position = reactFlowInstance.screenToFlowPosition(center);
 
-  if (type === 'frame') {
+  if(type === 'image')
+  {
+    const imageNode = {
+      id: `layer-image-node-${Date.now()}`,
+      type: 'layer-image-node', // Matches nodeTypes registration
+      position,
+      data: {
+          displayName: 'Image Input',
+          type: 'input-image',
+          functionality: 'input',
+          order: highestNodeOrder,
+       },
+      width: 300,
+      height: 200,
+    };
+    reactFlowInstance.addNodes?.(imageNode);
+    return;
+  }
+
+  else if (type === 'frame') {
     const frameLabelNode = {
       id: `labeled-frame-node-${Date.now()}`,
       type: 'labeledFrameGroupNode', // Matches nodeTypes registration
@@ -231,6 +251,27 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           <PopoverTrigger asChild>
             <Button 
               size="icon" 
+              variant={activeTool === 'image' ? "default" : "ghost"}
+              className={`rounded-md ${activeTool === 'image' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+              onClick={() => handleToolChange('image')}
+            >
+              <Image className={`h-4 w-4 ${activeTool === 'image' ? "text-white" : "text-gray-400"}`} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
+            <div className="space-y-2">
+              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddLayer('image')}>
+                <Image className="h-4 w-4 mr-2" />
+                Image Layer
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              size="icon" 
               variant={activeTool === 'triangle' ? "default" : "ghost"}
               className={`rounded-md ${activeTool === 'triangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
               onClick={() => handleToolChange('triangle')}
@@ -240,7 +281,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddShape('triangle')}>
+              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddLayer('triangle')}>
                 <Triangle className="h-4 w-4 mr-2" />
                 Triangle
               </Button>
@@ -261,7 +302,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('rectangle')}>
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('rectangle')}>
                 <RectangleHorizontal className="h-4 w-4 mr-2" />
                 Rectangle
               </Button>
@@ -282,7 +323,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('circle')}>
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('circle')}>
                 <CircleIcon className="h-4 w-4 mr-2 " />
                 Circle
               </Button>
@@ -303,7 +344,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           </PopoverTrigger>
           <PopoverContent className="w-40 p-2 bg-sidebar border-field">
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddShape('text')}>
+              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('text')}>
                 <Text className="h-4 w-4 mr-2 " />
                 Text Input
               </Button>
@@ -348,7 +389,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           <Button
             variant="default"
             size="sm"
-            onClick={() => handleAddShape('section', { width: sectionWidth, height: sectionHeight })}
+            onClick={() => handleAddLayer('section', { width: sectionWidth, height: sectionHeight })}
             className="w-full mt-2 hover:bg-white hover:text-black"
           >
             Add Section
@@ -394,7 +435,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           <Button
             variant="default"
             size="sm"
-            onClick={() => handleAddShape('frame')}
+            onClick={() => handleAddLayer('frame')}
             className="w-full mt-2 hover:bg-white hover:text-black"
           >
             Frame 

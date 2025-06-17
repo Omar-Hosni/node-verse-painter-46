@@ -2,19 +2,9 @@ import { Node, Edge } from '@xyflow/react';
 
 export type NodeType = 
   | 'comment-node'
-  | 'input-text' 
-  | 'input-image' 
-  | 'model-sdxl' 
-  | 'model-flux' 
-  | 'model-hidream'
-  | 'lora-realistic'
-  | 'lora-cartoon'
-  | 'lora-character'
-  | 'controlnet-canny'
-  | 'controlnet-depth'
-  | 'controlnet-pose'
-  | 'controlnet-segment'
-  | 'output-preview';
+  | 'normal-node'
+  | 'layer-image-node'
+  | 'preview-realtime-node'
 
 export type Collaborator = {
   id: string;

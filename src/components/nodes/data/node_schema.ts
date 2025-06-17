@@ -336,7 +336,7 @@ interface Router extends BaseNode {
 
 //Render (preview)
 interface ImageOutput extends BaseNode {
-  design: 'image-node',
+  design: 'layer-image-node',
   functionality: 'preview',
   type:"preview-image",
   right_sidebar: {
@@ -473,7 +473,7 @@ interface Gear extends BaseNode {
 
 //Layers (Input Nodes)
 interface ImageLayer extends BaseNode {
-  design: 'image-layer',
+  design: 'layer-image-node',
   functionality: 'layer',
   type: 'layer-image',
 }

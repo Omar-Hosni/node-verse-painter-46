@@ -1,7 +1,7 @@
-
 import { toast } from 'sonner';
 import { Node, Edge } from '@xyflow/react';
 import { WorkflowJson } from './types';
+import { getRunwareService } from '@/services/runwareService';
 
 // Control Net Image Upload
 export const uploadControlNetImage = async (
@@ -134,34 +134,117 @@ export const generateImage = async (
   }
 };
 
-// Send workflow to API
+// Send workflow to API with proper node functionality mapping
 export const sendWorkflowToAPI = async (
   workflow: WorkflowJson,
   updateNodeData: (nodeId: string, data: any) => void,
   nodes: Node[]
 ): Promise<any> => {
-  // In a real implementation, you would send the workflow to the API
-  // For now, simulate an API call with a delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Find preview node and update it with the generated image
-  const previewNode = nodes.find(n => n.type === 'previewNode');
-  if (previewNode) {
-    updateNodeData(previewNode.id, {
-      loading: true
+  try {
+    const apiKey = 'mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl'; // This should come from settings
+    const runwareService = getRunwareService(apiKey);
+    
+    // Find nodes by functionality from node_schema.ts
+    const inputNodes = nodes.filter(n => n.data?.functionality === 'input');
+    const engineNodes = nodes.filter(n => n.data?.functionality === 'engine');
+    const previewNodes = nodes.filter(n => n.data?.functionality === 'preview' || n.type === 'previewNode');
+    const controlNetNodes = nodes.filter(n => n.data?.functionality === 'control-net');
+    const loraNodes = nodes.filter(n => n.data?.functionality === 'lora');
+    
+    // Get prompt from text input nodes
+    let prompt = 'A beautiful landscape';
+    let negativePrompt = '';
+    const textInputNode = inputNodes.find(n => n.data?.type === 'input-text');
+    if (textInputNode && textInputNode.data?.right_sidebar) {
+      const rightSidebar = textInputNode.data.right_sidebar as Record<string, any>;
+      if (rightSidebar.prompt) {
+        prompt = String(rightSidebar.prompt);
+      }
+      if (rightSidebar.negative) {
+        negativePrompt = String(rightSidebar.negative);
+      }
+    }
+    
+    // Get model from engine nodes
+    let model = 'runware:100@1';
+    const engineNode = engineNodes[0];
+    if (engineNode && engineNode.data?.model) {
+      model = String(engineNode.data.model);
+    }
+    
+    // Get LoRA configurations
+    const loras = loraNodes.map(node => {
+      const rightSidebar = (node.data?.right_sidebar as Record<string, any>) || {};
+      return {
+        name: String(node.data?.lora || 'realistic-vision'),
+        strength: Number(rightSidebar.power || 80) / 100
+      };
     });
-  }
-  
-  // Simulate the API response with a delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Update with a placeholder image
-  if (previewNode) {
-    updateNodeData(previewNode.id, {
-      image: 'https://images.unsplash.com/photo-1682687981974-c5ef2111640c',
-      loading: false
+    
+    // Get ControlNet configurations
+    const controlnets = controlNetNodes.map(node => {
+      const rightSidebar = (node.data?.right_sidebar as Record<string, any>) || {};
+      return {
+        type: String(node.data?.controlnet || 'canny'),
+        imageUrl: String(node.data?.image || ''),
+        strength: Number(rightSidebar.strength || 80) / 100
+      };
+    }).filter(cn => cn.imageUrl); // Only include controlnets with images
+    
+    // Update preview nodes to show loading
+    previewNodes.forEach(node => {
+      updateNodeData(node.id, {
+        loading: true,
+        error: null
+      });
     });
+    
+    console.log('Generating image with:', {
+      prompt,
+      negativePrompt,
+      model,
+      loras,
+      controlnets
+    });
+    
+    // Generate image with all configurations
+    const result = await runwareService.generateImage({
+      positivePrompt: prompt,
+      negativePrompt: negativePrompt,
+      model: model,
+      width: 1024,
+      height: 1024,
+      numberResults: 1,
+      outputFormat: 'WEBP',
+      lora: loras,
+      controlnet: controlnets
+    });
+    
+    // Update preview nodes with result
+    previewNodes.forEach(node => {
+      updateNodeData(node.id, {
+        image: result.imageURL,
+        loading: false,
+        error: null
+      });
+    });
+    
+    toast.success('Image generated successfully!');
+    return { success: true, result };
+    
+  } catch (error) {
+    console.error('Error in sendWorkflowToAPI:', error);
+    
+    // Update preview nodes with error
+    const previewNodes = nodes.filter(n => n.data?.functionality === 'preview' || n.type === 'previewNode');
+    previewNodes.forEach(node => {
+      updateNodeData(node.id, {
+        loading: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    });
+    
+    toast.error('Failed to generate image: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    throw error;
   }
-  
-  return { success: true };
 };

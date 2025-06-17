@@ -1,5 +1,3 @@
-
-// Fix the typings for the inputs in RightSidebar.tsx
 import React, { useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { 
@@ -208,8 +206,13 @@ export const RightSidebar = () => {
   const renderNodeSpecificControls = () => {
     if (!selectedNode) return null;
     
+    // Handle new schema-based nodes
+    if (selectedNode.type === 'normal-node' || selectedNode.type === 'layer-image') {
+      return renderSchemaBasedControls();
+    }
+    
+    // Keep existing controls for backward compatibility
     switch (selectedNode.type) {
-
       // Label Node Controls
       case 'labeledFrameGroupNode':
       return (
@@ -410,6 +413,149 @@ export const RightSidebar = () => {
         );
         
       default:
+        return renderSchemaBasedControls();
+    }
+  };
+
+  const renderSchemaBasedControls = () => {
+    if (!selectedNode?.data?.type) return null;
+    
+    const nodeType = selectedNode.data.type;
+    
+    switch (nodeType) {
+      case 'control-net-pose':
+        return (
+          <>
+            {renderTextInput('Source', 'source')}
+            {renderSlider('Fingers Left', 'fingers.left', 0, 100, 1)}
+            {renderSlider('Fingers Right', 'fingers.right', 0, 100, 1)}
+            {renderSlider('Shoulders Left', 'shoulders.left', 0, 100, 1)}
+            {renderSlider('Shoulders Right', 'shoulders.right', 0, 100, 1)}
+            {renderSlider('Elbow Left', 'elbow.left', 0, 100, 1)}
+            {renderSlider('Elbow Right', 'elbow.right', 0, 100, 1)}
+            {renderSlider('Hip Left', 'hip.left', 0, 100, 1)}
+            {renderSlider('Hip Right', 'hip.right', 0, 100, 1)}
+            {renderSlider('Knee Left', 'knee.left', 0, 100, 1)}
+            {renderSlider('Knee Right', 'knee.right', 0, 100, 1)}
+            {renderSlider('Ankle Left', 'ankle.left', 0, 100, 1)}
+            {renderSlider('Ankle Right', 'ankle.right', 0, 100, 1)}
+            {renderSlider('Neck', 'neck', 0, 100, 1)}
+            {renderSlider('Head', 'head', 0, 100, 1)}
+          </>
+        );
+        
+      case 'control-net-edge':
+      case 'control-net-depth':
+      case 'control-net-segments':
+      case 'control-net-normal-map':
+        return (
+          <>
+            {renderTextInput('Image', 'image')}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
+              <select
+                value={selectedNode.data.type || 'source'}
+                onChange={(e) => updateNodeData(selectedNode.id, { type: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
+              >
+                <option value="source">Source</option>
+                <option value="final map">Final Map</option>
+              </select>
+            </div>
+            {renderTextInput('Source', 'source')}
+            {renderTextInput('Map', 'map')}
+          </>
+        );
+        
+      case 'control-net-lights':
+        return (
+          <>
+            {renderTextInput('Blend', 'blend')}
+            {renderTextInput('Image', 'image')}
+            {renderSlider('Power', 'power', 0, 100, 1)}
+            {renderColorInput('Color', 'color')}
+            {renderSlider('Length', 'length', 0, 1000, 10)}
+            {renderSlider('Width', 'width', 0, 1000, 10)}
+            {renderNumericInput('Location X', 'location.x', 0, 1000, 10)}
+            {renderNumericInput('Location Y', 'location.y', 0, 1000, 10)}
+          </>
+        );
+        
+      case 'control-net-reference':
+        return (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
+              <select
+                value={selectedNode.data.type || 'source'}
+                onChange={(e) => updateNodeData(selectedNode.id, { type: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
+              >
+                <option value="source">Source</option>
+                <option value="final map">Final Map</option>
+              </select>
+            </div>
+            {renderSlider('Power', 'power', 0, 100, 1)}
+          </>
+        );
+        
+      case 'image-to-image-re-imagine':
+        return (
+          <>
+            {renderSlider('Creativity', 'creativity', 0, 100, 1)}
+          </>
+        );
+        
+      case 'image-to-image-reangle':
+        return (
+          <>
+            {renderNumericInput('Angle X', 'angle.x', -180, 180, 1)}
+            {renderNumericInput('Angle Y', 'angle.y', -180, 180, 1)}
+            {renderNumericInput('Angle Z', 'angle.z', -180, 180, 1)}
+          </>
+        );
+        
+      case 'input-text':
+        return (
+          <>
+            {renderTextArea('Prompt', 'prompt', 'Enter your prompt here...')}
+            {renderTextArea('Negative Prompt', 'negative', 'Enter negative prompt here...')}
+            <div className="mb-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedNode.data.enhance || false}
+                  onChange={(e) => updateNodeData(selectedNode.id, { enhance: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-300">Enhance</span>
+              </label>
+            </div>
+          </>
+        );
+        
+      case 'preview-image':
+      case 'preview-realtime':
+        return (
+          <>
+            {renderTextInput('Preview', 'preview')}
+            {renderSlider('Quality', 'quality', 0, 100, 1)}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Ratio</label>
+              <select
+                value={selectedNode.data.ratio || 'Outpaint'}
+                onChange={(e) => updateNodeData(selectedNode.id, { ratio: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
+              >
+                <option value="Outpaint">Outpaint</option>
+                <option value="Inpaint">Inpaint</option>
+              </select>
+            </div>
+            {renderSlider('Accident', 'accident', 0, 100, 1)}
+          </>
+        );
+        
+      default:
         return (
           <p className="text-sm text-gray-500">
             Select a node to view and edit its properties.
@@ -417,6 +563,7 @@ export const RightSidebar = () => {
         );
     }
   };
+
   
   // If no node is selected but an edge is selected
   const renderEdgeControls = () => {

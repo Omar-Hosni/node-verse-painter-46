@@ -11,15 +11,12 @@ import {
   ConnectionLineType,
   SelectionMode,
   NodePositionChange,
-  NodeDimensionChange
+  NodeDimensionChange,
+  MarkerType
 } from '@xyflow/react';
 
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { ModelNode } from './nodes/ModelNode';
-import { LoraNode } from './nodes/LoraNode';
-import { ControlnetNode } from './nodes/ControlnetNode';
 import { PreviewNode } from './nodes/PreviewNode';
-import { InputNode } from './nodes/InputNode';
 import CustomEdge from './edges/CustomEdge';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -41,13 +38,11 @@ import { getHighestOrder } from '@/store/nodeActions';
 
 import AlignmentGuides from './AlignmentGuides';
 import { calculateAlignmentGuides, snapNodeToGuides, AlignmentGuide } from '@/utils/alignmentUtils';
+import NormalNode from './nodes/NormalNode';
+import LayerImageNode from './nodes/LayerImageNode';
 
 const nodeTypes: NodeTypes = {
-  modelNode: ModelNode,
-  loraNode: LoraNode,
-  controlnetNode: ControlnetNode,
   previewNode: PreviewNode,
-  inputNode: InputNode,
   labeledFrameGroupNode: LabeledFrameGroupNodeWrapper,
   'shape-rectangle': RectangleNode,
   'shape-circle': CircleNode,
@@ -55,6 +50,9 @@ const nodeTypes: NodeTypes = {
   'section-node': SectionNode,
   'drawing-node': DrawingNode,
   'comment-node': CommentNode,
+  'normal-node': NormalNode,
+  'layer-image-node': LayerImageNode,
+  'preview-realtime-node': PreviewNode
 };
 
 const edgeTypes: EdgeTypes = {
@@ -295,11 +293,11 @@ export const Canvas = ({activeTool, setActiveTool}) => {
     }
   };
 
-  const defaultEdgeOptions = {
-    type: 'custom',
-    animated: true,
-    style: { strokeWidth: 2, stroke: '#666' }
-  };
+  // const defaultEdgeOptions = {
+  //   type: 'custom',
+  //   animated: true,
+  //   style: { strokeWidth: 2, stroke: '#666' }
+  // };
 
 
   const isNodeInsideFrame = (node: Node, frame: Node): boolean => {
@@ -560,8 +558,22 @@ export const Canvas = ({activeTool, setActiveTool}) => {
 
   const nodesOrdered = [...useCanvasStore.getState().nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
 
-  console.log(nodes)
-  
+  const defaultEdgeOptions = {
+    animated: true,
+    type: 'floating',
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: '#007bff',
+    },
+    style: {
+      stroke: '#007bff',
+      strokeWidth: 2,
+    },
+  };
+
+  console.log(nodesOrdered)
+
+
   return (
     <div className="flex-1 h-screen bg-[#121212] relative" ref={reactFlowWrapper}>
       <ReactFlow
@@ -579,7 +591,6 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         panOnScroll
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
         zoomActivationKeyCode="Meta"         // Zoom with Meta key (Cmd on Mac)
         multiSelectionKeyCode={['Meta', 'Shift']} // Multi-select with Cmd or Shift
         selectNodesOnDrag={false}            // Disables default selection on drag
@@ -591,6 +602,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         className="bg-[#151515]"
         connectionLineStyle={{ stroke: '#ff69b4', strokeWidth: 3 }}
         connectionLineType={ConnectionLineType.Bezier}
+        defaultEdgeOptions={defaultEdgeOptions}
         snapToGrid={true}
         snapGrid={[15, 15]}
       >

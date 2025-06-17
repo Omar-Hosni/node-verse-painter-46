@@ -114,6 +114,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           ? get().selectedEdge
           : null
     });
+    get().saveToHistory();
   },
 
   onConnect: (connection: Connection) => {
@@ -139,7 +140,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   addNode: (nodeType: NodeType, position, order) => {
     // Save state before adding node
     get().saveToHistory();
-    
+    console.log(nodeType)
     const newNode = createNode(nodeType, position, order);
 
     set({ 
@@ -424,17 +425,20 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     );
   },
 
-  sendWorkflowToAPI: async () => {
-    // Create a proper WorkflowJson object
-    const workflow: WorkflowJson = {
-      ...get().exportWorkflowAsJson(),
-    };
-    
-    return await sendWorkflowToAPI(
-      workflow,
-      get().updateNodeData,
-      get().nodes
-    );
+  sendWorkflowToAPI: async (): Promise<any> => {
+        const { nodes, edges, updateNodeData } = get();
+        const workflowJson: WorkflowJson = {
+          nodes,
+          edges,
+          version: '1.0.0',
+          settings: {
+            autoLayout: false,
+            snapToGrid: true,
+            gridSize: 15,
+            theme: 'dark'
+          }
+        };
+    return await sendWorkflowToAPI(workflowJson, updateNodeData, nodes);
   },
   
   // New methods for drawing collaboration
@@ -463,4 +467,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   resetFabricObjects: () => {
     set({ fabricObjects: [] });
   }
-}));
+  }),
+  
+
+);

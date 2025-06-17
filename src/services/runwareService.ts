@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Define the parameters for image generation

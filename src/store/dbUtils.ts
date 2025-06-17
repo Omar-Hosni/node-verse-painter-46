@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Node, Edge } from '@xyflow/react';
 import { toast } from 'sonner';

@@ -57,4 +57,10 @@ conditional rules
 
 
 
+1-the image output and realtime preview are similar in design as image layer, but instead they act as output nodes for the generation, so when user selects imageoutput node on canvas, the rightsidebar is expected to show generate button that takes the workflow nodes' functionality from data and sends it to runware api to generate the image
 
+2-fix the connection rules because i currently can't connect any shit to each other. the from array is nodes you can connect from(left handle) and to array is nodes you can connect to(right handle)
+
+3-there is also global rules in node_schema.ts that ensure a workflow or node has some certain data/elements before a connection is allowed
+
+4-the workflow needs to be extractable for runware api, the current nodes plays different functionalities (lora, controlnets, models), make sure the generate image extracts functionalities of workflow nodes to generate output in the image-output preview layer node. 
