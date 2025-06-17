@@ -54,7 +54,7 @@ const LayerImageNode: React.FC<NodeProps> = ({
 
   return (
     <div
-      className={`bg-[#111] rounded-lg overflow-hidden shadow-lg ${selected ? 'ring-2 ring-white absolute' : ''}`}
+      className={`relative bg-[#111] rounded-lg shadow-lg ${selected ? 'ring-2 ring-white ' : ''}`}
       style={{ width: 200, height: 150 }}
     >
       {hasImage ? (
