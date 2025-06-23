@@ -64,3 +64,5 @@ conditional rules
 3-there is also global rules in node_schema.ts that ensure a workflow or node has some certain data/elements before a connection is allowed
 
 4-the workflow needs to be extractable for runware api, the current nodes plays different functionalities (lora, controlnets, models), make sure the generate image extracts functionalities of workflow nodes to generate output in the image-output preview layer node. 
+
+the workflow needs to be extractable for runware api, the current nodes plays different functionalities (lora, controlnets, models), make sure the generate image extracts functionalities of workflow nodes to generate output in the image-output preview layer node. 

@@ -62,6 +62,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Pose Control',
         icon: "pose",
         description: 'Control pose of the subject',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -70,6 +71,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Edge Control',
         icon: "edge",
         description: 'Edge detection via Canny map',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -78,6 +80,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Lights Control',
         icon: "lights",
         description: 'Custom lighting map control',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -86,6 +89,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Face Express',
         icon: "face",
         description: 'Facial expressions and identity',
+        status: 'coming-soon',
       },
       {
         design: 'normal-node',
@@ -94,6 +98,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Segments',
         icon: "segments",
         description: 'Segment maps for regions',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -102,6 +107,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Depth Control',
         icon: "depth",
         description: 'Depth map control for composition',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -110,6 +116,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Normal Map',
         icon: "normal_map",
         description: 'Reference faces, styles, or objects',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -118,6 +125,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Reference',
         icon: "reference",
         description: 'Reference faces, styles, or objects',
+        status: 'stable',
       },
     ],
   },
@@ -132,6 +140,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Re-Imagine',
         icon: "reimagine",
         description: 'Recreate image with new style',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -140,6 +149,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Re-Scene',
         icon: "rescene",
         description: 'Change scene and object context',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -148,6 +158,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Object Re-Light',
         icon: "objectrelight",
         description: 'Change the lighting of the scene',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -156,6 +167,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Re-Angle',
         icon: "reangle",
         description: 'Change the camera angle',
+        status: 'stable',
       },
     ],
   },
@@ -170,6 +182,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Remove BG',
         icon: "removebg",
         description: 'Erase image background',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -178,6 +191,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Upscale',
         icon: "upscale",
         description: 'Increase image resolution',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -186,6 +200,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'In-Painting',
         icon: "inpainting",
         description: 'Fill missing areas in the image',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -194,6 +209,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Out-Painting',
         icon: "outpainting",
         description: 'Extend content beyond original image',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -202,6 +218,7 @@ export const insertCategories: NodeCategory[] = [
         label: '3D Maker',
         icon: "3dmaker",
         description: 'Generate mesh and texture from image',
+        status: 'coming-soon',
       },
       {
         design: 'normal-node',
@@ -210,6 +227,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Text Prompt',
         icon: "text",
         description: 'Input text prompt for generation',
+        status: 'stable',
       },
       {
         design: 'normal-node',
@@ -218,6 +236,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Merger',
         icon: "merger",
         description: 'Merge multiple images with weights',
+        status: 'stable',
       },
       {
         design: 'custom-router',
@@ -226,6 +245,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Router',
         icon: "router",
         description: 'Route connections in workflows',
+        status: 'stable',
       },
     ],
   },
@@ -237,23 +257,25 @@ export const insertCategories: NodeCategory[] = [
         design: 'image-node',
         functionality: 'preview',
         type: 'layer-image-node',
-        data:{
+        data: {
           functionality: 'output',
         },
         label: 'Image Output',
         icon: "image_output",
         description: 'Final rendered image',
+        status: 'stable',
       },
       {
         design: 'image-node',
         functionality: 'preview',
         type: 'preview-realtime-node',
-        data:{
-          functionality: 'output'
+        data: {
+          functionality: 'output',
         },
         label: 'Real-Time Preview',
         icon: "realtime",
         description: 'Live preview during generation',
+        status: 'coming-soon',
       },
     ],
   },
@@ -261,16 +283,59 @@ export const insertCategories: NodeCategory[] = [
     name: 'Engines',
     icon: Cog,
     options: [
-
+      {
+        design: 'normal-node',
+        functionality: 'engine',
+        type: 'engine-real',
+        model: 'civitai:778691@1129380',
+        lora: 'civitai:920816@1565102',
+        image_url: 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/99ccccd1-35b1-4090-ade2-83e2a2bf14ab/anim=false,width=450/5P_00006_.jpeg',
+        data: {
+          functionality: 'engine',
+        },
+        label: 'Nover Real',
+        icon: "realtime",
+        description: 'Combination of Fluxmania Model and Defluxion LoRa',
+        status: 'stable',
+      },
     ],
   },
   {
     name: 'Gears',
     icon: Orbit,
     options: [
+      {
+        design: 'normal-node',
+        functionality: 'lora',
+        type: 'gear-anime',
+        lora: 'civitai:534506@1882710',
+        image_url: 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/8125d41b-c2fc-4141-8a43-a2b8f0c3058d/anim=false,width=450/pixai-1888583114545024969-0.jpeg',
+        data: {
+          functionality: 'lora',
+        },
+        label: 'Gear Semi-Real',
+        icon: "",
+        description: 'Semi-Real LoRa',
+        status: 'stable',
+      },
+      {
+        design: 'normal-node',
+        functionality: 'lora',
+        type: 'gear-killua',
+        lora: 'civitai:1348627@1523250',
+        image_url: 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0de4dbcd-eb1c-478c-9709-1694b25e94f9/anim=false,width=450/00960-497516903.jpeg',
+        data: {
+          functionality: 'lora',
+        },
+        label: 'Gear Killua',
+        icon: "",
+        description: 'Killua LoRa',
+        status: 'stable',
+      },
     ],
   },
 ];
+
 
 
 export const assetCategories = [

@@ -410,7 +410,7 @@ interface Realtime extends BaseNode {
 interface Engine extends BaseNode {
   design: 'normal-node',
   functionality: 'engine',
-  type: "engine-dream"|"",
+  type: "engine-real"|"engine-draw"|"engine-dream"|"engine-style"|"engine-ads"|"engine-home",
   model: string,
   lora: string,
   image_url:string

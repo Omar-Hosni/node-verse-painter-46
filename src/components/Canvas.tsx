@@ -41,6 +41,8 @@ import { calculateAlignmentGuides, snapNodeToGuides, AlignmentGuide } from '@/ut
 import NormalNode from './nodes/NormalNode';
 import LayerImageNode from './nodes/LayerImageNode';
 
+import isValidConnection from '@/utils/connectionUtils';
+
 const nodeTypes: NodeTypes = {
   previewNode: PreviewNode,
   labeledFrameGroupNode: LabeledFrameGroupNodeWrapper,
@@ -66,7 +68,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
     edges, 
     onNodesChange, 
     onEdgesChange, 
-    onConnect,
+    onConnect: originalOnConnect,
     setSelectedNode,
     setSelectedEdge,
     copySelectedNode,
@@ -556,6 +558,16 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   //set({ nodes: loadedNodes });
 
 
+  const onConnect = useCallback((connection: Connection) => {
+    if (isValidConnection(connection, nodes, edges)) {
+      originalOnConnect(connection);
+    }
+  }, [nodes, edges, originalOnConnect]);
+
+  useEffect(()=>{
+
+  },[activeTool])
+
   const nodesOrdered = [...useCanvasStore.getState().nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
 
   const defaultEdgeOptions = {
@@ -570,8 +582,6 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       strokeWidth: 2,
     },
   };
-
-  console.log(nodesOrdered)
 
 
   return (

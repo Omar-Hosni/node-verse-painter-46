@@ -15,7 +15,8 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
       nodeType.startsWith('image-to-image-') || 
       nodeType.startsWith('input-text') ||
       nodeType.startsWith('connector') ||
-      nodeType.startsWith('engine-')) {
+      nodeType.startsWith('engine-') ||
+    nodeType.startsWith('gear-')) {
     
     // These use normal-node design
     const displayName = getDisplayNameFromType(nodeType);
@@ -29,10 +30,13 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
         type: nodeType,
         functionality: getFunctionalityFromType(nodeType),
         displayName,
+        nodeShape: 'rectangle',
         order,
+        color:'black',
         // Add default right_sidebar data based on type
         right_sidebar:{
-        ...getDefaultDataForType(nodeType)
+        ...getDefaultDataForType(nodeType),
+        image_url:getImageUrlForEngineOrGear(nodeType)
         }
       },
       className: 'node-normal',
@@ -120,6 +124,9 @@ const getDisplayNameFromType = (nodeType: string): string => {
     'connector': 'Router',
     'preview-image': 'Image Output',
     'preview-realtime': 'Real-Time Preview',
+    'engine-real': 'Nover Real',
+    'gear-anime': 'Anime',
+    'gear-killua': 'Killua'
   };
   return typeMap[nodeType] || nodeType;
 };
@@ -131,6 +138,7 @@ const getFunctionalityFromType = (nodeType: string): string => {
   if (nodeType === 'connector') return 'helper';
   if (nodeType.startsWith('preview-')) return 'preview';
   if (nodeType.startsWith('engine-')) return 'engine';
+  if (nodeType.startsWith('gear-')) return 'gear';
   return 'unknown';
 };
 
@@ -168,11 +176,25 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
       quality: 100,
       ratio: 'Outpaint',
       accident: 0
+    },
+    'engine-real':{
+      image_url:''
     }
   };
   
   return defaults[nodeType] || {};
 };
+
+const getImageUrlForEngineOrGear = (nodeType: string): Record<string, string> => {
+   
+  const defaults: Record<string, string> = {
+    'engine-real': "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/99ccccd1-35b1-4090-ade2-83e2a2bf14ab/anim=false,width=450/5P_00006_.jpeg",
+    'gear-anime':"https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/8125d41b-c2fc-4141-8a43-a2b8f0c3058d/anim=false,width=450/pixai-1888583114545024969-0.jpeg",
+    'gear-killua':"https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0de4dbcd-eb1c-478c-9709-1694b25e94f9/anim=false,width=450/00960-497516903.jpeg"
+  }
+
+  return defaults[nodeType] || {};
+}
 
 export const getHighestOrder = (nodes: Node[]): number => {
   

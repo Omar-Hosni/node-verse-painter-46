@@ -1,9 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Image as ImageIcon, Download } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 
-const LayerImageNode: React.FC<NodeProps> = ({ 
+interface LayerImageNodeData {
+  displayName?: string;
+  functionality?: string;
+  image?: string;
+  imageUrl?: string;
+  loading?: boolean;
+  uploading?: boolean;
+  [key: string]: any;
+}
+
+const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
   id, 
   data, 
   selected 
@@ -17,18 +27,23 @@ const LayerImageNode: React.FC<NodeProps> = ({
 
     try {
       updateNodeData(id, { uploading: true });
+
+      const base64Image = await fileToBase64(file);
       
-      // Create a URL for the uploaded image
-      const imageUrl = URL.createObjectURL(file);
+      // Save to store
       updateNodeData(id, { 
-        image: imageUrl, 
-        uploading: false 
+        image: base64Image,
+        uploading: false
       });
+
+      // Persist in localStorage
+      localStorage.setItem(`layer-image-${id}`, base64Image);
     } catch (error) {
       console.error('Upload error:', error);
       updateNodeData(id, { uploading: false });
     }
   };
+
 
   const triggerUpload = () => {
     if (data?.functionality === 'input') {
@@ -46,6 +61,25 @@ const LayerImageNode: React.FC<NodeProps> = ({
       document.body.removeChild(link);
     }
   };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+
+  useEffect(() => {
+    const storedImage = localStorage.getItem(`layer-image-${id}`);
+    if (storedImage && !data?.image) {
+      updateNodeData(id, { image: storedImage });
+    }
+  }, [id, data?.image, updateNodeData]);
+
+
 
   const isOutputNode = data?.functionality === 'output';
   const isInputNode = data?.functionality === 'input';

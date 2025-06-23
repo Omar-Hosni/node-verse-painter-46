@@ -300,13 +300,77 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
     const { parentToChildrenMap } = hierarchy;
     const hasChildren = parentToChildrenMap[node.id]?.length > 0;
     const isExpanded = expandedNodes[node.id] !== false;
+    console.log(node)
+    
+    const getIconName = (nodeName) =>{
+      let iconName = "";
+      
+      if (nodeName.includes('pose')) {
+        iconName = "pose";
+      } else if (nodeName.includes('3dmaker')) {
+        iconName = "3dmaker";
+      } else if (nodeName.includes('depth')) {
+        iconName = "depth";
+      } else if (nodeName.includes('edge')) {
+        iconName = "edge";
+      } else if (nodeName.includes('engine')) {
+        iconName = "engine";
+      } else if (nodeName.includes('face')) {
+        iconName = "face";
+      } else if (nodeName.includes('gear')) {
+        iconName = "gear";
+      } else if (nodeName.includes('image_output')) {
+        iconName = "image_output";
+      } else if (nodeName.includes('inpainting')) {
+        iconName = "inpainting";
+      } else if (nodeName.includes('lights')) {
+        iconName = "lights";
+      } else if (nodeName.includes('merger')) {
+        iconName = "merger";
+      } else if (nodeName.includes('normal_map')) {
+        iconName = "normal_map";
+      } else if (nodeName.includes('objectrelight')) {
+        iconName = "objectrelight";
+      } else if (nodeName.includes('outpainting')) {
+        iconName = "outpainting";
+      } else if (nodeName.includes('placeholder')) {
+        iconName = "placeholder";
+      } else if (nodeName.includes('realtime')) {
+        iconName = "realtime";
+      } else if (nodeName.includes('reangle')) {
+        iconName = "reangle";
+      } else if (nodeName.includes('reference')) {
+        iconName = "reference";
+      } else if (nodeName.includes('reimagine')) {
+        iconName = "reimagine";
+      } else if (nodeName.includes('removebg')) {
+        iconName = "removebg";
+      } else if (nodeName.includes('rescene')) {
+        iconName = "rescene";
+      } else if (nodeName.includes('router')) {
+        iconName = "router";
+      } else if (nodeName.includes('segments')) {
+        iconName = "segments";
+      } else if (nodeName.includes('text')) {
+        iconName = "text";
+      } else if (nodeName.includes('upscale')) {
+        iconName = "upscale";
+      }
+      else if (nodeName.includes('layer-image')) {
+        iconName = "image_input";
+      }
+
+      return iconName;
+    }
+
+    const icon = getIconName(node.id)
 
     return (
       <div key={node.id} className="mb-1" data-id={node.id}>
         <div
           className={node.selected ? 
-            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md bg-blue-600  border-t border-white" : 
-            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md hover:bg-gray-800/50 hover:border-t hover:border-white"}
+            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md bg-[#007aff]" : 
+            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md hover:bg-field text-gray-400"}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
             const selected = canvasNodes.find(n => n.id === node.id);
@@ -318,8 +382,10 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
             }
           }}
         >
+          <SvgIcon name={icon} className={node.selected ? "h-4 w-4" : "h-3.5 w-3.5"}/>
+
           {hasChildren ? (
-            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1">
+            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1 hover:bg-gray-600 hover:transition-all">
               {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </button>
           ) : <span className="w-4 mr-1" />}
@@ -372,7 +438,7 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
     const order = getHighestOrder(getNodes())+1;
     addNode(nodeType, position, order);
   };
-  
+
   return (
     <div className="w-16 lg:w-[13%] h-full bg-[#0d0d0d] border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
       {/* Tab selector */}
@@ -441,33 +507,63 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
           {/* Insert Tab - Node Categories */}
           {activeTab === 'Insert' && !searchTerm && (
             <div>
-              {insertCategories.map((category) => (
-                <div key={category.name} className="mb-8">
-                  <div className="flex flex-row items-center mb-3 ml-4">
-                    <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
-                      <category.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="text-sm font-semibold text-gray-400">
-                      <span>{category.name}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    {category.options.map((option) => (
-                      <div
-                        key={option.type}
-                        onClick={() => handleAddNode(option.type)}
-                        className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
-                      >
-                        <SvgIcon name={option.icon.toString()} className="h-8 w-8 text-[#f3f2f2] mb-2"/>
-                        <span className="text-xs text-gray-500 text-center font-medium">
+
+          {insertCategories.map((category) => (
+            <div key={category.name} className="mb-8">
+              <div className="flex flex-row items-center mb-3 ml-4">
+                <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
+                  <category.icon className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-sm font-semibold text-gray-400">
+                  <span>{category.name}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {category.options.map((option) => (
+                  <div
+                    key={option.type}
+                    onClick={
+                      option.status === 'coming-soon'
+                        ? undefined
+                        : () => handleAddNode(option.type)
+                    }
+                    className={`relative bg-[#151515] hover:border hover:border-blue-500 rounded-2xl 
+                                px-8 py-6 flex items-center justify-center cursor-pointer 
+                                overflow-hidden ${option?.image_url ? "p-0" : "flex-col"} 
+                                ${option.status === 'coming-soon' ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {/* Image or icon + label */}
+                    {option?.image_url ? (
+                      <img
+                        src={option.image_url}
+                        alt={option.label}
+                        className="scale-[220%] rounded-2xl"
+                      />
+                    ) : (
+                      <>
+                        <SvgIcon
+                          name={option.icon.toString()}
+                          className="h-8 w-8 text-[#f3f2f2] mb-2"
+                        />
+                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis py-2">
                           {option.label}
                         </span>
+                      </>
+                    )}
+
+                    {/* Overlay for "Coming Soon" */}
+                    {option.status === 'coming-soon' && (
+                      <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                        <span className="text-white text-xs font-semibold">Coming Soon</span>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+          ))}
+
             </div>
           )}
 
@@ -478,19 +574,40 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
             <h3 className="text-sm text-gray-400 mb-3 ml-4">
               Search results for "{searchTerm}"
             </h3>
-
             {filterNodeOptions(allNodeOptions).length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {filterNodeOptions(allNodeOptions).map((option) => (
                   <div
                     key={option.type}
-                    onClick={() => handleAddNode(option.type)}
-                    className="bg-[#151515] hover:border hover:border-blue-500 rounded-2xl px-8 py-6 flex flex-col items-center justify-center cursor-pointer"
+                    onClick={
+                      option.status === 'coming-soon'
+                        ? undefined
+                        : () => handleAddNode(option.type)
+                    }
+                    className={`relative bg-[#151515] hover:border hover:border-blue-500 rounded-2xl 
+                                px-8 py-6 flex flex-col items-center justify-center cursor-pointer 
+                                overflow-hidden ${option.status === 'coming-soon' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <img src={"/nodes/data/icons/placeholder.svg"}/>
-                    <span className="text-xs text-gray-500 text-center font-medium">
-                      {option.label}
-                    </span>
+                    {option?.image_url ? (
+                      <img
+                        src={option.image_url}
+                        alt={option.label}
+                        className="scale-[220%] rounded-2xl"
+                      />
+                    ) : (
+                      <>
+                        <SvgIcon name={option.icon.toString()} className="h-8 w-8 text-[#f3f2f2] mb-2" />
+                        <span className="text-xs text-gray-500 text-center font-medium">
+                          {option.label}
+                        </span>
+                      </>
+                    )}
+
+                    {option.status === 'coming-soon' && (
+                      <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                        <span className="text-white text-xs font-semibold">Coming Soon</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -499,6 +616,7 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
                 No components match your search.
               </div>
             )}
+
           </div>
         )}
 

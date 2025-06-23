@@ -18,7 +18,8 @@ import {
   MessageCirclePlus,
   Plus,
   Tally1,
-  Image
+  Image,
+  Move,
 } from 'lucide-react';
 import { 
   Popover,
@@ -200,40 +201,40 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           <path d="M12 4v16" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="1" />
         </svg>
 
-        <Button
-          size="icon"
-          variant={activeTool === 'comment' ? "default" : "ghost"}
-          className={`rounded-full ${activeTool === 'comment' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-          onClick={()=>{
-            handleToolChange('comment')
-            handleAddCommentNode()
-          }}
-          >
-            <MessageCirclePlus
-              className="h-4 w-4 text-white"
-              color={activeTool === 'comment' ? 'white' : 'gray'}/>
-          </Button>
-
           <Button 
             size="icon" 
             variant={activeTool === 'select' ? "default" : "ghost"}
-            className={`rounded-full ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            className={`rounded-lg ${activeTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             onClick={() => handleToolChange('select')}
           >
             <MousePointer 
-              className="h-4 w-4 text-white" 
+              className="h-4 w-4 text-white scale-125" 
               color={activeTool === 'select' ? 'white' : 'gray'}/>
           </Button>
 
           <Button 
             size="icon" 
             variant={activeTool === 'hand' ? "default" : "ghost"} 
-            className={`rounded-full ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+            className={`rounded-lg  ${activeTool === 'hand' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             onClick={() => handleToolChange('hand')}
           >
             <Hand 
-              className="h-4 w-4 text-white"
+              className="h-4 w-4 text-white scale-125"
               color={activeTool === 'hand' ? 'white' : 'gray'}/>
+          </Button>
+
+        <Button
+          size="icon"
+          variant={activeTool === 'comment' ? "default" : "ghost"}
+          className={`rounded-lg ${activeTool === 'comment' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={()=>{
+            handleToolChange('comment')
+            handleAddCommentNode()
+          }}
+          >
+            <MessageCirclePlus
+              className="h-4 w-4 text-white scale-125"
+              color={activeTool === 'comment' ? 'white' : 'gray'}/>
           </Button>
 
         <svg viewBox="0 0 24 24" width="35">
@@ -246,7 +247,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
       </div>
       
       {/* Top center shape tools */}
-      <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10">
+      <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10 scale-[110%]">
         <Popover>
           <PopoverTrigger asChild>
             <Button 
