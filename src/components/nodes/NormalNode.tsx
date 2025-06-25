@@ -46,23 +46,27 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
   const iconName = getIconName(data.type);
   const modelImage = getIconImage(data.type);
 
-  const colorDegreeMap = {
-    "purple":500,
-    "orange":700,
-    "red":500,
-    "green":700,
-    "blue":500,
-    "pink":500,
-    "cyan":500
-  }
+  const bgColorMap: Record<string, string> = {
+    purple: "bg-purple-500",
+    orange: "bg-orange-700",
+    red: "bg-red-500",
+    green: "bg-green-700",
+    blue: "bg-blue-500",
+    pink: "bg-pink-500",
+    cyan: "bg-cyan-500",
+    black: "bg-[#111]",
+  };
 
-  console.log(data?.nodeShape)
+  const rawColor = data?.color?.toLowerCase() || "blue";
+  const bgColor = bgColorMap[rawColor] || "bg-blue-500"; // fallback to blue
+
 
   const currentNodeShape = data?.nodeShape
 
   let nodeStyle = {}
   let roundedDegree = ""
   let isSquare = false;
+  let isTextInputNode = data.type.includes('input-text')
 
   if(currentNodeShape === "rectangle"){
     nodeStyle = { width: 170, height:50 }
@@ -74,9 +78,6 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     isSquare = true;
   }
 
-  //if isSquare then flex-col, else flex-row
-
-  const bgColor = data?.color.toLowerCase() === "black" ? "bg-[#111]" : `bg-${data.color.toLowerCase()}-${colorDegreeMap[data.color.toLowerCase()]}`
 
   return (
     <div
@@ -127,12 +128,16 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
 
 
       {/* Handles for connection */}
-      <Handle
+      {
+        !isTextInputNode && (      
+        <Handle
         type="target"
         position={Position.Left}
         id="input"
         className="!bg-white !border-none w-2.5 h-2.5"
-      />
+      />)
+      }
+
       <Handle
         type="source"
         position={Position.Right}

@@ -39,7 +39,7 @@ const CustomEdge: React.FC<EdgeProps> = ({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style, strokeWidth: 2}} />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style, strokeWidth: 1}} />
       
       {/* Edge control button - improved visibility */}
       <EdgeLabelRenderer>
@@ -53,7 +53,7 @@ const CustomEdge: React.FC<EdgeProps> = ({
           className="nodrag nopan"
         >
           <button
-            className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors border-2 border-gray-300"
+            className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors border-2 border-gray-300"
             onClick={onEdgeClick}
           >
             <X size={16} />

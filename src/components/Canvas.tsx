@@ -583,6 +583,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
     },
   };
 
+  
 
   return (
     <div className="flex-1 h-screen bg-[#121212] relative" ref={reactFlowWrapper}>
@@ -614,7 +615,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         connectionLineType={ConnectionLineType.Bezier}
         defaultEdgeOptions={defaultEdgeOptions}
         snapToGrid={true}
-        snapGrid={[15, 15]}
+        snapGrid={[25, 25]}
       >
         {/*Canva Visualizer and Zoom in Zoom Out buttons*/}
         {/* <MiniMap style={{ backgroundColor: '#1A1A1A' }} /> */}

@@ -32,7 +32,7 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
         displayName,
         nodeShape: 'rectangle',
         order,
-        color:'black',
+        color:'Black',
         // Add default right_sidebar data based on type
         right_sidebar:{
         ...getDefaultDataForType(nodeType),
