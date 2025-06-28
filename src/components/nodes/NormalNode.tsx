@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { User } from 'lucide-react';
 import SvgIcon from '@/components/SvgIcon';
+import NodeIcon from '../NodeIcon';
 import { E } from 'node_modules/@liveblocks/react/dist/room-CqT08uWZ';
 
 interface NormalNodeData {
@@ -21,6 +22,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     if(type==="connector") return "router";
     if(type.includes('engine')) return "engine";
     if(type.includes('gear')) return "gear";
+    if(type.includes('remove')) return "removebg";
 
     const parts = type.split('-');
     return parts[parts.length - 1];
@@ -34,7 +36,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     if (type.includes('outpainting')) return 'outpainting';
     if (type.includes('pose')) return 'pose';
     if (type.includes('reference')) return 'reference';
-    if (type.includes('remove-bg')) return 'remove-bg';
+    if (type.includes('remove')) return 'remove-bg';
     if (type.includes('rescene')) return 'rescene';
     if (type.includes('segment')) return 'segment';
     if (type.includes('upscale')) return 'upscale';
@@ -69,11 +71,11 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
   let isTextInputNode = data.type.includes('input-text')
 
   if(currentNodeShape === "rectangle"){
-    nodeStyle = { width: 170, height:50 }
+    nodeStyle = { height:50 }
     roundedDegree = "full"
   }
   else if(currentNodeShape === "square"){
-    nodeStyle = { width: 120, height:90 }
+    nodeStyle = { height:90 }
     roundedDegree = "2xl"
     isSquare = true;
   }
@@ -81,8 +83,8 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
 
   return (
     <div
-      className={`flex flex-${isSquare ? 'col' : 'row'} items-center justify-between ${bgColor} bg-opacity-80 rounded-${roundedDegree} px-3 py-2 shadow-lg ${
-        selected ? 'ring-2 ring-white' : ''
+      className={`inline-flex flex-${isSquare ? 'col' : 'row'} gap-2 items-center justify-between ${bgColor} bg-opacity-80 rounded-${roundedDegree} px-3 py-2 shadow-lg ${
+        selected ? `ring-1 ${bgColor.includes('blue') || bgColor.includes('cyan')  ? `ring-white` : 'ring-blue-600'}` : ''
       }`}
       style={nodeStyle}
     >
@@ -116,13 +118,14 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
           </div>
 
           {/* Circular image on the right */}
-          <div className="w-10 h-10 rounded-full overflow-hidden">
+          {/* <div className="w-10 h-10 rounded-full overflow-hidden">
             <img
               src={`/nodes/data/icons/images/${modelImage}.png`}
               alt={data.displayName}
               className="w-full h-full object-cover"
             />
-          </div>
+          </div> */}
+          <NodeIcon icon={data.icon} iconBgColor={data.iconBgColor} />
         </>
       )}
 

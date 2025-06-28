@@ -25,6 +25,8 @@ const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    localStorage.clear()
+
     try {
       updateNodeData(id, { uploading: true });
 
@@ -88,7 +90,7 @@ const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
 
   return (
     <div
-      className={`relative bg-[#111] rounded-lg shadow-lg ${selected ? 'ring-2 ring-white ' : ''}`}
+      className={`relative bg-[#111] rounded-lg shadow-lg ${selected ? 'ring-1 ring-blue-600 ' : ''}`}
       style={{ width: 200, height: 150 }}
     >
       {hasImage ? (

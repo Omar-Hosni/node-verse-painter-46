@@ -9,11 +9,12 @@ import { Toolbar } from '@/components/Toolbar';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Collaborator } from '@/store/types';
+import { Collaborator, NodeOption } from '@/store/types';
 import { DrawingLayer } from '@/components/CollaborativeDrawing/DrawingLayer';
 import {DrawingOverlay} from '@/components/DrawingOverlay';
 import {FloatingPaintCanvas} from '@/components/FloatingPaintCanvas';
 import { useReactFlow } from '@xyflow/react';
+import LeftSidebarNodeDesc from '@/components/LeftSidebarNodeDesc';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -31,6 +32,7 @@ const Editor = () => {
   const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
   
   const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'frame' | 'triangle' | 'labeledGroup'>('select');
+  const [selectedInsertNode, setSelectedInsertNode] = useState<NodeOption | null>(null);
 
   useEffect(() => {
     // Check authentication and redirect if not authenticated
@@ -255,7 +257,9 @@ const Editor = () => {
         projectId={projectId}
       />
       <div className="flex flex-1 relative">
-        <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab}/>
+        <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} setSelectedInsertNode={setSelectedInsertNode}/>
+        <LeftSidebarNodeDesc selectedInsertNode={selectedInsertNode} setSelectedInsertNode={setSelectedInsertNode}/>
+
         <div className="flex-1 relative" id="canvas-area">
           <Canvas activeTool={activeTool} setActiveTool={setActiveTool}/>
           <div id="canvas-wrapper" className="absolute inset-0 pointer-events-none">

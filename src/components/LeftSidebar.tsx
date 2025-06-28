@@ -25,6 +25,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 
+import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -33,7 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Node } from '@xyflow/react';
-import { NodeType } from '@/store/types';
+import { NodeType, NodeOption } from '@/store/types';
 
 import { DndContext } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -46,16 +48,12 @@ import { insertCategories, assetCategories } from './nodes/data/left_sidebar';
 import _3dmaker from './nodes/data/icons/3dmaker.svg'
 import SvgIcon from './SvgIcon';
 
-interface NodeOption {
-  type: NodeType;
-  label: string;
-  description: string;
-  icon: any;
-}
 
-export const LeftSidebar = ({activeTab, setActiveTab}: {
+
+export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
   activeTab: 'Outline' | 'Insert' | 'Assets';
   setActiveTab: (tab: 'Outline' | 'Insert' | 'Assets') => void;
+  setSelectedInsertNode: (insertNode) => void;
 }) => {
 
   const addNode = useCanvasStore(state => state.addNode);
@@ -300,7 +298,6 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
     const { parentToChildrenMap } = hierarchy;
     const hasChildren = parentToChildrenMap[node.id]?.length > 0;
     const isExpanded = expandedNodes[node.id] !== false;
-    console.log(node)
     
     const getIconName = (nodeName) =>{
       let iconName = "";
@@ -343,7 +340,7 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
         iconName = "reference";
       } else if (nodeName.includes('reimagine')) {
         iconName = "reimagine";
-      } else if (nodeName.includes('removebg')) {
+      } else if (nodeName.includes('remove')) {
         iconName = "removebg";
       } else if (nodeName.includes('rescene')) {
         iconName = "rescene";
@@ -366,11 +363,17 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
     const icon = getIconName(node.id)
 
     return (
-      <div key={node.id} className="mb-1" data-id={node.id}>
+      <div key={node.id}
+        className={`mb-1 ${level > 0 ? "bg-[#0c1620] rounded-s-xl" : ""}`}
+        data-id={node.id}>
+        
         <div
-          className={node.selected ? 
-            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md bg-[#007aff]" : 
-            "p-2 flex items-center cursor-pointer rounded-t-xl rounded-s-md hover:bg-field text-gray-400"}
+          className={
+          `${node.selected ? 
+            "p-2 gap-2 flex items-center cursor-pointer bg-[#007aff]" : 
+            "p-2 gap-2 flex items-center cursor-pointer hover:bg-field text-gray-400"} 
+          ${isExpanded ? "rounded-t-xl" : "rounded-xl"}`
+          }
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
             const selected = canvasNodes.find(n => n.id === node.id);
@@ -382,13 +385,15 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
             }
           }}
         >
-          <SvgIcon name={icon} className={node.selected ? "h-4 w-4" : "h-3.5 w-3.5"}/>
 
           {hasChildren ? (
-            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1 hover:bg-gray-600 hover:transition-all">
-              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1 rounded-sm hover:bg-gray-600 hover:transition-all">
+              {isExpanded ? <IoMdArrowDropdown className="h-3 w-3 text-white" /> : <IoMdArrowDropright className="h-3 w-3 text-white" />}
             </button>
           ) : <span className="w-4 mr-1" />}
+
+          <SvgIcon name={icon} className={node.selected ? "h-3.5 w-3.5" : "h-3 w-3"}/>
+
           <span>{node.data?.displayName || node.type}</span>
         </div>
         {hasChildren && isExpanded && parentToChildrenMap[node.id].map(child =>
@@ -523,11 +528,16 @@ export const LeftSidebar = ({activeTab, setActiveTab}: {
                 {category.options.map((option) => (
                   <div
                     key={option.type}
-                    onClick={
-                      option.status === 'coming-soon'
-                        ? undefined
-                        : () => handleAddNode(option.type)
-                    }
+                    // onClick={
+                    //   option.status === 'coming-soon'
+                    //     ? undefined
+                    //     : () => handleAddNode(option.type)
+                    // }
+                    onClick={() => {
+                      if (option.status !== 'coming-soon') {
+                        setSelectedInsertNode(option);
+                      }
+                    }}
                     className={`relative bg-[#151515] hover:border hover:border-blue-500 rounded-2xl 
                                 px-8 py-6 flex items-center justify-center cursor-pointer 
                                 overflow-hidden ${option?.image_url ? "p-0" : "flex-col"} 

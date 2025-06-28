@@ -26,6 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getHighestOrder } from '@/store/nodeActions';
 
 type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'image' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame';
 
@@ -46,7 +47,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
   const [sectionHeight, setSectionHeight] = useState(600);
 
   const nodes = getNodes()
-  const highestNodeOrder = nodes.length > 0 ? Math.max(...nodes.map(node => node?.data?.order)) : 0;
 
 
   const handleOpenInsertTab = () => {
@@ -61,6 +61,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
   };
   
   const handleAddCommentNode = () => {
+    const order = getHighestOrder(getNodes())+1;
 
     addNode('comment-node', {
       x: window.innerWidth / 2,
@@ -69,7 +70,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
         type: 'comment-node',
         text: 'New Comment',
         color: '#fcd34d',
-        order: highestNodeOrder + 1
+        order: order
       }
     });
   };
@@ -85,6 +86,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
   };
 
   const position = reactFlowInstance.screenToFlowPosition(center);
+  const order = getHighestOrder(getNodes())+1;
 
   if(type === 'image')
   {
@@ -96,7 +98,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
           displayName: 'Image Input',
           type: 'input-image',
           functionality: 'input',
-          order: highestNodeOrder,
+          order: order,
        },
       width: 300,
       height: 200,
@@ -105,14 +107,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
     return;
   }
 
-  else if (type === 'frame') {
+  if (type === 'frame') {
     const frameLabelNode = {
       id: `labeled-frame-node-${Date.now()}`,
       type: 'labeledFrameGroupNode', // Matches nodeTypes registration
       position,
       data: {
         label: "Frame's Label",
-        order: highestNodeOrder + 1
+        order: order
        },
       width: 300,
       height: 200,
@@ -146,7 +148,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
       data: {
         width,
         height,
-        order: highestNodeOrder + 1
+        order: order
       },
     };
 
@@ -155,9 +157,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
   }
 
   if (type === 'text') {
-    const order = getNodes()?.length > 0 ? getNodes().length : 0;
-    addNode('input-text', position, order);
-    return;
+    addNode('input-text', position, order)
+    return
   }
 
   const shapeNodeTypeMap = {
@@ -176,13 +177,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
       type: nodeType,
       position,
       data: {
-        order: highestNodeOrder + 1
+        order:order,
+        type: nodeType
       },
       width: 380,
       height: 200,
     };
 
     reactFlowInstance.addNodes?.(newNode);
+    return;
   };
 
   return (

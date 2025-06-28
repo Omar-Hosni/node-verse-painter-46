@@ -53,10 +53,10 @@ const CustomEdge: React.FC<EdgeProps> = ({
           className="nodrag nopan"
         >
           <button
-            className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors border-2 border-gray-300"
+            className="w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-colors border-2 border-gray-300"
             onClick={onEdgeClick}
           >
-            <X size={16} />
+            <X size={16} className="opacity-0 hover:opacity-100"/>
           </button>
         </div>
       </EdgeLabelRenderer>

@@ -18,11 +18,14 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from 'sonner';
 
-import Rive from "@rive-app/react-canvas";
+import Rive, { RiveFile } from "@rive-app/react-canvas";
 import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { ScrollArea } from './ui/scroll-area';
 import SvgIcon from './SvgIcon';
 import * as Slider from '@radix-ui/react-slider';
+import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
+
+import EmojiPicker from 'emoji-picker-react';
 
 const CustomSlider = ({ value, min, max, step, onChange }: {
   value: number;
@@ -33,22 +36,24 @@ const CustomSlider = ({ value, min, max, step, onChange }: {
 }) => {
   return (
     <Slider.Root
-      className="relative flex items-center select-none touch-none w-[72px] h-5"
+      className="relative flex items-center select-none touch-none w-[82px] h-5"
       min={min}
       max={max}
       step={step}
       value={[value]}
       onValueChange={(val) => onChange(val[0])}
     >
-      <Slider.Track className="bg-gray-700 relative grow rounded-full h-[3px]">
+      <Slider.Track className="bg-gray-700 relative grow rounded-full h-[2px]">
         <Slider.Range className="absolute bg-blue-500 h-full rounded-full" />
       </Slider.Track>
-      <Slider.Thumb className="block w-4 h-4 bg-white rounded-full shadow hover:bg-gray-200 focus:outline-none" />
+      <Slider.Thumb className="block w-3 h-3 bg-white rounded-full shadow hover:bg-gray-200 focus:outline-none" />
     </Slider.Root>
   );
 };
 
 export const RightSidebar = () => {
+  const [showEmoji, setShowEmoji] = useState(false);
+
   const { 
     selectedNode, 
     updateNodeData, 
@@ -61,6 +66,34 @@ export const RightSidebar = () => {
   } = useCanvasStore();
   
   const [isUploading, setIsUploading] = useState(false);
+  const [currentSelectedStyle, setCurrentSelectedStyle] = useState('accent')
+
+  const ratioShapeMap: { [key: string]: JSX.Element } = {
+    '1:1': (
+      <div className="w-3.5 h-3.5 bg-transparent border border-[#767676] rounded-sm aspect-square" />
+    ),
+    '2:3': (
+      <div className="h-3.5 w-auto aspect-[2/3] border border-[#767676] rounded-sm" />
+    ),
+    '3:2': (
+      <div className="w-3.5 h-auto aspect-[3/2] border border-[#767676] rounded-sm" />
+    ),
+    '9:16': (
+      <div className="h-3.5 w-auto aspect-[9/16] border border-[#767676] rounded-sm" />
+    ),
+    '16:9': (
+      <div className="w-3.5 h-auto aspect-[16/9] border border-[#767676] rounded-sm" />
+    ),
+  };
+
+  const ratioSizeMap: Record<string, { width: number; height: number }> = {
+    '1:1': { width: 512, height: 512 },
+    '2:3': { width: 512, height: 768 },
+    '3:2': { width: 768, height: 512 },
+    '9:16': { width: 576, height: 1024 },
+    '16:9': { width: 1024, height: 576 },
+  };
+
 
   // Handle image upload for ControlNet or Input nodes
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,12 +233,12 @@ export const RightSidebar = () => {
 
         {sidebarType === 'source' && (
           <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Source</label>
+            <div className="flex justify-between items-center mb-4 text-sm text-gray-300">
+              <span className="font-medium text-gray-400">Source</span>
               <select
                 value={source}
                 onChange={(e) => handleSourceChange(e.target.value)}
-                className="w-full bg-[#1e1e1e] text-sm text-gray-300 border border-[#2a2a2a] rounded-md px-3 py-2"
+                className="bg-[#1e1e1e] text-sm text-[#9e9e9e]border border-[#2a2a2a] rounded-2xl w-[145px] h-[32px] px-3 py-1"
               >
                 <option value="Image">Image</option>
                 <option value="Camera">Camera</option>
@@ -213,11 +246,11 @@ export const RightSidebar = () => {
               </select>
             </div>
 
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Map</label>
+            <div className="flex justify-between items-center mb-2 text-sm text-gray-300">
+              <span className="font-medium text-gray-400">Map</span>
               <button
-                onClick={() => toast.success("Map inserted into canvas")} // replace with your actual handler
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-full flex items-center gap-2"
+                onClick={() => toast.success("Map inserted into canvas")}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 w-[145px]"
               >
                 <Upload className="h-4 w-4" /> Insert in canvas
               </button>
@@ -229,19 +262,20 @@ export const RightSidebar = () => {
   };
 
 
-  const renderImage = (src: string) =>{
-
+  const renderImage = (src: string) => {
     return (
-      <div className="mb-4">
-          <div className="relative mb-2">
-            <img
-              src={src}
-              className="w-full h-auto rounded-md"
-            />
-          </div>
+      <div className="relative w-[250px] h-[160px] rounded-2xl overflow-hidden group mb-4">
+        {/* Image */}
+        <img
+          src={src}
+          alt="Preview"
+          className="w-full h-full object-cover"
+        />
+        {/* Shadow overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
     );
-  }
+  };
 
   const renderImageInput = (label: string, property: string) => {
     if (!selectedNode) return null;
@@ -323,59 +357,46 @@ export const RightSidebar = () => {
   };
 
   const renderSlider = (
-  label: string,
-  property: string,
-  min: number,
-  max: number,
-  step: number
-) => {
-  if (!selectedNode?.data) return null;
+    label: string,
+    property: string,
+    min: number,
+    max: number,
+    step: number
+  ) => {
+    if (!selectedNode?.data) return null;
 
-  const value = selectedNode.data[property];
-  const numericValue = typeof value === 'number' ? value : 0;
+    const value = selectedNode.data[property];
+    const numericValue = typeof value === 'number' ? value : 0;
 
-  const generateOptions = () => {
-    const options = [];
-    for (let i = min; i <= max; i += step) {
-      options.push(
-        <option key={i} value={i}>
-          {i}{label === "Zoom" ? "%" : "°"}
-        </option>
-      );
-    }
-    return options;
-  };
+    const generateOptions = () => {
+      const options = [];
+      for (let i = min; i <= max; i += step) {
+        options.push(
+          <option key={i} value={i}>
+            {i}{label === "Zoom" ? "%" : "°"}
+          </option>
+        );
+      }
+      return options;
+    };
 
-  return (
-    <div className="mb-3">
-      <div className="flex gap-4 w-full justify-end">
-        {/* Label + Dropdown */}
-        <div className="flex items-end justify-end gap-5">
-          <label className=" text-sm font-medium text-gray-300 whitespace-nowrap">
-              {label}
-          </label>
-          <select
-            value={numericValue}
+    return (
+      <div className="mb-4 flex items-center justify-between w-full">
+        {/* Label on the left */}
+        <label className="text-sm text-[#9e9e9e]">{label}</label>
+
+        {/* Dropdown + Slider on the right */}
+        <div className="flex items-center gap-2 w-[170px] justify-end">
+          <input
+            value={`${numericValue} ${label === 'Zoom' ? '%' : '°'}`}
             onChange={(e) =>
               updateNodeData(selectedNode.id, {
                 [property]: parseFloat(e.target.value),
               })
             }
-            className="bg-[#1a1a1a] text-white text-xs px-2 py-1 rounded-md border border-gray-600 w-[50px]"
-          >
-            {generateOptions()}
-          </select>
+            className="bg-[#1a1a1a] text-white text-center text-xs px-2 py-1 rounded-full w-[52px] h-[28px]"
+          />
 
-          {/* Range Slider */}
-          {/* <input
-            type="range"
-            value={numericValue}
-            min={min}
-            max={max}
-            step={step}
-            onChange={(e) => updateNodeData(selectedNode.id, { [property]: parseFloat(e.target.value) })}
-            className="h-1 w-[30%] bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 mt-2"
-          /> */}
           <CustomSlider
             value={numericValue}
             min={min}
@@ -389,12 +410,9 @@ export const RightSidebar = () => {
           />
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-
-  
   const renderTextArea = (
     label: string,
     property: string,
@@ -441,12 +459,15 @@ export const RightSidebar = () => {
         </div>
 
         {/* Location */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
-          <div className="flex gap-2">
-            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2 w-full">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]">Location</label>
+
+          {/* Inputs on the right */}
+          <div className="flex gap-2 w-[160px]">
+            {/* X */}
+            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 w-full">
               <input
-                type="number"
                 value={selectedNode.position.x}
                 onChange={(e) =>
                   updateNodeData(selectedNode.id, {
@@ -461,9 +482,10 @@ export const RightSidebar = () => {
               />
               <span className="ml-2 text-gray-500 text-xs">X</span>
             </div>
-            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2 w-full">
+
+            {/* Y */}
+            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 w-full">
               <input
-                type="number"
                 value={selectedNode.position.y}
                 onChange={(e) =>
                   updateNodeData(selectedNode.id, {
@@ -481,28 +503,33 @@ export const RightSidebar = () => {
           </div>
         </div>
 
+
         {/* Pin Toggle */}
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Pin</label>
-          <div className="flex bg-[#1e1e1e] rounded-full overflow-hidden border border-[#2a2a2a] w-fit">
-            <button
-              onClick={() => updateNodeData(selectedNode.id, { pin: false })}
-              className={`px-4 py-1.5 text-sm rounded-full transition-all ${
-                !pin ? 'bg-[#2d2d2d] text-white' : 'text-gray-400'
-              }`}
-            >
-              No
-            </button>
-            <button
-              onClick={() => updateNodeData(selectedNode.id, { pin: true })}
-              className={`px-4 py-1.5 text-sm rounded-full transition-all ${
-                pin ? 'bg-[#2d2d2d] text-white' : 'text-gray-400'
-              }`}
-            >
-              Yes
-            </button>
-          </div>
+        <div className="mb-4 flex items-center justify-between w-full">
+        {/* Label on the left */}
+        <label className="text-sm text-[#9e9e9e]">Pin</label>
+
+        {/* Toggle on the right */}
+        <div className="flex bg-[#1e1e1e] rounded-full overflow-hidden border border-[#2a2a2a] w-[160px] justify-between">
+          <button
+            onClick={() => updateNodeData(selectedNode.id, { pin: false })}
+            className={`w-1/2 py-1.5 text-sm transition-all ${
+              !pin ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-400'
+            }`}
+          >
+            No
+          </button>
+          <button
+            onClick={() => updateNodeData(selectedNode.id, { pin: true })}
+            className={`w-1/2 py-1.5 text-sm transition-all ${
+              pin ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-400'
+            }`}
+          >
+            Yes
+          </button>
         </div>
+      </div>
+
       </div>
     );
   };
@@ -511,7 +538,7 @@ export const RightSidebar = () => {
   const renderNodeDesignInput = () => {
     if (!selectedNode?.data) return null;
 
-    const { skip = false, title = '', color = 'Pink', nodeShape = 'rectangle', style = 'accent' } = selectedNode.data;
+    const { skip = false, title = '', color = 'Pink', nodeShape = 'rectangle' } = selectedNode.data;
     const colors = ['Black', 'Blue', 'Green', 'Orange', 'Purple', 'Red', 'Pink', 'Cyan'];
 
     return (
@@ -519,48 +546,85 @@ export const RightSidebar = () => {
         <label className="block text-md font-bold text-white mb-4 border-t border-field py-4">Node</label>
 
         {/* Skip */}
-        <div className="mb-4 ">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Skip</label>
-          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] w-fit overflow-hidden">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-md text-[#9e9e9e] mb-1">Skip</label>
+
+          {/* Toggle buttons on the right */}
+          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
               onClick={() => updateNodeData(selectedNode.id, { skip: false })}
-              className={`px-4 py-1.5 flex items-center justify-center text-sm ${
-                !skip ? 'bg-[#2d2d2d] text-white' : 'text-gray-500'
+              className={`h-9 px-4 flex items-center justify-center text-sm ${
+                !skip ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-16 h-3.5" />
             </button>
             <button
               onClick={() => updateNodeData(selectedNode.id, { skip: true })}
-              className={`px-4 py-1.5 flex items-center justify-center text-sm ${
-                skip ? 'bg-[#2d2d2d] text-white' : 'text-gray-500'
+              className={`h-9 px-4 flex items-center justify-center text-sm ${
+                skip ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
-              <EyeOff className="w-4 h-4" />
+              <EyeOff className="w-16 h-3.5" />
             </button>
           </div>
         </div>
 
+
         {/* Title */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-          <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2">
-            <input
-              type="text"
-              value={selectedNode.data?.displayName}
-              onChange={(e) => updateNodeData(selectedNode.id, { displayName: e.target.value })}
-              className="w-full bg-transparent text-sm text-gray-200 outline-none"
-              placeholder="e.g Standing Pose"
-            />
-            <Palette className="ml-2 w-4 h-4 text-gray-400" />
+        <div className="mb-4 gap-4 flex items-center justify-between w-full">
+          {/* Label */}
+          <label className="text-sm text-[#9e9e9e] mb-1">Title</label>
+
+          {/* Input with icon picker */}
+          <div className="relative w-[170px]">
+            <div className="flex items-center rounded-full bg-[#1e1e1e] border border-[#2a2a2a] px-3 py-1.5 pr-10">
+              <input
+                type="text"
+                value={selectedNode.data?.displayName || ''}
+                onChange={(e) =>
+                  updateNodeData(selectedNode.id, { displayName: e.target.value })
+                }
+                placeholder="Engine title"
+                className="w-full h-7 bg-transparent text-sm text-white placeholder:text-gray-500 outline-none"
+              />
+            </div>
+
+            {/* Palette icon button */}
+            <button
+              onClick={() => setShowEmoji(!showEmoji)}
+              className="absolute right-2 top-0 bottom-0 my-auto h-full flex items-center text-gray-400 hover:text-white"
+            >
+              <span className="px-1 border-l border-gray-600 pl-2">🎨</span>
+            </button>
+
+
+            {/* Emoji Picker Popover */}
+            {showEmoji && (
+              <div className="absolute top-10 translate-y-[2%] translate-x-[2.5%] -right-12 z-50">
+                <EmojiPicker
+                  onEmojiClick={(emojiData) =>
+                    updateNodeData(selectedNode.id, {
+                      icon: `${emojiData.emoji}`,
+                    })
+                  }
+                  theme="dark"
+                  className='scale-[75%]'
+                />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Color */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Color</label>
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]">Color</label>
 
-          <div className="relative w-40 bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 flex items-center justify-between text-sm text-white">
+          {/* Custom select on the right */}
+          <div className="relative w-[170px] bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 flex items-center justify-between text-sm text-white">
+            {/* Colored dot + label */}
             <div className="flex items-center gap-2 pointer-events-none">
               <span
                 className="w-4 h-4 rounded-full"
@@ -568,13 +632,18 @@ export const RightSidebar = () => {
               ></span>
               <span>{color}</span>
             </div>
-            <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none" />
+
+            {/* Dropdown icon */}
+            <IoMdArrowDropdown className="w-4 h-4 text-gray-400 pointer-events-none" />
+            {/* Transparent select element */}
             <select
               value={color}
-              onChange={(e) =>
-                updateNodeData(selectedNode.id, { color: e.target.value })
+              onChange={(e) => 
+                currentSelectedStyle === 'accent' ?
+                  updateNodeData(selectedNode.id, { iconBgColor: e.target.value })
+                  : updateNodeData(selectedNode.id, { color: e.target.value })
               }
-              className="absolute inset-0 w-full h-full opacity-0 text-white bg-[#1e1e1e] cursor-pointer"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             >
               {colors.map((clr) => (
                 <option
@@ -590,21 +659,26 @@ export const RightSidebar = () => {
         </div>
 
 
+
         {/* Style (Accent vs Fill) */}
-        <div className="mb-4">
-          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] w-fit overflow-hidden">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]"></label>
+
+          {/* Toggle group on the right (same size as Skip) */}
+          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
-              onClick={() => updateNodeData(selectedNode.id, { style: 'accent' })}
-              className={`px-4 py-1.5 text-sm ${
-                style === 'accent' ? 'bg-[#2d2d2d] text-white' : 'text-gray-500'
+              onClick={() => setCurrentSelectedStyle('accent')}
+              className={`w-[84px] h-9 px-4 flex items-center justify-center text-sm ${
+                currentSelectedStyle === 'accent' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
               Accent
             </button>
             <button
-              onClick={() => updateNodeData(selectedNode.id, { style: 'fill' })}
-              className={`px-4 py-1.5 text-sm ${
-                style === 'fill' ? 'bg-[#2d2d2d] text-white' : 'text-gray-500'
+              onClick={() => setCurrentSelectedStyle('fill')}
+              className={`w-[84px] h-9 px-4 flex items-center justify-center text-sm ${
+                currentSelectedStyle === 'fill' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
               Fill
@@ -613,31 +687,31 @@ export const RightSidebar = () => {
         </div>
 
         {/* Shape */}
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Shape</label>
-          <div className="flex gap-2">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]">Shape</label>
+
+          {/* Toggle group on the right (styled like Skip/Style) */}
+          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
               onClick={() => updateNodeData(selectedNode.id, { nodeShape: 'square' })}
-              className={`px-4 py-1.5 text-sm rounded-full border flex items-center justify-center ${
-                nodeShape === 'square'
-                  ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                  : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+              className={`h-9 px-4 flex items-center justify-center text-sm ${
+                nodeShape === 'square' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
-              <Square className="w-4 h-4" />
+              <Square className="w-16 h-3.5" />
             </button>
             <button
               onClick={() => updateNodeData(selectedNode.id, { nodeShape: 'rectangle' })}
-              className={`px-4 py-1.5 text-sm rounded-full border flex items-center justify-center ${
-                nodeShape === 'rectangle'
-                  ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                  : 'border-[#2a2a2a] text-gray-400 hover:text-white'
+              className={`h-9 px-4 flex items-center justify-center text-sm ${
+                nodeShape === 'rectangle' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
-              <RectangleHorizontal className="w-4 h-4" />
+              <RectangleHorizontal className="w-16 h-3.5" />
             </button>
           </div>
         </div>
+
 
       </>
     );
@@ -646,7 +720,7 @@ export const RightSidebar = () => {
   const renderRiveInput = (nodeType: string) => {
     let labelName = "";
     let riveSrc = "";
-    let stateMachineName = "pose"; // this must match the name in Rive file
+    let stateMachineName = "State Machine 1"; // this must match the name in Rive file
 
     if (nodeType.includes("pose")) {
       labelName = "Pose";
@@ -658,32 +732,16 @@ export const RightSidebar = () => {
       return null;
     }
 
-    const { rive, RiveComponent } = useRive({
-      src: riveSrc,
-      autoplay: true,
-      stateMachines: stateMachineName,
-      artboard: "Default",
-    });
-
-    // Example of accessing an input
-    const toggleInput = useStateMachineInput(
-      rive,
-      stateMachineName,
-      "Toggle" // this must match the name of the input defined in Rive
-    );
 
     return (
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-300 mb-1">{labelName}</label>
         <div
-          className="w-full aspect-video rounded-md overflow-hidden border border-gray-700 cursor-pointer"
-          onClick={() => {
-            // Example: trigger an input
-            if (toggleInput?.fire) toggleInput.fire(); // for Trigger input
-            if (toggleInput?.value !== undefined) toggleInput.value = !toggleInput.value; // for Boolean input
-          }}
-        >
-          <RiveComponent />
+          className="w-full aspect-video rounded-md overflow-hidden border border-gray-700 cursor-pointer">
+
+          <Rive
+           src={riveSrc}
+           />
         </div>
       </div>
     );
@@ -701,10 +759,11 @@ export const RightSidebar = () => {
       : null;
 
     const { rive, RiveComponent } = useRive({
-      src: riveSrc || "",
-      stateMachines: stateMachineName || "",
+      src:riveSrc,
+      stateMachines: ['State Machine 1'],
       autoplay: true,
-      artboard: "Default",
+      artboard: "Artboard",
+      riveFile: riveSrc
     });
 
     // Still declare inputs (they just may be `undefined`)
@@ -735,19 +794,26 @@ export const RightSidebar = () => {
     const { right_sidebar } = selectedNode.data;
     const { image_url, accident, quality, ratio, size } = right_sidebar;
 
-    const ratioOptions = ['1:1', '3:4', '4:3', '9:16', '16:9'];
+    const ratioOptions = ['1:1', '2:3', '3:2', '9:16', '16:9'];
+
+    const defaultSize = ratioSizeMap[ratio || '1:1'];
+    const width = size?.width ?? defaultSize.width;
+    const height = size?.height ?? defaultSize.height;
 
     return (
       <>
        <label className="block text-md font-bold text-gray-300 mb-2">Engine</label>
         {renderImage(image_url)}
+        
         {/* Accident */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Accident</label>
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]">Accident</label>
+
+          {/* Styled input with embedded icons */}
+          <div className="relative flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 w-[150px]">
             <input
-              type="number"
-              value={accident || 0}
+              value={accident || 450}
               min={0}
               max={1000}
               step={1}
@@ -759,20 +825,18 @@ export const RightSidebar = () => {
                   },
                 })
               }
-              className="flex-1 bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2 text-sm text-gray-200"
+              className="bg-transparent w-full text-left text-sm text-white outline-none"
             />
-            <button className="bg-[#2a2a2a] text-gray-300 p-2 rounded-md">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M16 4h2a2 2 0 0 1 2 2v2M8 20H6a2 2 0 0 1-2-2v-2M16 20h2a2 2 0 0 0 2-2v-2M8 4H6a2 2 0 0 0-2 2v2" />
-              </svg>
-            </button>
           </div>
         </div>
 
         {/* Quality */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Quality</label>
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex items-center justify-between w-full">
+          {/* Label on the left */}
+          <label className="text-sm text-[#9e9e9e]">Quality</label>
+
+          {/* Select + CustomSlider on the right */}
+          <div className="flex items-center gap-3 translate-x-[30%] w-[210px]">
             <select
               value={quality || 5}
               onChange={(e) =>
@@ -783,7 +847,7 @@ export const RightSidebar = () => {
                   },
                 })
               }
-              className="bg-[#1e1e1e] border border-[#2a2a2a] text-sm text-gray-300 rounded-md px-2 py-1"
+              className="bg-[#1e1e1e] border border-[#2a2a2a] text-sm text-white rounded-2xl px-2 py-1 w-16 h-8"
             >
               {[...Array(10)].map((_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -791,28 +855,28 @@ export const RightSidebar = () => {
                 </option>
               ))}
             </select>
-            <input
-              type="range"
+
+            <CustomSlider
+              value={quality || 5}
               min={1}
               max={10}
-              value={quality || 5}
-              onChange={(e) =>
+              step={1}
+              onChange={(val) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
                     ...right_sidebar,
-                    quality: parseInt(e.target.value),
+                    quality: val,
                   },
                 })
               }
-              className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
             />
           </div>
         </div>
 
         {/* Ratio */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Ratio</label>
-          <div className="flex items-center justify-between gap-1 bg-[#1e1e1e] p-1 rounded-full border border-[#2a2a2a]">
+        <div className="flex items-center justify-between w-full mb-4">
+          <label className="text-sm text-[#9e9e9e]">Ratio</label>
+          <div className="flex items-center justify-end gap-1 bg-[#1e1e1e] p-1 rounded-full border border-[#2a2a2a] w-[147px]">
             {ratioOptions.map((r) => (
               <button
                 key={r}
@@ -824,68 +888,71 @@ export const RightSidebar = () => {
                     },
                   })
                 }
-                className={`text-xs px-3 py-1.5 rounded-full transition ${
-                  ratio === r
-                    ? 'bg-[#2d2d2d] text-white'
-                    : 'text-gray-400 hover:text-white'
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition ${
+                  ratio === r ? 'bg-[#2d2d2d]' : 'text-gray-400 hover:text-white'
                 }`}
               >
-                {r}
+                {ratioShapeMap[r]}
               </button>
             ))}
           </div>
-        </div>
+      </div>
 
-        {/* Size */}
-        <div className="mb-2 py-4 ">
-          <label className="block text-sm font-medium text-gray-300 mb-1">Size</label>
-          <div className="flex gap-2">
-            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2 w-full">
-              <input
-                type="number"
-                value={size?.width || ''}
-                min={64}
-                max={8192}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, {
-                    right_sidebar: {
-                      ...right_sidebar,
-                      size: {
-                        ...right_sidebar.size,
-                        width: parseInt(e.target.value),
-                      },
+      {/* Size */}
+      <div className="mb-4 flex items-center justify-between w-full">
+        {/* Label on the left */}
+        <label className="text-sm text-[#9e9e9e]">Size</label>
+
+        {/* Inputs on the right */}
+        <div className="flex gap-2 w-[145px]">
+          {/* Width */}
+          <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 w-full">
+            <input
+              value={width || ''}
+              min={64}
+              max={8192}
+              onChange={(e) =>
+                updateNodeData(selectedNode.id, {
+                  right_sidebar: {
+                    ...right_sidebar,
+                    size: {
+                      ...right_sidebar.size,
+                      width: parseInt(e.target.value),
                     },
-                  })
-                }
-                className="w-full bg-transparent text-sm text-gray-200 outline-none"
-                placeholder="Width"
-              />
-              <span className="ml-2 text-gray-500 text-xs">W</span>
-            </div>
-            <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-3 py-2 w-full">
-              <input
-                type="number"
-                value={size?.height || ''}
-                min={64}
-                max={8192}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, {
-                    right_sidebar: {
-                      ...right_sidebar,
-                      size: {
-                        ...right_sidebar.size,
-                        height: parseInt(e.target.value),
-                      },
+                  },
+                })
+              }
+              className="w-full bg-transparent text-sm text-gray-200 outline-none"
+              placeholder="Width"
+            />
+            <span className="ml-2 text-gray-500 text-xs">W</span>
+          </div>
+
+          {/* Height */}
+          <div className="flex items-center bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 w-full">
+            <input
+              value={height || ''}
+              min={64}
+              max={8192}
+              onChange={(e) =>
+                updateNodeData(selectedNode.id, {
+                  right_sidebar: {
+                    ...right_sidebar,
+                    size: {
+                      ...right_sidebar.size,
+                      height: parseInt(e.target.value),
                     },
-                  })
-                }
-                className="w-full bg-transparent text-sm text-gray-200 outline-none"
-                placeholder="Height"
-              />
-              <span className="ml-2 text-gray-500 text-xs">H</span>
-            </div>
+                  },
+                })
+              }
+              className="w-full bg-transparent text-sm text-gray-200 outline-none"
+              placeholder="Height"
+            />
+            <span className="ml-2 text-gray-500 text-xs">H</span>
           </div>
         </div>
+      </div>
+
       </>
     );
   };
@@ -974,7 +1041,6 @@ export const RightSidebar = () => {
 
   // Render node-specific controls based on type
   const renderNodeSpecificControls = () => {
-
     if (!selectedNode) return null;
     
     // Handle new schema-based nodes
@@ -1004,6 +1070,26 @@ export const RightSidebar = () => {
         </>
       );
       
+      // Shape Node Controls
+      case 'shape-circle':
+        return(
+          <>
+          {renderNodePositionInputs()}
+          </>
+        );
+      case 'shape-triangle':
+      return(
+        <>
+        {renderNodePositionInputs()}
+        </>
+      );
+      case 'shape-rectangle':
+      return(
+        <>
+        {renderNodePositionInputs()}
+        </>
+      );
+
       // Frame Node Controls      
       case 'frame-node':
       return (
@@ -1038,20 +1124,12 @@ export const RightSidebar = () => {
         return (
           <>
             {renderNodePositionInputs()}
-            {renderSlider('Fingers Left', 'fingers.left', 0, 100, 1)}
-            {renderSlider('Fingers Right', 'fingers.right', 0, 100, 1)}
-            {renderSlider('Shoulders Left', 'shoulders.left', 0, 100, 1)}
-            {renderSlider('Shoulders Right', 'shoulders.right', 0, 100, 1)}
-            {renderSlider('Elbow Left', 'elbow.left', 0, 100, 1)}
-            {renderSlider('Elbow Right', 'elbow.right', 0, 100, 1)}
-            {renderSlider('Hip Left', 'hip.left', 0, 100, 1)}
-            {renderSlider('Hip Right', 'hip.right', 0, 100, 1)}
-            {renderSlider('Knee Left', 'knee.left', 0, 100, 1)}
-            {renderSlider('Knee Right', 'knee.right', 0, 100, 1)}
-            {renderSlider('Ankle Left', 'ankle.left', 0, 100, 1)}
-            {renderSlider('Ankle Right', 'ankle.right', 0, 100, 1)}
-            {renderSlider('Neck', 'neck', 0, 100, 1)}
-            {renderSlider('Head', 'head', 0, 100, 1)}
+            {/* {<RiveWrapper nodeType='control-net-pose'/>} */}
+            {renderRiveInput('pose')}
+            {renderSlider('Zoom', 'zoom', 0, 100, 1)}
+            {renderSlider('Neck', 'neck', 0, 500, 1)}
+            {renderSlider('Head', 'head', 0, 500, 1)}
+            {renderSlider('Body', 'body', 0, 500, 1)}
             {renderNodeDesignInput()}
           </>
         );
@@ -1063,7 +1141,7 @@ export const RightSidebar = () => {
         return (
           <>
             {renderNodePositionInputs()}
-            {renderTextInput('Image', 'image')}
+            {renderImage(selectedNode?.data?.right_sidebar?.image_input)}
             {renderTypeInput()}
             {renderNodeDesignInput()}
           </>

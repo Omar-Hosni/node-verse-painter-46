@@ -107,10 +107,59 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   
 
   // Add real-time subscriptions
+  // useEffect(() => {
+  //   if (!projectId) return;
+
+  //   // Subscribe to project changes
+  //   const channel = supabase
+  //     .channel('project-changes')
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: 'UPDATE',
+  //         schema: 'public',
+  //         table: 'projects',
+  //         filter: `id=eq.${projectId}`,
+  //       },
+  //       (payload) => {
+  //         // Skip updating if we're the ones who made the change
+  //         if (useCanvasStore.getState().isLocalUpdate) {
+  //           useCanvasStore.getState().setIsLocalUpdate(false);
+  //           return;
+  //         }
+          
+  //         const canvasData = payload.new.canvas_data;
+          
+  //         // Only update if we received valid canvas data and we're not currently updating
+  //         if (
+  //           canvasData && 
+  //           canvasData.nodes && 
+  //           canvasData.edges && 
+  //           !useCanvasStore.getState().externalUpdateInProgress
+  //         ) {
+  //           // Set flag to prevent infinite loops
+  //           setExternalUpdateInProgress(true);
+            
+  //           console.log('Received real-time update for canvas:', canvasData);
+  //           toast.info('Canvas updated by another user');
+            
+  //           // Update canvas with new data
+  //           updateCanvasFromExternalSource(canvasData.nodes, canvasData.edges);
+  //         }
+  //       }
+  //     )
+  //     .subscribe();
+
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [projectId, setExternalUpdateInProgress, updateCanvasFromExternalSource]);
+
+  const lastUpdateRef = useRef<{nodesHash: string, edgesHash: string}>({ nodesHash: '', edgesHash: '' });
+
   useEffect(() => {
     if (!projectId) return;
 
-    // Subscribe to project changes
     const channel = supabase
       .channel('project-changes')
       .on(
@@ -122,28 +171,31 @@ export const Canvas = ({activeTool, setActiveTool}) => {
           filter: `id=eq.${projectId}`,
         },
         (payload) => {
-          // Skip updating if we're the ones who made the change
           if (useCanvasStore.getState().isLocalUpdate) {
             useCanvasStore.getState().setIsLocalUpdate(false);
             return;
           }
-          
+
           const canvasData = payload.new.canvas_data;
-          
-          // Only update if we received valid canvas data and we're not currently updating
           if (
             canvasData && 
             canvasData.nodes && 
             canvasData.edges && 
             !useCanvasStore.getState().externalUpdateInProgress
           ) {
-            // Set flag to prevent infinite loops
+            const nodesHash = JSON.stringify(canvasData.nodes);
+            const edgesHash = JSON.stringify(canvasData.edges);
+
+            if (
+              nodesHash === lastUpdateRef.current.nodesHash &&
+              edgesHash === lastUpdateRef.current.edgesHash
+            ) {
+              return; // No meaningful change
+            }
+
+            lastUpdateRef.current = { nodesHash, edgesHash };
             setExternalUpdateInProgress(true);
-            
-            console.log('Received real-time update for canvas:', canvasData);
             toast.info('Canvas updated by another user');
-            
-            // Update canvas with new data
             updateCanvasFromExternalSource(canvasData.nodes, canvasData.edges);
           }
         }
@@ -154,6 +206,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       supabase.removeChannel(channel);
     };
   }, [projectId, setExternalUpdateInProgress, updateCanvasFromExternalSource]);
+
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
@@ -559,16 +612,55 @@ export const Canvas = ({activeTool, setActiveTool}) => {
 
 
   const onConnect = useCallback((connection: Connection) => {
-    if (isValidConnection(connection, nodes, edges)) {
-      originalOnConnect(connection);
+    const currentNodes = reactFlowInstance.getNodes();
+    const currentEdges = reactFlowInstance.getEdges();
+
+    if (isValidConnection(connection, currentNodes, currentEdges)) {
+      originalOnConnect({
+          ...connection,
+          id: `${connection.source}-${connection.target}-${Date.now()}`
+        });
+      
+
+      //if layer-image connected to a certain control-net nodes, then the target node will update its data.right_sidebar.image_input
+      const control_net_options = ['edge', 'depth', 'normal', 'segment']
+      const isConnectionTargetAControlNet = control_net_options.some(o => connection.target.includes(o))
+
+      if(isConnectionTargetAControlNet && connection.source.includes('layer-image')){
+            const imageInputValue = localStorage.getItem(`layer-image-${connection.source}`)
+            console.log(`layer-image-${connection.source}`)
+            console.log(imageInputValue)
+            const targetNode = currentNodes.find((n)=>n.id === connection.target);
+
+            if(targetNode && imageInputValue !== null)
+            {
+              const updatedNodes = currentNodes.map((node) =>
+                node.id === targetNode.id
+                  ? {
+                      ...node,
+                      data: {
+                        ...node.data,
+                        right_sidebar: {
+                          ...node.data?.right_sidebar,
+                          image_input: imageInputValue,
+                        },
+                      },
+                    }
+                  : node
+              );
+              reactFlowInstance.setNodes(updatedNodes);
+            }
+          }
     }
-  }, [nodes, edges, originalOnConnect]);
+  }, [originalOnConnect, reactFlowInstance, edges, nodes]);
+
 
   useEffect(()=>{
 
   },[activeTool])
 
   const nodesOrdered = [...useCanvasStore.getState().nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
+  console.log(nodesOrdered)
 
   const defaultEdgeOptions = {
     animated: true,
@@ -621,7 +713,8 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         {/* <MiniMap style={{ backgroundColor: '#1A1A1A' }} /> */}
         <Controls className="text-black mb-20 bg-[#1A1A1A] border-[#333]" />
         
-        <Background color="#333333" gap={16} />
+        {/* <Background color="#333333" gap={16} /> */}
+
         <Panel position="top-right" className="flex flex-col gap-2">
           <Button 
             onClick={handleExportWorkflow}

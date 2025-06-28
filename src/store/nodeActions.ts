@@ -6,6 +6,13 @@ import { merge } from 'lodash';
 let nodeIdCounter = 1;
 let globalOrderCounter = 1000;
 
+let iconBgColorChoices = ['Pink', 'Blue', 'Cyan', 'Purple', 'Orange', 'Red', 'Green'];
+let iconsChoices = ['🎨', '🔥', '🖼️', '😏', '😉', '❤️', '✨'];
+
+const getRandomItem=(arr)=>{
+  return arr[Math.floor(Math.random() * arr.length)]; 
+}
+
 export const createNode = (nodeType: NodeType, position: { x: number; y: number }, order): Node => {
   const id = `${nodeType}-${nodeIdCounter++}`;
   let newNode: Node;
@@ -33,6 +40,8 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
         nodeShape: 'rectangle',
         order,
         color:'Black',
+        icon: getRandomItem(iconsChoices),
+        iconBgColor: getRandomItem(iconBgColorChoices),
         // Add default right_sidebar data based on type
         right_sidebar:{
         ...getDefaultDataForType(nodeType),

@@ -71,14 +71,45 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ externalUpdateInProgress: inProgress });
   },
   
-  updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => {
-    set({ 
-      nodes: newNodes,
-      edges: newEdges,
-      externalUpdateInProgress: false
+  // updateCanvasFromExternalSource: (newNodes: Node[], newEdges: Edge[]) => {
+  //   set({ 
+  //     nodes: newNodes,
+  //     edges: newEdges,
+  //     externalUpdateInProgress: false
+  //   });
+  // },
+  
+  updateCanvasFromExternalSource: (newNodes, newEdges) => {
+    const currentNodes = get().nodes;
+    const currentEdges = get().edges;
+
+    const newNodeMap = new Map(newNodes.map(n => [n.id, n]));
+    const mergedNodes = currentNodes.map(n => newNodeMap.get(n.id) || n);
+
+    const newEdgeMap = new Map(newEdges.map(e => [e.id, e]));
+    const mergedEdges = currentEdges.map(e => newEdgeMap.get(e.id) || e);
+
+    // Add new nodes and edges that don’t exist locally
+    for (const node of newNodes) {
+      if (!currentNodes.some(n => n.id === node.id)) {
+        mergedNodes.push(node);
+      }
+    }
+
+    for (const edge of newEdges) {
+      if (!currentEdges.some(e => e.id === edge.id)) {
+        mergedEdges.push(edge);
+      }
+    }
+
+    set({
+      nodes: mergedNodes,
+      edges: mergedEdges,
+      externalUpdateInProgress: false,
     });
   },
-  
+
+
   updateCollaborators: (collaborators: Collaborator[]) => {
     set({ collaborators });
   },
@@ -101,6 +132,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   onEdgesChange: (changes: EdgeChange[]) => {
+
     // Save state before making changes to edges
     get().saveToHistory();
     
@@ -115,28 +147,75 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           : null
     });
     get().saveToHistory();
+    
   },
+
+  // onConnect: (connection: Connection) => {
+  //   // Save state before connecting
+  //   get().saveToHistory();
+    
+  //   // Create a unique edge ID
+  //   const id = `edge-${get().edges.length + 1}`;
+    
+  //   set({
+  //     edges: addEdge(
+  //       { 
+  //         ...connection, 
+  //         id, 
+  //         animated: true,
+  //         type: 'custom'
+  //       }, 
+  //       get().edges
+  //     ),
+  //   });
+  // },
+
+  // onConnect: (connection: Connection) => {
+  //   get().saveToHistory();
+
+  //   const cleanedEdges = get().edges.filter(
+  //     (e) =>
+  //       !(
+  //         e.source === connection.source &&
+  //         e.target === connection.target &&
+  //         (e.sourceHandle === connection.sourceHandle || (!e.sourceHandle && !connection.sourceHandle)) &&
+  //         (e.targetHandle === connection.targetHandle || (!e.targetHandle && !connection.targetHandle))
+  //       )
+  //   );
+
+  //   const newEdge = {
+  //     ...connection,
+  //     id: `edge-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+  //     animated: true,
+  //     type: 'custom',
+  //   };
+
+  //   set({
+  //     edges: addEdge(newEdge, cleanedEdges),
+  //   });
+  // },
+
 
   onConnect: (connection: Connection) => {
     // Save state before connecting
     get().saveToHistory();
-    
-    // Create a unique edge ID
-    const id = `edge-${get().edges.length + 1}`;
-    
+
+    const prevEdges = get().edges;
+
+    const newEdge = {
+      ...connection,
+      id: `edge-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Safer unique ID
+      animated: true,
+      type: 'custom',
+    };
+
+    const updatedEdges = addEdge(newEdge, prevEdges);
+
     set({
-      edges: addEdge(
-        { 
-          ...connection, 
-          id, 
-          animated: true,
-          type: 'custom'
-        }, 
-        get().edges
-      ),
+      edges: [...updatedEdges],
     });
   },
-  
+
   addNode: (nodeType: NodeType, position, order) => {
     // Save state before adding node
     get().saveToHistory();
@@ -148,6 +227,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       selectedNode: newNode,
     });
   },
+  
 
   updateNodeData: (nodeId, newData) => {
     // Save state before updating node data
