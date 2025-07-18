@@ -521,3 +521,67 @@ const onNodeDragStop = (event, node) => {
 
     setNodes(deduped);
   };
+
+
+rive light input old code:
+{[1, 2, 3, 4].map((i) => {
+            const { lightGetters, lightSetters } = lightControls(i);
+            const ref = lightValuesRef(i);
+            
+            // console.log(ref)
+            
+            return (
+              <div key={i} className="p-2 border border-gray-700 rounded-lg">
+                <div className="mb-4 flex items-center justify-between w-full">
+                  <label className="text-md text-[#9e9e9e]">Select Light {i}</label>
+                  <input
+                    type="checkbox"
+                    checked={lightGetters.selected ?? false}
+                    onChange={(e) => {
+                      lightSetters.setSelected(e.target.checked);
+                      onChangeLightValue(i, "selected", e.target.checked);
+                    }}
+                  />
+                </div>
+
+                {["size", "width", "power"].map((key) => (
+                  <div key={key} className="mb-4 flex items-center justify-between w-full">
+                    <label className="text-md text-[#9e9e9e]">{key} {i}</label>
+                      
+                      <div className="flex items-center">
+                        <input
+                          value={`${ref?.[key] ?? 100}%`}
+                          type="text"
+                          className="mr-2 text-sm text-center w-[60px] h-[30px] rounded-full bg-[#191919] border border-[#2a2a2a]"
+                        />
+                        <CustomSlider
+                          value={ref?.[key] ?? 100}
+                          min={0}
+                          max={100}
+                          step={1}
+                          onChange={(val) => {
+                            lightSetters[`set${key.charAt(0).toUpperCase() + key.slice(1)}`](val);
+                            onChangeLightValue(i, key, val);
+                          }}
+                        />
+                      </div>
+                  </div>
+                ))}
+
+                <div className="mb-4 flex items-center justify-between w-full">
+                  <label className="text-md text-[#9e9e9e]">Color {i}</label>
+                  <input
+                    type="color"
+                    value={ref?.color ?? "#ffffff"}
+                    onChange={(e) => {
+                      const { r, g, b } = hexToRGB(e.target.value);
+                      // console.log(r,g,b)
+                      lightSetters.setRgb(r,g,b);
+                      onChangeLightValue(i, "color", e.target.value);
+                    }}
+                    className="w-[30px] h-[30px] p-0 border-none bg-transparent rounded-full"
+                  />
+                </div>
+              </div>
+            );
+          })}

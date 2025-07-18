@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { 
   Trash, 
@@ -18,14 +18,13 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from 'sonner';
 
-import Rive, { RiveFile } from "@rive-app/react-canvas";
-import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
 import { ScrollArea } from './ui/scroll-area';
 import SvgIcon from './SvgIcon';
 import * as Slider from '@radix-ui/react-slider';
 import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
 
 import EmojiPicker from 'emoji-picker-react';
+import RiveInput from './RiveInput';
 
 const CustomSlider = ({ value, min, max, step, onChange }: {
   value: number;
@@ -64,7 +63,7 @@ export const RightSidebar = () => {
     uploadControlNetImage,
     uploadInputImage
   } = useCanvasStore();
-  
+
   const [isUploading, setIsUploading] = useState(false);
   const [currentSelectedStyle, setCurrentSelectedStyle] = useState('accent')
 
@@ -344,13 +343,18 @@ export const RightSidebar = () => {
     const value = selectedNode.data[property] ?? '#000000';
 
     return (
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+      <div className="flex flex-row mb-4 justify-between items-center">
+        <label className="block text-sm font-medium text-[#9e9e9e] mb-1">{label}</label>        
         <input
           type="color"
           value={value}
           onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
-          className="w-full h-10 p-0 border-none bg-transparent"
+          className="w-10 h-10 bg-black rounded-full ml-10 mb-1"
+        />
+        <input
+        type="text"
+        value={value}
+        className="w-[100px] h-[30px] rounded-2xl bg-[#2a2a2a] text-center"
         />
       </div>
     );
@@ -383,7 +387,7 @@ export const RightSidebar = () => {
     return (
       <div className="mb-4 flex items-center justify-between w-full">
         {/* Label on the left */}
-        <label className="text-sm text-[#9e9e9e]">{label}</label>
+        <label className="text-sm w-[20px] text-[#9e9e9e]">{label}</label>
 
         {/* Dropdown + Slider on the right */}
         <div className="flex items-center gap-2 w-[170px] justify-end">
@@ -394,7 +398,7 @@ export const RightSidebar = () => {
                 [property]: parseFloat(e.target.value),
               })
             }
-            className="bg-[#1a1a1a] text-white text-center text-xs px-2 py-1 rounded-full w-[52px] h-[28px]"
+            className="bg-[#1a1a1a] text-white text-center text-[12px] px-2 py-1 rounded-full w-[80px] h-[30px]"
           />
 
           <CustomSlider
@@ -543,10 +547,10 @@ export const RightSidebar = () => {
 
     return (
       <>
-        <label className="block text-md font-bold text-white mb-4 border-t border-field py-4">Node</label>
+        <label className="block text-md font-bold text-white mb-4 border-t border-field py-1">Node</label>
 
         {/* Skip */}
-        <div className="mb-4 flex items-center justify-between w-full">
+        <div className="mb-4  flex items-center justify-between w-full">
           {/* Label on the left */}
           <label className="text-md text-[#9e9e9e] mb-1">Skip</label>
 
@@ -554,7 +558,7 @@ export const RightSidebar = () => {
           <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
               onClick={() => updateNodeData(selectedNode.id, { skip: false })}
-              className={`h-9 px-4 flex items-center justify-center text-sm ${
+              className={`h-[29px] px-4 flex items-center justify-center text-sm ${
                 !skip ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -562,7 +566,7 @@ export const RightSidebar = () => {
             </button>
             <button
               onClick={() => updateNodeData(selectedNode.id, { skip: true })}
-              className={`h-9 px-4 flex items-center justify-center text-sm ${
+              className={`h-[29px] px-4 flex items-center justify-center text-sm ${
                 skip ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -578,7 +582,7 @@ export const RightSidebar = () => {
           <label className="text-sm text-[#9e9e9e] mb-1">Title</label>
 
           {/* Input with icon picker */}
-          <div className="relative w-[170px]">
+          <div className="relative w-[170px] h-[30px]">
             <div className="flex items-center rounded-full bg-[#1e1e1e] border border-[#2a2a2a] px-3 py-1.5 pr-10">
               <input
                 type="text"
@@ -587,7 +591,7 @@ export const RightSidebar = () => {
                   updateNodeData(selectedNode.id, { displayName: e.target.value })
                 }
                 placeholder="Engine title"
-                className="w-full h-7 bg-transparent text-sm text-white placeholder:text-gray-500 outline-none"
+                className="w-full h-full bg-transparent text-sm text-white placeholder:text-gray-500 outline-none"
               />
             </div>
 
@@ -623,11 +627,11 @@ export const RightSidebar = () => {
           <label className="text-sm text-[#9e9e9e]">Color</label>
 
           {/* Custom select on the right */}
-          <div className="relative w-[170px] bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 flex items-center justify-between text-sm text-white">
+          <div className="relative w-[170px] h-[30px] bg-[#1e1e1e] border border-[#2a2a2a] rounded-full px-3 py-1.5 flex items-center justify-between text-sm text-white">
             {/* Colored dot + label */}
             <div className="flex items-center gap-2 pointer-events-none">
               <span
-                className="w-4 h-4 rounded-full"
+                className="w-5 h-5 rounded-full"
                 style={{ backgroundColor: color.toLowerCase() }}
               ></span>
               <span>{color}</span>
@@ -666,10 +670,10 @@ export const RightSidebar = () => {
           <label className="text-sm text-[#9e9e9e]"></label>
 
           {/* Toggle group on the right (same size as Skip) */}
-          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
+          <div className="flex h-[30px] bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
               onClick={() => setCurrentSelectedStyle('accent')}
-              className={`w-[84px] h-9 px-4 flex items-center justify-center text-sm ${
+              className={`w-[84px] h-full px-4 flex items-center justify-center text-sm ${
                 currentSelectedStyle === 'accent' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -677,7 +681,7 @@ export const RightSidebar = () => {
             </button>
             <button
               onClick={() => setCurrentSelectedStyle('fill')}
-              className={`w-[84px] h-9 px-4 flex items-center justify-center text-sm ${
+              className={`w-[84px] h-full px-4 flex items-center justify-center text-sm ${
                 currentSelectedStyle === 'fill' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -692,10 +696,10 @@ export const RightSidebar = () => {
           <label className="text-sm text-[#9e9e9e]">Shape</label>
 
           {/* Toggle group on the right (styled like Skip/Style) */}
-          <div className="flex bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
+          <div className="flex h-[30px] bg-[#1e1e1e] rounded-full border border-[#2a2a2a] overflow-hidden">
             <button
               onClick={() => updateNodeData(selectedNode.id, { nodeShape: 'square' })}
-              className={`h-9 px-4 flex items-center justify-center text-sm ${
+              className={`h-full px-4 flex items-center justify-center text-sm ${
                 nodeShape === 'square' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -703,7 +707,7 @@ export const RightSidebar = () => {
             </button>
             <button
               onClick={() => updateNodeData(selectedNode.id, { nodeShape: 'rectangle' })}
-              className={`h-9 px-4 flex items-center justify-center text-sm ${
+              className={`h-full px-4 flex items-center justify-center text-sm ${
                 nodeShape === 'rectangle' ? 'bg-[#2d2d2d] text-white rounded-full' : 'text-gray-500'
               }`}
             >
@@ -717,76 +721,6 @@ export const RightSidebar = () => {
     );
   };
 
-  const renderRiveInput = (nodeType: string) => {
-    let labelName = "";
-    let riveSrc = "";
-    let stateMachineName = "State Machine 1"; // this must match the name in Rive file
-
-    if (nodeType.includes("pose")) {
-      labelName = "Pose";
-      riveSrc = "/rive/pose.riv";
-    } else if (nodeType.includes("lights")) {
-      labelName = "Light Controller";
-      riveSrc = "/rive/lights.riv";
-    } else {
-      return null;
-    }
-
-
-    return (
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">{labelName}</label>
-        <div
-          className="w-full aspect-video rounded-md overflow-hidden border border-gray-700 cursor-pointer">
-
-          <Rive
-           src={riveSrc}
-           />
-        </div>
-      </div>
-    );
-  };
-
-  const RiveWrapper = ({ nodeType }: { nodeType: string }) => {
-    const riveSrc =
-      nodeType === "control-net-pose" ? "/rive/pose.riv"
-      : nodeType === "control-net-lights" ? "/rive/lights.riv"
-      : null;
-
-    const stateMachineName =
-      nodeType === "control-net-pose" ? "PoseMachine"
-      : nodeType === "control-net-lights" ? "LightsMachine"
-      : null;
-
-    const { rive, RiveComponent } = useRive({
-      src:riveSrc,
-      stateMachines: ['State Machine 1'],
-      autoplay: true,
-      artboard: "Artboard",
-      riveFile: riveSrc
-    });
-
-    // Still declare inputs (they just may be `undefined`)
-    const trigger = useStateMachineInput(rive, stateMachineName || "", "Activate");
-
-    if (!riveSrc || !stateMachineName) return null;
-
-    return (
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          {nodeType.includes("pose") ? "Pose" : "Light Controller"}
-        </label>
-        <div
-          className="w-full aspect-video rounded-md overflow-hidden border border-gray-700"
-          onClick={() => {
-            trigger?.fire?.();
-          }}
-        >
-          <RiveComponent />
-        </div>
-      </div>
-    );
-  };
 
   const renderEngineInput = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
@@ -836,7 +770,7 @@ export const RightSidebar = () => {
           <label className="text-sm text-[#9e9e9e]">Quality</label>
 
           {/* Select + CustomSlider on the right */}
-          <div className="flex items-center gap-3 translate-x-[30%] w-[210px]">
+          <div className="flex items-center gap-3 translate-x-[25%] w-[210px]">
             <select
               value={quality || 5}
               onChange={(e) =>
@@ -1124,12 +1058,7 @@ export const RightSidebar = () => {
         return (
           <>
             {renderNodePositionInputs()}
-            {/* {<RiveWrapper nodeType='control-net-pose'/>} */}
-            {renderRiveInput('pose')}
-            {renderSlider('Zoom', 'zoom', 0, 100, 1)}
-            {renderSlider('Neck', 'neck', 0, 500, 1)}
-            {renderSlider('Head', 'head', 0, 500, 1)}
-            {renderSlider('Body', 'body', 0, 500, 1)}
+            {<RiveInput key={selectedNode?.id} nodeType="pose"/>}
             {renderNodeDesignInput()}
           </>
         );
@@ -1151,14 +1080,7 @@ export const RightSidebar = () => {
         return (
           <>
             {renderNodePositionInputs()}
-            {renderTextInput('Blend', 'blend')}
-            {renderTextInput('Image', 'image')}
-            {renderSlider('Power', 'power', 0, 100, 1)}
-            {renderColorInput('Color', 'color')}
-            {renderSlider('Length', 'length', 0, 1000, 10)}
-            {renderSlider('Width', 'width', 0, 1000, 10)}
-            {renderNumericInput('Location X', 'location.x', 0, 1000, 10)}
-            {renderNumericInput('Location Y', 'location.y', 0, 1000, 10)}
+            {<RiveInput key={selectedNode?.id} nodeType="lights"/>}
             {renderNodeDesignInput()}
           </>
         );
@@ -1346,7 +1268,7 @@ export const RightSidebar = () => {
 
   // Main render
   return (
-    <div className={selectedNode ? "w-80 h-full bg-[#0d0d0d] border-l border-field flex flex-col overflow-hidden" : "w-80 h-full bg-[#0d0d0d] border-l border-field"}>
+    <div className={selectedNode ? "w-[14%] h-full bg-[#0d0d0d] border-l border-field flex flex-col overflow-hidden" : "w-[14%] h-full bg-[#0d0d0d] border-l border-field"}>
       
       {/* Properties panel */}
       <ScrollArea className="h-[calc(100vh-80px)] overflow-y-auto">

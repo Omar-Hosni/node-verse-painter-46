@@ -157,7 +157,6 @@ export const FloatingPaintCanvas = ({ isPainting }: FloatingPaintCanvasProps) =>
       canvas.removeEventListener('touchend', up);
     };
   }, [isPainting, drawing, ctx, viewport]);
-
   return (
     <canvas
       ref={canvasRef}

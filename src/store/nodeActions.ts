@@ -45,6 +45,7 @@ export const createNode = (nodeType: NodeType, position: { x: number; y: number 
         // Add default right_sidebar data based on type
         right_sidebar:{
         ...getDefaultDataForType(nodeType),
+        image_input: null,
         image_url:getImageUrlForEngineOrGear(nodeType)
         }
       },
@@ -154,23 +155,119 @@ const getFunctionalityFromType = (nodeType: string): string => {
 const getDefaultDataForType = (nodeType: string): Record<string, any> => {
   // Return default right_sidebar data based on node type from schema
   const defaults: Record<string, any> = {
-    'control-net-pose': {
-      pose: '',
+   'control-net-pose': {
+      template: '',
       source: '',
-      fingers: { left: 0, right: 0 },
-      shoulders: { left: 0, right: 0 },
-      elbow: { left: 0, right: 0 },
-      hip: { left: 0, right: 0 },
-      knee: { left: 0, right: 0 },
-      ankle: { left: 0, right: 0 },
-      neck: 0,
+      zooming: 100,
+      neck: 50,
       head: 0,
+      stroke: 500,
+      ball_size: 1000,
+      export_version: false,
+      selected: false,
+
+      // Entire location
+      entire_location_x: 290,
+      entire_location_y: 318,
+
+      // Shoulders
+      shoulder_left_x: -47.12242126464844,
+      shoulder_left_y: -161.46728515625,
+      shoulder_right_x: 45.875,
+      shoulder_right_y: -161.46990966796875,
+
+      // Elbows
+      elbow_left_x: -79.12069702148438,
+      elbow_left_y: -51.96641540527344,
+      elbow_right_x: 102.375,
+      elbow_right_y: -181.46990966796875,
+
+      // Hands
+      hand_left_x: -67.125,
+      hand_left_y: -21.96990966796875,
+      hand_right_x: 106,
+      hand_right_y: -244.5,
+
+      // Waist
+      waist_left_x: -28.625,
+      waist_left_y: -12.96990966796875,
+      waist_right_x: 28.375,
+      waist_right_y: -12.96990966796875,
+
+      // Knees
+      knee_left_x: -41.125,
+      knee_left_y: 90.03009033203125,
+      knee_right_x: 39.875,
+      knee_right_y: 90.03009033203125,
+
+      // Feet
+      foot_left_x: -49,
+      foot_left_y: 200,
+      foot_right_x: 48.375,
+      foot_right_y: 200.03009033203125
     },
     'control-net-edge': {
       image: '',
       type: 'source',
       source: '',
       map: ''
+    },
+   'control-net-lights': {
+      export_version: false,
+      editing: true,
+      lights: [
+        {
+          id: 1,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          angle: 0,
+          locationX: 248,
+          locationY: 258
+        },
+        {
+          id: 2,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 240,
+          locationY: 255
+        },
+        {
+          id: 3,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 255,
+          locationY: 265
+        },
+        {
+          id: 4,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 270,
+          locationY: 240
+        }
+      ]
     },
     'image-to-image-re-imagine': {
       creativity: 50

@@ -64,7 +64,7 @@ export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
   const canvasNodes = useCanvasStore(state => state.nodes);
   const canvasEdges = useCanvasStore(state => state.edges);
   const [currentSelectedNode, setCurrentSelectedNode] = useState<Node | null>(null);
-  const { setSelectedNode, setSelectedNodeById, onNodesChange } = useCanvasStore();
+  const { setSelectedNode, setSelectedNodeById, onNodesChange, selectedNode } = useCanvasStore();
 
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -364,7 +364,10 @@ export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
 
     return (
       <div key={node.id}
-        className={`mb-1 ${level > 0 ? "bg-[#0c1620] rounded-s-xl" : ""}`}
+        className={`mb-1 ${level > 0 && selectedNode && 
+          parentToChildrenMap && Object.keys(parentToChildrenMap)?.includes(selectedNode?.id) 
+          ? "bg-[#0c1620] rounded-s-xl" 
+          : ""}`}
         data-id={node.id}>
         
         <div
@@ -445,7 +448,7 @@ export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
   };
 
   return (
-    <div className="w-16 lg:w-[13%] h-full bg-[#0d0d0d] border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
+    <div className="w-[14%] h-full bg-[#0d0d0d] border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
       {/* Tab selector */}
       <div className="flex justify-center items-center bg-transparent py-2">
         <div className="flex bg-[#151515] rounded-full p-1">

@@ -15,6 +15,7 @@ import {DrawingOverlay} from '@/components/DrawingOverlay';
 import {FloatingPaintCanvas} from '@/components/FloatingPaintCanvas';
 import { useReactFlow } from '@xyflow/react';
 import LeftSidebarNodeDesc from '@/components/LeftSidebarNodeDesc';
+import { Lasso } from '@/components/Lasso';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -31,7 +32,7 @@ const Editor = () => {
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
   const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
   
-  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'frame' | 'triangle' | 'labeledGroup'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'frame' | 'triangle' | 'labeledGroup' | 'lasso'>('select');
   const [selectedInsertNode, setSelectedInsertNode] = useState<NodeOption | null>(null);
 
   useEffect(() => {

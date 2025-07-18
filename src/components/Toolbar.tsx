@@ -20,6 +20,8 @@ import {
   Tally1,
   Image,
   Move,
+  MousePointerClick,
+  Lasso
 } from 'lucide-react';
 import { 
   Popover,
@@ -28,7 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { getHighestOrder } from '@/store/nodeActions';
 
-type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'image' | 'circle' | 'rectangle' | 'text' | 'section' | 'triangle' | 'frame';
+type ToolType = 'select' | 'hand' | 'comment' | 'paint' | 'image' | 'circle' | 'rectangle' | 'text' | 'section' | 'labeledGroup' | 'triangle' | 'frame' | 'lasso';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -37,7 +39,7 @@ interface ToolbarProps {
 }
 
 
-export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setActiveTab }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setActiveTab}) => {
   const [isPainting, setIsPainting] = useState(false);
   const addNode = useCanvasStore(state => state.addNode);
   const {getNodes} = useReactFlow()
@@ -251,202 +253,112 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
       
       {/* Top center shape tools */}
       <div className="fixed top-[4.5rem] left-1/2 transform -translate-x-1/2 bg-sidebar border border-field rounded-lg px-2 py-1 flex gap-1 z-10 scale-[110%]">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'image' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'image' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('image')}
-            >
-              <Image className={`h-4 w-4 ${activeTool === 'image' ? "text-white" : "text-gray-400"}`} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddLayer('image')}>
-                <Image className="h-4 w-4 mr-2" />
-                Image Layer
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'image' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'image' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('image');
+            handleAddLayer('image');
+          }}
+        >
+          <Image className={`h-4 w-4 ${activeTool === 'image' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'triangle' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'triangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('triangle')}
-            >
-              <Triangle className={`h-4 w-4 ${activeTool === 'triangle' ? "text-white" : "text-gray-400"}`} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button variant="ghost" className="text-white hover:bg-white hover:text-black w-full justify-start" onClick={() => handleAddLayer('triangle')}>
-                <Triangle className="h-4 w-4 mr-2" />
-                Triangle
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'triangle' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'triangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('triangle');
+            handleAddLayer('triangle');
+          }}
+        >
+          <Triangle className={`h-4 w-4 ${activeTool === 'triangle' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'rectangle' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('rectangle')}
-            >
-              <RectangleHorizontal className={`h-4 w-4 ${activeTool === 'rectangle' ? "text-white" : "text-gray-400"}`} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('rectangle')}>
-                <RectangleHorizontal className="h-4 w-4 mr-2" />
-                Rectangle
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'circle' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('circle')}
-            >
-              <CircleIcon className={`h-4 w-4 ${activeTool === 'circle' ? "text-white" : "text-gray-400"}`} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('circle')}>
-                <CircleIcon className="h-4 w-4 mr-2 " />
-                Circle
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'rectangle' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'rectangle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('rectangle');
+            handleAddLayer('rectangle');
+          }}
+        >
+          <RectangleHorizontal className={`h-4 w-4 ${activeTool === 'rectangle' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              size="icon" 
-              variant={activeTool === 'text' ? "default" : "ghost"}
-              className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-              onClick={() => handleToolChange('text')}
-            >
-              <Text className={`h-4 w-4 ${activeTool === 'text' ? "text-white" : "text-gray-400"}`} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2 bg-sidebar border-field">
-            <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-white hover:bg-white hover:text-black" onClick={() => handleAddLayer('text')}>
-                <Text className="h-4 w-4 mr-2 " />
-                Text Input
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'circle' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'circle' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('circle');
+            handleAddLayer('circle');
+          }}
+        >
+          <CircleIcon className={`h-4 w-4 ${activeTool === 'circle' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-       <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            size="icon"
-            variant={activeTool === 'section' ? "default" : "ghost"}
-            className={`rounded-md ${activeTool === 'section' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-            onClick={() => handleToolChange('section')}
-          >
-            <Frame className={`h-4 w-4 ${activeTool === 'section' ? "text-white" : "text-gray-400"}`} />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
-          <div>
-            <label className="text-xs text-gray-300">Section Width</label>
-            <input
-              type="number"
-              value={sectionWidth}
-              onChange={(e) => setSectionWidth(parseInt(e.target.value))}
-              className="w-full bg-gray-700 border border-gray-600 text-white rounded px-2 py-1 text-sm"
-              min={100}
-              max={2000}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-300">Section Height</label>
-            <input
-              type="number"
-              value={sectionHeight}
-              onChange={(e) => setSectionHeight(parseInt(e.target.value))}
-              className="w-full bg-gray-700 border border-gray-600 text-white rounded px-2 py-1 text-sm"
-              min={100}
-              max={2000}
-            />
-          </div>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleAddLayer('section', { width: sectionWidth, height: sectionHeight })}
-            className="w-full mt-2 hover:bg-white hover:text-black"
-          >
-            Add Section
-          </Button>
-        </PopoverContent>
-      </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'text' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'text' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('text');
+            handleAddLayer('text');
+          }}
+        >
+          <Text className={`h-4 w-4 ${activeTool === 'text' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            size="icon"
-            variant={activeTool === 'paint' ? "default" : "ghost"}
-            className={`rounded-full ${activeTool === 'paint' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-            onClick={() => handleToolChange('paint')}
-          >
-            <Paintbrush className={`h-4 w-4 ${activeTool === 'paint' ? "text-white" : "text-gray-400"}`} />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleToolChange('paint')}
-            className="w-full mt-2 hover:bg-white hover:text-black"
-          >
-            Paint Brush
-          </Button>
-        </PopoverContent>
-      </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'section' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'section' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('section');
+            handleAddLayer('section', { width: sectionWidth, height: sectionHeight });
+          }}
+        >
+          <Frame className={`h-4 w-4 ${activeTool === 'section' ? "text-white" : "text-gray-400"}`} />
+        </Button>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            size="icon"
-            variant={activeTool === 'frame' ? "default" : "ghost"}
-            className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
-            onClick={() => handleToolChange('frame')}
-          >
-            <Group className={`h-4 w-4 ${activeTool === 'frame' ? "text-white" : "text-gray-400"}`} />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-52 p-2 bg-sidebar border-field space-y-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleAddLayer('frame')}
-            className="w-full mt-2 hover:bg-white hover:text-black"
-          >
-            Frame 
-          </Button>
-        </PopoverContent>
-      </Popover>
+        <Button
+          size="icon"
+          variant={activeTool === 'paint' ? "default" : "ghost"}
+          className={`rounded-full ${activeTool === 'paint' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => handleToolChange('paint')}
+        >
+          <Paintbrush className={`h-4 w-4 ${activeTool === 'paint' ? "text-white" : "text-gray-400"}`} />
+        </Button>
+
+        <Button
+          size="icon"
+          variant={activeTool === 'frame' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'frame' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('frame');
+            handleAddLayer('frame');
+          }}
+        >
+          <Group className={`h-4 w-4 ${activeTool === 'frame' ? "text-white" : "text-gray-400"}`} />
+        </Button>
+
+        {/* ✅ Lasso Tool */}
+        <Button
+          size="icon"
+          variant={activeTool === 'lasso' ? "default" : "ghost"}
+          className={`rounded-md ${activeTool === 'lasso' ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
+          onClick={() => {
+            handleToolChange('lasso')
+          }}
+        >
+          <Lasso className={`h-4 w-4 ${activeTool === 'lasso' ? "text-white" : "text-gray-400"}`} />
+        </Button>
       </div>
+
     </>
   );
 };

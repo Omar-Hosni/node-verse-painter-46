@@ -43,9 +43,9 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
         <X className="w-4 h-4" />
       </button>
 
-      {selectedInsertNode.image_url && (
+      {selectedInsertNode.node_desc_image_url && (
         <img
-          src={selectedInsertNode.image_url}
+          src={`/nodes/data/icons/description/${selectedInsertNode.node_desc_image_url}.png`}
           alt="Node preview"
           className="rounded-xl mb-4 w-full object-cover"
         />

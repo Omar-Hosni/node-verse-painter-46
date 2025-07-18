@@ -63,6 +63,14 @@ export interface CollaborativeFabricObject {
   };
 }
 
+//for LeftSidebar and Editor, etc.
+export interface NodeOption {
+  type: NodeType;
+  label: string;
+  description: string;
+  icon: any;
+}
+
 export interface CanvasState {
   nodes: Node[];
   edges: Edge[];

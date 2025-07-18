@@ -56,12 +56,13 @@ export const insertCategories: NodeCategory[] = [
     icon: DraftingCompass,
     options: [
       {
-        design: 'normal-node',
-        functionality: 'control-net',
-        type: 'control-net-pose',
+        design: 'normal-node', // for UI
+        functionality: 'control-net', // for Connection Rules
+        type: 'control-net-pose', // for Runware API
         label: 'Pose Control',
         icon: "pose",
-        description: 'Control pose of the subject',
+        description: 'The Pose Controller Node defines body positioning and gestures, helping the engine generate people in specific stances or movement.',
+        node_desc_image_url:"pose",
         status: 'stable',
       },
       {
@@ -70,7 +71,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-edge',
         label: 'Edge Control',
         icon: "edge",
-        description: 'Edge detection via Canny map',
+        description: 'The Edge Controller Node extracts and refines edges, generating clean line art that guides the engine to follow the image’s structural outlines.',
+        node_desc_image_url:"edge",
         status: 'stable',
       },
       {
@@ -79,7 +81,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-lights',
         label: 'Lights Control',
         icon: "lights",
-        description: 'Custom lighting map control',
+        description: 'The Light Controller Node adjusts lighting conditions, colors, and highlights to shape the mood, contrast, and realism of the output image.',
+        node_desc_image_url:"light",
         status: 'stable',
       },
       {
@@ -88,7 +91,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-face',
         label: 'Face Express',
         icon: "face",
-        description: 'Facial expressions and identity',
+        description: 'The Face Expression Node adjusts facial features to express emotions, enabling realistic and expressive character generation.',
+        node_desc_image_url:"face-express",
         status: 'coming-soon',
       },
       {
@@ -97,7 +101,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-segments',
         label: 'Segments',
         icon: "segments",
-        description: 'Segment maps for regions',
+        description: 'The Segments allows to detect objects and differ them enabling text prompts to better target objects for specific changes.',
+        node_desc_image_url:"segments",
         status: 'stable',
       },
       {
@@ -106,7 +111,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-depth',
         label: 'Depth Control',
         icon: "depth",
-        description: 'Depth map control for composition',
+        description: 'The Depth Controller Node extracts depth information, turning it into a depth map that helps the engine maintain accurate distance and layering in the final output.',
+        node_desc_image_url:"depth",
         status: 'stable',
       },
       {
@@ -116,6 +122,7 @@ export const insertCategories: NodeCategory[] = [
         label: 'Normal Map',
         icon: "normal_map",
         description: 'Reference faces, styles, or objects',
+        node_desc_image_url:"normal-map",
         status: 'stable',
       },
       {
@@ -124,7 +131,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'control-net-reference',
         label: 'Reference',
         icon: "reference",
-        description: 'Reference faces, styles, or objects',
+        description: 'The Reference Node preserves style, character details, product design, and more—ensuring consistency and precision for visualization and style transfer.',
+        node_desc_image_url:"reference",
         status: 'stable',
       },
     ],
@@ -139,7 +147,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-reimagine',
         label: 'Re-Imagine',
         icon: "reimagine",
-        description: 'Recreate image with new style',
+        description: 'The Re-Imagine Node generates creative variations of an image, maintaining its essence while exploring new visual possibilities.',
+        node_desc_image_url:"re-imagine",
         status: 'stable',
       },
       {
@@ -148,7 +157,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-rescene',
         label: 'Re-Scene',
         icon: "rescene",
-        description: 'Change scene and object context',
+        description: 'The Re-Scene Node merges a subject with a background, blending both into a realistic, well-composited scene.',
+        node_desc_image_url:"re-scene",
         status: 'stable',
       },
       {
@@ -157,7 +167,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-objectrelight',
         label: 'Object Re-Light',
         icon: "objectrelight",
-        description: 'Change the lighting of the scene',
+        description: 'The Relight Node modifies the lighting of an existing image, allowing for new visual moods or improved highlight and shadow dynamics.',
+        node_desc_image_url:"re-light",
         status: 'stable',
       },
       {
@@ -166,7 +177,18 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-reangle',
         label: 'Re-Angle',
         icon: "reangle",
-        description: 'Change the camera angle',
+        description: 'The Re-Angle Node shifts the camera viewpoint to offer alternate perspectives while preserving the core composition.',
+        node_desc_image_url:"re-angle",
+        status: 'stable',
+      },
+            {
+        design: 'normal-node',
+        functionality: 'image-to-image',
+        type: 'image-to-image-remix',
+        label: 'Re-Mix',
+        icon: "merger",
+        description: 'The Re-Mix Node merges multiple images into one cohesive output, blending elements and styles to form a unified composition.',
+        node_desc_image_url:"re-mix",
         status: 'stable',
       },
     ],
@@ -181,7 +203,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-remove-bg',
         label: 'Remove BG',
         icon: "removebg",
-        description: 'Erase image background',
+        description: 'The Remove BG Node isolates the subject and removes the background, making the image ready for compositing or replacement.',
+        node_desc_image_url:"remove-bg",
         status: 'stable',
       },
       {
@@ -190,7 +213,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-upscale',
         label: 'Upscale',
         icon: "upscale",
-        description: 'Increase image resolution',
+        description: 'The Image Upscale Node increases the resolution of an image while maintaining sharpness, ideal for print or large displays.',
+        node_desc_image_url:"upscaler",
         status: 'stable',
       },
       {
@@ -199,7 +223,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-inpainting',
         label: 'In-Painting',
         icon: "inpainting",
-        description: 'Fill missing areas in the image',
+        description: 'The Inpainting Node fills or repairs selected areas of an image using surrounding content to restore or modify missing parts.',
+        node_desc_image_url:"in-paint",
         status: 'stable',
       },
       {
@@ -208,7 +233,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'image-to-image-remove-outpainting',
         label: 'Out-Painting',
         icon: "outpainting",
-        description: 'Extend content beyond original image',
+        description: 'The Outpainting Node extends an image’s canvas, generating new content that blends naturally with the original edges.',
+        node_desc_image_url:"out-painting",
         status: 'stable',
       },
       {
@@ -226,7 +252,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'input-text',
         label: 'Text Prompt',
         icon: "text",
-        description: 'Input text prompt for generation',
+        description: 'The Text Prompt Node lets you enter descriptive text that guides the engine’s imagination and controls the direction of the generated image.',
+        node_desc_image_url:"text prompt",
         status: 'stable',
       },
       {
@@ -244,7 +271,8 @@ export const insertCategories: NodeCategory[] = [
         type: 'connector',
         label: 'Router',
         icon: "router",
-        description: 'Route connections in workflows',
+        description: 'The Router Node directs the flow of data between nodes, giving you control over logic paths and workflow branching.',
+        node_desc_image_url:"router",
         status: 'stable',
       },
     ],
@@ -262,7 +290,8 @@ export const insertCategories: NodeCategory[] = [
         },
         label: 'Image Output',
         icon: "image_output",
-        description: 'Final rendered image',
+        description: 'The Image Output Node renders and displays the final generated image, acting as the visual endpoint of your workflow.',
+        node_desc_image_url:"image-output",
         status: 'stable',
       },
       {

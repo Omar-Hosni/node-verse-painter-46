@@ -42,6 +42,7 @@ import NormalNode from './nodes/NormalNode';
 import LayerImageNode from './nodes/LayerImageNode';
 
 import isValidConnection from '@/utils/connectionUtils';
+import { Lasso } from './Lasso';
 
 const nodeTypes: NodeTypes = {
   previewNode: PreviewNode,
@@ -660,13 +661,12 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   },[activeTool])
 
   const nodesOrdered = [...useCanvasStore.getState().nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
-  console.log(nodesOrdered)
 
   const defaultEdgeOptions = {
-    animated: true,
+    animated: false,
     type: 'floating',
     markerEnd: {
-      type: MarkerType.ArrowClosed,
+      type: MarkerType.Arrow,
       color: '#007bff',
     },
     style: {
@@ -674,8 +674,6 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       strokeWidth: 2,
     },
   };
-
-  
 
   return (
     <div className="flex-1 h-screen bg-[#121212] relative" ref={reactFlowWrapper}>
@@ -697,6 +695,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         zoomActivationKeyCode="Meta"         // Zoom with Meta key (Cmd on Mac)
         multiSelectionKeyCode={['Meta', 'Shift']} // Multi-select with Cmd or Shift
         selectNodesOnDrag={false}            // Disables default selection on drag
+        deleteKeyCode={['Delete', 'Backspace']}
         onNodeDragStop={onNodeDragStop}
         fitView
         nodesDraggable={isSelectTool}
@@ -707,11 +706,12 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         connectionLineType={ConnectionLineType.Bezier}
         defaultEdgeOptions={defaultEdgeOptions}
         snapToGrid={true}
-        snapGrid={[25, 25]}
+        snapGrid={[15, 15]}
       >
         {/*Canva Visualizer and Zoom in Zoom Out buttons*/}
         {/* <MiniMap style={{ backgroundColor: '#1A1A1A' }} /> */}
         <Controls className="text-black mb-20 bg-[#1A1A1A] border-[#333]" />
+        {activeTool === "lasso" ? <Lasso partial={false}/> : <></>}
         
         {/* <Background color="#333333" gap={16} /> */}
 

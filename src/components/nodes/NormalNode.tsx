@@ -75,7 +75,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     roundedDegree = "full"
   }
   else if(currentNodeShape === "square"){
-    nodeStyle = { height:90 }
+    nodeStyle = { height:80 }
     roundedDegree = "2xl"
     isSquare = true;
   }
@@ -83,7 +83,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
 
   return (
     <div
-      className={`inline-flex flex-${isSquare ? 'col' : 'row'} gap-2 items-center justify-between ${bgColor} bg-opacity-80 rounded-${roundedDegree} px-3 py-2 shadow-lg ${
+      className={`inline-flex flex-${isSquare ? 'col' : 'row'} gap-2 items-center justify-between ${bgColor} rounded-${roundedDegree} px-3 py-2 shadow-lg ${
         selected ? `ring-1 ${bgColor.includes('blue') || bgColor.includes('cyan')  ? `ring-white` : 'ring-blue-600'}` : ''
       }`}
       style={nodeStyle}
@@ -91,14 +91,8 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
       {isSquare ? (
         <>
           {/* Circular Image on top in column layout */}
-          <div className="w-10 h-10 rounded-full overflow-hidden mb-1">
-            <img
-              src={`/nodes/data/icons/images/${modelImage}.png`}
-              alt={data.displayName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-
+          <NodeIcon icon={data.icon} iconBgColor={data.iconBgColor} className="mt-2"/>
+          
           {/* Icon and label below the image */}
           <div className="flex items-center justify-center mb-2 gap-2.5">
             <SvgIcon name={iconName} className="h-2.5 w-2.5" />
@@ -118,13 +112,6 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
           </div>
 
           {/* Circular image on the right */}
-          {/* <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img
-              src={`/nodes/data/icons/images/${modelImage}.png`}
-              alt={data.displayName}
-              className="w-full h-full object-cover"
-            />
-          </div> */}
           <NodeIcon icon={data.icon} iconBgColor={data.iconBgColor} />
         </>
       )}
@@ -132,12 +119,12 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
 
       {/* Handles for connection */}
       {
-        !isTextInputNode && (      
-        <Handle
-        type="target"
-        position={Position.Left}
-        id="input"
-        className="!bg-white !border-none w-2.5 h-2.5"
+      !isTextInputNode && (      
+      <Handle
+      type="target"
+      position={Position.Left}
+      id="input"
+      className="!bg-white !border-none w-2.5 h-2.5"
       />)
       }
 

@@ -39,7 +39,14 @@ const CustomEdge: React.FC<EdgeProps> = ({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{...style, strokeWidth: 1}} />
+      <BaseEdge path={edgePath} 
+      markerEnd={markerEnd} 
+      style={{
+        ...style, 
+        strokeWidth: 1,
+        strokeDasharray: '0', // disables dashed lines
+        animation: 'none' // disables animation
+        }} />
       
       {/* Edge control button - improved visibility */}
       <EdgeLabelRenderer>
