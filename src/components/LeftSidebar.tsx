@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/hover-card";
 
 import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
+import { calculateZIndices, TreeNode } from "@/utils/zIndexCalculator";
 
 import {
   Collapsible,

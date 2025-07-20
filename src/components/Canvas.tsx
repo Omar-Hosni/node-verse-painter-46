@@ -479,7 +479,6 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   };
 
 
-
   const handleNodesChange = useCallback((changes) => {
     onNodesChange(changes); //library updates
 
@@ -603,15 +602,6 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   }, [onNodesChange, reactFlowInstance, previousNodes]);
 
 
-
-  //The following could be used after any operation that affects Ordering
-  // After adding/removing nodes in store actions:
-  //setNodes(renumberOrders(updatedNodes));
-  // After loading a project:
-  //const loadedNodes = renumberOrdersEnhanced(nodesFromProject);
-  //set({ nodes: loadedNodes });
-
-
   const onConnect = useCallback((connection: Connection) => {
     const currentNodes = reactFlowInstance.getNodes();
     const currentEdges = reactFlowInstance.getEdges();
@@ -707,6 +697,7 @@ export const Canvas = ({activeTool, setActiveTool}) => {
         defaultEdgeOptions={defaultEdgeOptions}
         snapToGrid={true}
         snapGrid={[15, 15]}
+        proOptions={{ hideAttribution: true }}
       >
         {/*Canva Visualizer and Zoom in Zoom Out buttons*/}
         {/* <MiniMap style={{ backgroundColor: '#1A1A1A' }} /> */}
