@@ -190,7 +190,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     lightControls(4),
   ];
   // lights[1].lightSetters.setLightAdded(true)
-  console.log(lights[1].lightGetters.lightAdded)
+  // console.log(lights[1].lightGetters.lightAdded)
 
   // Rive view model bindings for pose
   const { value: zooming, setValue: setZooming } = useViewModelInstanceNumber("zooming", rive?.viewModelInstance);
@@ -335,9 +335,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
   ]);
 
 
-
-
-  console.log(right_sidebar)
+  // console.log(right_sidebar)
 
   //initialize values for pose and light upon rendering/node select 
   useEffect(()=>{

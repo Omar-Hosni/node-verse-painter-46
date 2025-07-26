@@ -356,6 +356,8 @@ export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
       }
       else if (nodeName.includes('layer-image')) {
         iconName = "image_input";
+      }else{
+        iconName = "default"
       }
 
       return iconName;

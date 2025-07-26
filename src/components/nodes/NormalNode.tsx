@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { User } from 'lucide-react';
 import SvgIcon from '@/components/SvgIcon';
 import NodeIcon from '../NodeIcon';
-import { E } from 'node_modules/@liveblocks/react/dist/room-CqT08uWZ';
 
 interface NormalNodeData {
   displayName?: string;
@@ -11,14 +9,18 @@ interface NormalNodeData {
   functionality?: string;
   image_url?: string;
   order?: number;
+  color?: string;
+  nodeShape?: string;
+  icon?: string;
+  iconBgColor?: string;
+  skip?: boolean;
   [key: string]: any;
 }
 
 const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => {
-  
+  const [isHovered, setIsHovered] = useState(false);
 
   const getIconName = (type: string) => {
-    // Extract icon name from type (e.g., 'control-net-pose' -> 'pose')    
     if(type==="connector") return "router";
     if(type.includes('engine')) return "engine";
     if(type.includes('gear')) return "gear";
@@ -28,111 +30,158 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     return parts[parts.length - 1];
   };
 
-  const getIconImage = (type: string) => {
-    if (type.includes('edge')) return 'edge';
-    if (type.includes('engine')) return 'engine';
-    if (type.includes('gear')) return 'gear';
-    if (type.includes('lights')) return 'lights';
-    if (type.includes('outpainting')) return 'outpainting';
-    if (type.includes('pose')) return 'pose';
-    if (type.includes('reference')) return 'reference';
-    if (type.includes('remove')) return 'remove-bg';
-    if (type.includes('rescene')) return 'rescene';
-    if (type.includes('segment')) return 'segment';
-    if (type.includes('upscale')) return 'upscale';
-    if (type.includes('text')) return 'text';
-    return 'default';
-  };
-
-  
-  const iconName = getIconName(data.type);
-  const modelImage = getIconImage(data.type);
-
-  const bgColorMap: Record<string, string> = {
-    purple: "bg-purple-500",
-    orange: "bg-orange-700",
-    red: "bg-red-500",
-    green: "bg-green-700",
-    blue: "bg-blue-500",
-    pink: "bg-pink-500",
-    cyan: "bg-cyan-500",
-    black: "bg-[#111]",
+  // Color mapping to hex colors
+  const colorMap: Record<string, string> = {
+    purple: "#8B5CF6",
+    orange: "#F97316", 
+    red: "#EF4444",
+    green: "#10B981",
+    blue: "#3B82F6",
+    pink: "#EC4899",
+    cyan: "#06B6D4",
+    black: "#111111",
   };
 
   const rawColor = data?.color?.toLowerCase() || "blue";
-  const bgColor = bgColorMap[rawColor] || "bg-blue-500"; // fallback to blue
+  const nodeColor = colorMap[rawColor] || "#3B82F6";
+  
+  const currentNodeShape = data?.nodeShape || "pill";
+  const nodeTitle = data?.displayName || 'Node';
+  const isSkipped = data?.skip || false;
+  const isTextInputNode = data?.type?.includes('input-text');
 
+  // Apply shape styling
+  const shapeStyle = currentNodeShape === 'rectangle' ? '24px' : '24px';
+  
+  // Background color - always dark
+  const backgroundColor = '#0D0D0D';
+  const circleColor = nodeColor;
 
-  const currentNodeShape = data?.nodeShape
-
-  let nodeStyle = {}
-  let roundedDegree = ""
-  let isSquare = false;
-  let isTextInputNode = data.type.includes('input-text')
-
-  if(currentNodeShape === "rectangle"){
-    nodeStyle = { height:50 }
-    roundedDegree = "full"
-  }
-  else if(currentNodeShape === "square"){
-    nodeStyle = { height:80 }
-    roundedDegree = "2xl"
-    isSquare = true;
-  }
-
+  const iconName = getIconName(data?.type || '');
 
   return (
-    <div
-      className={`inline-flex flex-${isSquare ? 'col' : 'row'} gap-2 items-center justify-between ${bgColor} rounded-${roundedDegree} px-3 py-2 shadow-lg ${
-        selected ? `ring-1 ${bgColor.includes('blue') || bgColor.includes('cyan')  ? `ring-white` : 'ring-blue-600'}` : ''
-      }`}
-      style={nodeStyle}
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        background: backgroundColor,
+        border: selected ? '1px solid #007AFF' : '1px solid transparent',
+        borderRadius: shapeStyle,
+        padding: '14px 10px',
+        width: 'fit-content',
+        height: currentNodeShape === 'square' ? '80px' : '48px',
+        display: 'flex',
+        flexDirection: currentNodeShape === 'square' ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: currentNodeShape === 'square' ? 'center' : 'space-between',
+        gap: currentNodeShape === 'square' ? '8px' : '12px',
+        position: 'relative',
+        transition: 'all 0.2s ease',
+        opacity: isSkipped ? 0.5 : 1,
+      }}
     >
-      {isSquare ? (
+      {currentNodeShape === 'square' ? (
         <>
-          {/* Circular Image on top in column layout */}
-          <NodeIcon icon={data.icon} iconBgColor={data.iconBgColor} className="mt-2"/>
+          {/* Square layout - icon on top, text below */}
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: circleColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <NodeIcon icon={data?.icon} iconBgColor={data?.iconBgColor} />
+          </div>
           
-          {/* Icon and label below the image */}
-          <div className="flex items-center justify-center mb-2 gap-2.5">
-            <SvgIcon name={iconName} className="h-2.5 w-2.5" />
-            <span className="text-white text-sm font-medium">
-              {data.displayName || 'Node'}
-            </span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}>
+            <SvgIcon name={iconName} className="h-2.5 w-2.5" style={{ color: 'white', opacity: 0.4 }} />
+            <div style={{
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: '500',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            }}>
+              {nodeTitle}
+            </div>
           </div>
         </>
       ) : (
         <>
-          {/* Icon and label on the left */}
-          <div className="flex items-center space-x-2">
-            <SvgIcon name={iconName} className="h-3.5 w-3.5" />
-            <span className="text-white text-sm font-medium">
-              {data.displayName || 'Node'}
-            </span>
+          {/* Regular layout - left icon, middle text, right circle */}
+          <div style={{
+            width: '20px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0.4,
+          }}>
+            <SvgIcon name={iconName} className="h-3 w-3" style={{ color: 'white' }} />
           </div>
 
-          {/* Circular image on the right */}
-          <NodeIcon icon={data.icon} iconBgColor={data.iconBgColor} />
+          <div style={{
+            flex: 1,
+            color: 'white',
+            fontSize: '10px',
+            fontWeight: '500',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}>
+            {nodeTitle}
+          </div>
+
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: circleColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+          }}>
+            <NodeIcon icon={data?.icon} iconBgColor={data?.iconBgColor} />
+          </div>
         </>
       )}
 
+      {/* Left Handle - appears on hover for non-text-input nodes */}
+      {!isTextInputNode && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="input"
+          style={{
+            background: isHovered ? '#007AFF' : 'transparent',
+            border: isHovered ? '2px solid #007AFF' : 'none',
+            width: isHovered ? '8px' : '8px',
+            height: isHovered ? '8px' : '8px',
+            opacity: isHovered ? 1 : 0,
+            transition: 'all 0.2s ease',
+            left: '-6px',
+          }}
+        />
+      )}
 
-      {/* Handles for connection */}
-      {
-      !isTextInputNode && (      
-      <Handle
-      type="target"
-      position={Position.Left}
-      id="input"
-      className="!bg-white !border-none w-2.5 h-2.5"
-      />)
-      }
-
+      {/* Right Handle - appears on hover */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!bg-white !border-none w-2.5 h-2.5"
+        style={{
+          background: isHovered ? '#007AFF' : 'transparent',
+          border: isHovered ? '2px solid #007AFF' : 'none',
+          width: isHovered ? '8px' : '8px',
+          height: isHovered ? '8px' : '8px',
+          opacity: isHovered ? 1 : 0,
+          transition: 'all 0.2s ease',
+          right: '-6px',
+        }}
       />
     </div>
   );

@@ -1,7 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Image as ImageIcon, Download } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
+import { getRunwareService } from '@/services/runwareService';
+
+
+const API_KEY = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG"; 
 
 interface LayerImageNodeData {
   displayName?: string;
@@ -21,31 +25,60 @@ const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { updateNodeData } = useCanvasStore();
 
+  const runware = useMemo(() => getRunwareService({ apiKey: API_KEY }), []);
+
+  // const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   localStorage.clear()
+
+  //   try {
+  //     updateNodeData(id, { uploading: true });
+
+  //     const base64Image = await fileToBase64(file);
+      
+  //     // Save to store
+  //     updateNodeData(id, { 
+  //       image: base64Image,
+  //       uploading: false
+  //     });
+
+  //     // Persist in localStorage
+  //     localStorage.setItem(`layer-image-${id}`, base64Image);
+  //   } catch (error) {
+  //     console.error('Upload error:', error);
+  //     updateNodeData(id, { uploading: false });
+  //   }
+  // };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    localStorage.clear()
-
     try {
       updateNodeData(id, { uploading: true });
-
       const base64Image = await fileToBase64(file);
-      
-      // Save to store
-      updateNodeData(id, { 
-        image: base64Image,
+
+      // Upload to Runware
+      const { imageUUID, imageURL } = await runware.uploadImage(base64Image);
+      console.log(imageUUID)
+      console.log(imageURL)
+
+      updateNodeData(id, {
+        image: imageURL,
+        imageUrl: imageURL,
+        imageUUID,
         uploading: false
       });
 
-      // Persist in localStorage
-      localStorage.setItem(`layer-image-${id}`, base64Image);
+      localStorage.setItem(`layer-image-${id}`, imageURL);
+      localStorage.setItem(`layer-image-uuid-${id}`, imageUUID);
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       updateNodeData(id, { uploading: false });
     }
   };
-
 
   const triggerUpload = () => {
     if (data?.functionality === 'input') {
