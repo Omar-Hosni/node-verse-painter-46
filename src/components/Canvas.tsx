@@ -271,9 +271,14 @@ export const Canvas = ({activeTool, setActiveTool}) => {
   };
 
   const handleGenerateImage = async () => {
-    const previewNode = nodes.find(n => n.type === 'previewNode');
-    if (!previewNode) {
-      toast.error("No preview node found! Please add a preview node to your canvas.");
+    // Find output nodes (preview-realtime-node or layer-image-node with output functionality)
+    const outputNodes = nodes.filter(n => 
+      n.type === 'preview-realtime-node' || 
+      (n.type === 'layer-image-node' && (n.data?.functionality === 'output' || n.data?.functionality === 'preview'))
+    );
+    
+    if (outputNodes.length === 0) {
+      toast.error("No output node found! Please add a preview node to your canvas.");
       return;
     }
 
@@ -291,14 +296,41 @@ export const Canvas = ({activeTool, setActiveTool}) => {
     }
 
     try {
-      // Update button to loading state
-      toast.info("Sending request to generate image...");
+      const outputNode = outputNodes[0]; // Use the first output node found
+      const hasCredits = await useCreditsForGeneration();
       
-      // Send to API
-      await sendWorkflowToAPI();
+      if (!hasCredits) {
+        toast.error("Failed to deduct credits. Please try again.");
+        return;
+      }
       
-      // Use credits
-      await useCreditsForGeneration();
+      toast.info("Generating image...");
+      
+      // Import the generation function and service
+      const { generateImageForOutputNode } = await import('@/lib/workflow/generateImageForOutputNode');
+      const { RunwareService } = await import('@/services/runwareService');
+      
+      // Get the API key from store
+      const apiKey = useCanvasStore.getState().runwayApiKey;
+      if (!apiKey) {
+        toast.error("Please set your Runware API key in the settings.");
+        return;
+      }
+      
+      // Initialize Runware service
+      const runwareService = new RunwareService({ apiKey });
+      
+      // Generate image for the output node
+      await generateImageForOutputNode({
+        workflowId: projectId || 'default',
+        nodes,
+        edges,
+        outputNodeId: outputNode.id,
+        runwareService,
+        updateCanvasNodeData: (nodeId: string, data: any) => {
+          useCanvasStore.getState().updateNodeData(nodeId, data);
+        }
+      });
       
     } catch (error) {
       console.error("Error generating image:", error);
