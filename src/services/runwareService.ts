@@ -151,8 +151,13 @@ export class RunwareService {
       });
       const data: RunwareResponse = await res.json();
       if (!res.ok || data.errors?.length) {
+        // Handle specific error codes
+        const error = data.errors?.[0];
+        if (error?.code === 'insufficientCredits') {
+          throw new Error('Insufficient credits in your Runware account. Please add more credits to continue.');
+        }
         throw new Error(
-          data.errors?.[0]?.message ?? `Runware error (HTTP ${res.status})`
+          error?.message ?? `Runware error (HTTP ${res.status})`
         );
       }
       return data;
