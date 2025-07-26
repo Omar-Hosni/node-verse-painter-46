@@ -301,7 +301,7 @@ export const RightSidebar = () => {
         {imageUrl ? (
           <div className="relative mb-2">
             <img
-              src={imageUrl}
+              src={imageUrl as string}
               alt="Uploaded"
               className="w-full h-auto rounded-md"
             />
@@ -586,7 +586,7 @@ export const RightSidebar = () => {
             <div className="flex items-center rounded-full bg-[#1e1e1e] border border-[#2a2a2a] px-3 py-1.5 pr-10">
               <input
                 type="text"
-                value={selectedNode.data?.displayName || ''}
+                value={(selectedNode.data?.displayName as string) || ''}
                 onChange={(e) =>
                   updateNodeData(selectedNode.id, { displayName: e.target.value })
                 }
@@ -613,7 +613,7 @@ export const RightSidebar = () => {
                       icon: `${emojiData.emoji}`,
                     })
                   }
-                  theme="dark"
+                  theme={"dark" as any}
                   className='scale-[75%]'
                 />
               </div>
@@ -632,17 +632,17 @@ export const RightSidebar = () => {
             <div className="flex items-center gap-2 pointer-events-none">
               <span
                 className="w-5 h-5 rounded-full"
-                style={{ backgroundColor: color.toLowerCase() }}
+                style={{ backgroundColor: (color as string)?.toLowerCase() }}
               ></span>
-              <span>{color}</span>
+              <span>{color as string}</span>
             </div>
 
             {/* Dropdown icon */}
             <IoMdArrowDropdown className="w-4 h-4 text-gray-400 pointer-events-none" />
             {/* Transparent select element */}
             <select
-              value={color}
-              onChange={(e) => 
+              value={color as string}
+              onChange={(e) =>
                 currentSelectedStyle === 'accent' ?
                   updateNodeData(selectedNode.id, { iconBgColor: e.target.value })
                   : updateNodeData(selectedNode.id, { color: e.target.value })
@@ -726,7 +726,7 @@ export const RightSidebar = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
 
     const { right_sidebar } = selectedNode.data;
-    const { image_url, accident, quality, ratio, size } = right_sidebar;
+    const { image_url, accident, quality, ratio, size } = right_sidebar as any;
 
     const ratioOptions = ['1:1', '2:3', '3:2', '9:16', '16:9'];
 
@@ -754,7 +754,7 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     accident: parseInt(e.target.value),
                   },
                 })
@@ -776,7 +776,7 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     quality: parseInt(e.target.value),
                   },
                 })
@@ -798,7 +798,7 @@ export const RightSidebar = () => {
               onChange={(val) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     quality: val,
                   },
                 })
@@ -817,7 +817,7 @@ export const RightSidebar = () => {
                 onClick={() =>
                   updateNodeData(selectedNode.id, {
                     right_sidebar: {
-                      ...right_sidebar,
+                      ...(right_sidebar as any),
                       ratio: r,
                     },
                   })
@@ -848,9 +848,9 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     size: {
-                      ...right_sidebar.size,
+                      ...(right_sidebar as any)?.size,
                       width: parseInt(e.target.value),
                     },
                   },
@@ -871,9 +871,9 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     size: {
-                      ...right_sidebar.size,
+                      ...(right_sidebar as any)?.size,
                       height: parseInt(e.target.value),
                     },
                   },
@@ -895,7 +895,7 @@ export const RightSidebar = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
 
     const { right_sidebar } = selectedNode.data;
-    const { image_url, power = 70, tags = [] } = right_sidebar;
+    const { image_url, power = 70, tags = [] } = right_sidebar as any;
 
     return (
       <>
@@ -912,7 +912,7 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     power: parseInt(e.target.value),
                   },
                 })
@@ -937,7 +937,7 @@ export const RightSidebar = () => {
               onChange={(e) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
-                    ...right_sidebar,
+                    ...(right_sidebar as any),
                     power: parseInt(e.target.value),
                   },
                 })
@@ -970,7 +970,7 @@ export const RightSidebar = () => {
   // Utility to check if a property exists
   const hasProperty = (property: string) => {
     return (selectedNode?.data && property in selectedNode.data) || 
-    (selectedNode?.data?.right_sidebar && property in selectedNode.data?.right_sidebar);
+    (selectedNode?.data?.right_sidebar && property in (selectedNode.data?.right_sidebar as object));
   };
 
   // Render node-specific controls based on type
@@ -992,7 +992,7 @@ export const RightSidebar = () => {
           <label className="block text-sm font-medium text-gray-300 mb-1">Label Name</label>
           <input
             type="text"
-            value={selectedNode.data.label || ''}
+            value={(selectedNode.data.label as string) || ''}
             onChange={(e) =>
               useCanvasStore.getState().updateNodeData(selectedNode.id, {
                 label: e.target.value,
@@ -1070,7 +1070,7 @@ export const RightSidebar = () => {
         return (
           <>
             {renderNodePositionInputs()}
-            {renderImage(selectedNode?.data?.right_sidebar?.image_input)}
+            {renderImage((selectedNode?.data?.right_sidebar as any)?.image_input)}
             {renderTypeInput()}
             {renderNodeDesignInput()}
           </>
@@ -1092,7 +1092,7 @@ export const RightSidebar = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
               <select
-                value={selectedNode.data.type || 'source'}
+                value={(selectedNode.data.type as string) || 'source'}
                 onChange={(e) => updateNodeData(selectedNode.id, { type: e.target.value })}
                 className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
               >
@@ -1135,7 +1135,7 @@ export const RightSidebar = () => {
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={selectedNode.data.enhance || false}
+                  checked={(selectedNode.data.enhance as boolean) || false}
                   onChange={(e) => updateNodeData(selectedNode.id, { enhance: e.target.checked })}
                   className="rounded"
                 />
@@ -1156,7 +1156,7 @@ export const RightSidebar = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-300 mb-1">Ratio</label>
               <select
-                value={selectedNode.data.ratio || 'Outpaint'}
+                value={(selectedNode.data.ratio as string) || 'Outpaint'}
                 onChange={(e) => updateNodeData(selectedNode.id, { ratio: e.target.value })}
                 className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200"
               >

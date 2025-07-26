@@ -17,10 +17,10 @@ const Index = () => {
     
     // Add some initial nodes in a horizontal layout
     // This demonstrates the horizontal flow
-    addNode('model-sdxl', { x: 100, y: 250 }, 0);
-    addNode('lora-realistic', { x: 350, y: 250 }, 1);
-    addNode('controlnet-canny', { x: 600, y: 250 }, 2);
-    addNode('output-preview', { x: 850, y: 250 }, 3);
+    addNode('engine-real', { x: 100, y: 250 }, 0);
+    addNode('gear-anime', { x: 350, y: 250 }, 1);
+    addNode('control-net-edge', { x: 600, y: 250 }, 2);
+    addNode('layer-image-node', { x: 850, y: 250 }, 3);
     
   }, [setRunwayApiKey, addNode]);
 
@@ -28,13 +28,21 @@ const Index = () => {
     <div className="flex flex-col h-screen overflow-hidden">
       <AppHeader />
       <div className="flex flex-1 relative">
-        <LeftSidebar />
+        <LeftSidebar 
+          activeTab="Insert"
+          setActiveTab={() => {}}
+          setSelectedInsertNode={() => {}}
+        />
         <div className="flex-1 relative">
-          <Canvas />
+          <Canvas activeTool="select" setActiveTool={() => {}} />
         </div>
         <RightSidebar />
       </div>
-      <Toolbar />
+      <Toolbar 
+        activeTool="select"
+        onToolChange={() => {}}
+        setActiveTab={() => {}}
+      />
     </div>
   );
 };

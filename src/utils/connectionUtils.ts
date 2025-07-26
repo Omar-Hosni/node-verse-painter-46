@@ -50,9 +50,9 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
       const inputFunctionality = inputNode?.data?.functionality;
       const inputType = inputNode?.data?.type;
       
-      return inputFunctionality === 'image-to-image' && 
-             !inputType?.includes('inpainting') && 
-             !inputType?.includes('outpainting');
+       return inputFunctionality === 'image-to-image' && 
+              !(inputType as string)?.includes('inpainting') && 
+              !(inputType as string)?.includes('outpainting');
     });
     
     if (hasReRenderingOrTools) {
@@ -62,8 +62,8 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
   }
 
   // Re-rendering nodes rules
-  if (sourceFunctionality === 'image-to-image' && sourceType?.includes('re-')) {
-    if (['re-scene', 're-light', 're-angle'].some(type => sourceType?.includes(type))) {
+  if (sourceFunctionality === 'image-to-image' && (sourceType as string)?.includes('re-')) {
+    if (['re-scene', 're-light', 're-angle'].some(type => (sourceType as string)?.includes(type))) {
       if (targetFunctionality !== 'engine') {
         toast.error("Re-scene, re-light, and re-angle nodes can only connect to engine nodes");
         return false;
@@ -71,7 +71,7 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
     }
     
     // Re-imagen special rules
-    if (sourceType?.includes('re-imagine')) {
+    if ((sourceType as string)?.includes('re-imagine')) {
       const sourceHasEngineInput = edges.some(edge => {
         if (edge.target === sourceNode.id) {
           const inputNode = nodes.find(n => n.id === edge.source);
@@ -92,7 +92,7 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
       const hasReRenderingNode = engineIncomingEdges.some(edge => {
         const inputNode = nodes.find(n => n.id === edge.source);
         return inputNode?.data?.functionality === 'image-to-image' && 
-               inputNode?.data?.type?.includes('re-');
+               (inputNode?.data?.type as string)?.includes('re-');
       });
       
       if (hasReRenderingNode) {
@@ -103,9 +103,9 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
   }
 
   // Tools nodes rules
-  if (sourceFunctionality === 'image-to-image' && !sourceType?.includes('re-')) {
+  if (sourceFunctionality === 'image-to-image' && !(sourceType as string)?.includes('re-')) {
     // Inpainting and outpainting can only connect to engine
-    if (['inpainting', 'outpainting', '3d-maker'].some(type => sourceType?.includes(type))) {
+    if (['inpainting', 'outpainting', '3d-maker'].some(type => (sourceType as string)?.includes(type))) {
       if (targetFunctionality !== 'engine') {
         toast.error("Inpainting, outpainting, and 3D maker nodes can only connect to engine nodes");
         return false;
@@ -118,7 +118,7 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
       const hasToolsNode = engineIncomingEdges.some(edge => {
         const inputNode = nodes.find(n => n.id === edge.source);
         return inputNode?.data?.functionality === 'image-to-image' && 
-               !inputNode?.data?.type?.includes('re-');
+               !(inputNode?.data?.type as string)?.includes('re-');
       });
       
       if (hasToolsNode) {
@@ -130,10 +130,10 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
       const hasReRenderingNode = engineIncomingEdges.some(edge => {
         const inputNode = nodes.find(n => n.id === edge.source);
         return inputNode?.data?.functionality === 'image-to-image' && 
-               inputNode?.data?.type?.includes('re-');
+               (inputNode?.data?.type as string)?.includes('re-');
       });
       
-      if (hasReRenderingNode && !sourceType?.includes('inpainting') && !sourceType?.includes('outpainting')) {
+      if (hasReRenderingNode && !(sourceType as string)?.includes('inpainting') && !(sourceType as string)?.includes('outpainting')) {
         toast.error("Tools nodes cannot be used with re-rendering nodes (except inpainting/outpainting)");
         return false;
       }
@@ -155,7 +155,7 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
 
   // Conditional image delivery rules
   const conditionalImageDeliveryTypes = ['re-imagine', 'inpainting', 'outpainting'];
-  if (conditionalImageDeliveryTypes.some(type => sourceType?.includes(type))) {
+  if (conditionalImageDeliveryTypes.some(type => (sourceType as string)?.includes(type))) {
     const sourceHasEngineInput = edges.some(edge => {
       if (edge.target === sourceNode.id) {
         const inputNode = nodes.find(n => n.id === edge.source);

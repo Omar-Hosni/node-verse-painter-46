@@ -27,8 +27,8 @@ export function getHelperLines(
   // Function to get dynamic width for custom nodes with fit-content
   const getDynamicWidth = (node: Node, fallbackWidth: number): number => {
     // First try measured width (most accurate)
-    if (node.measured?.width) {
-      return node.measured.width;
+    if ((node as any).measured?.width) {
+      return (node as any).measured.width;
     }
     
     // For custom nodes with dynamic width, calculate based on content
@@ -74,7 +74,7 @@ export function getHelperLines(
   const nodeADefaults = getDefaultDimensions(nodeA);
   // Use dynamic width calculation for width, keep original height calculation
   const nodeAWidth = getDynamicWidth(nodeA, nodeADefaults.width);
-  const nodeAHeight = nodeA.measured?.height ?? (nodeA.style?.height as number) ?? nodeADefaults.height;
+  const nodeAHeight = (nodeA as any).measured?.height ?? (nodeA.style?.height as number) ?? nodeADefaults.height;
   
   const nodeABounds = {
     left: change.position.x,
@@ -111,7 +111,7 @@ export function getHelperLines(
       // Get node B dimensions - use dynamic width calculation for width, keep original height calculation
       const nodeBDefaults = getDefaultDimensions(nodeB);
       const nodeBWidth = getDynamicWidth(nodeB, nodeBDefaults.width);
-      const nodeBHeight = nodeB.measured?.height ?? (nodeB.style?.height as number) ?? nodeBDefaults.height;
+      const nodeBHeight = (nodeB as any).measured?.height ?? (nodeB.style?.height as number) ?? nodeBDefaults.height;
       
       const nodeBBounds = {
         left: nodeB.position.x,

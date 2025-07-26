@@ -68,13 +68,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, setA
     addNode('comment-node', {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
-      data: {
-        type: 'comment-node',
-        text: 'New Comment',
-        color: '#fcd34d',
-        order: order
-      }
-    });
+    }, order);
   };
 
 

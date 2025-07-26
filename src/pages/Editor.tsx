@@ -271,7 +271,7 @@ const Editor = () => {
         <RightSidebar />
       </div>
       {/* <Toolbar /> */}
-      <Toolbar activeTool={activeTool} onToolChange={(tool) => setActiveTool(tool)} setActiveTab={setActiveTab}/>
+      <Toolbar activeTool={activeTool as any} onToolChange={(tool) => setActiveTool(tool as any)} setActiveTab={setActiveTab}/>
 
     </div>
   );

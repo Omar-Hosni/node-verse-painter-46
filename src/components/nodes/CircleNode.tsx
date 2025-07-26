@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 
-export const CircleNode = memo(({ id, data, selected }) => {
+export const CircleNode = memo(({ id, data, selected }: { id: string; data: any; selected: boolean }) => {
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const width = data.width || 100;
   const height = data.height || 100;

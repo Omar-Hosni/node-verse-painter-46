@@ -4,6 +4,6 @@ import { LabeledFrameGroupNode } from "@/components/nodes/LabeledFrameGroupNode"
 
 export const LabeledFrameGroupNodeWrapper = memo(({ selected, data }: NodeProps) => {
   return (
-    <LabeledFrameGroupNode selected={selected} label={data?.label || 'Label'} data={data} />
+    <LabeledFrameGroupNode selected={selected} label={(data?.label as string) || 'Label'} data={data} />
   );
 });

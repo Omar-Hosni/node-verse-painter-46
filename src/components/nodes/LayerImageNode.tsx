@@ -17,7 +17,7 @@ interface LayerImageNodeData {
   [key: string]: any;
 }
 
-const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
+const LayerImageNode: React.FC<NodeProps> = ({
   id, 
   data, 
   selected 

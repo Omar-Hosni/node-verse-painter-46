@@ -142,7 +142,7 @@ export const sendWorkflowToAPI = async (
 ): Promise<any> => {
   try {
     const apiKey = 'mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl'; // This should come from settings
-    const runwareService = getRunwareService(apiKey);
+    const runwareService = getRunwareService({ apiKey });
     
     // Find nodes by functionality from node_schema.ts
     const inputNodes = nodes.filter(n => n.data?.functionality === 'input');
@@ -208,7 +208,7 @@ export const sendWorkflowToAPI = async (
     });
     
     // Generate image with all configurations
-    const result = await runwareService.generateImage({
+    const result = await runwareService.txt2img({
       positivePrompt: prompt,
       negativePrompt: negativePrompt,
       model: model,

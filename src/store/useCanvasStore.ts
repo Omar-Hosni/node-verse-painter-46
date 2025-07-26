@@ -209,7 +209,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       type: 'custom',
     };
 
-    const updatedEdges = addEdge(newEdge, prevEdges);
+    const updatedEdges = addEdge({...newEdge, animated: false}, prevEdges);
 
     set({
       edges: [...updatedEdges],

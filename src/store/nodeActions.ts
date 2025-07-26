@@ -299,19 +299,19 @@ const getImageUrlForEngineOrGear = (nodeType: string): Record<string, string> =>
     'gear-killua':"https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0de4dbcd-eb1c-478c-9709-1694b25e94f9/anim=false,width=450/00960-497516903.jpeg"
   }
 
-  return defaults[nodeType] || {};
+  return (defaults as any)[nodeType] || {};
 }
 
 export const getHighestOrder = (nodes: Node[]): number => {
   
   return nodes.reduce((max, node) => 
-    Math.max(max, node.data?.order || 0), 0);
+    Math.max(max, (node.data?.order as number) || 0), 0);
 };
 
 // Add function to renumber orders
 export const renumberOrders = (nodes: Node[]): Node[] => {
   const sortedNodes = [...nodes].sort((a, b) => 
-    (a.data?.order || 0) - (b.data?.order || 0));
+    ((a.data?.order as number) || 0) - ((b.data?.order as number) || 0));
   
   return sortedNodes.map((node, index) => ({
     ...node,
@@ -339,7 +339,7 @@ export const renumberOrdersEnhanced = (nodes: Node[]): Node[] => {
   });
 
   // Sort top-level nodes by current order
-  topLevelNodes.sort((a, b) => (a.data?.order || 0) - (b.data?.order || 0));
+  topLevelNodes.sort((a, b) => ((a.data?.order as number) || 0) - ((b.data?.order as number) || 0));
   
   let globalOrder = 1;
   const renumberedNodes: Node[] = [];
@@ -358,7 +358,7 @@ export const renumberOrdersEnhanced = (nodes: Node[]): Node[] => {
     
     // Process children
     const children = nodesByParent[parent.id] || [];
-    children.sort((a, b) => (a.data?.order || 0) - (b.data?.order || 0));
+    children.sort((a, b) => ((a.data?.order as number) || 0) - ((b.data?.order as number) || 0));
     
     children.forEach(child => {
       renumberedNodes.push({

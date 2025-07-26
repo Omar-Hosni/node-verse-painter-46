@@ -46,20 +46,20 @@ export const calculateNewOrder = (
   
   if (position === 'above') {
     // When placing above, we want a higher order than the reference node
-    const nodesAbove = siblings.filter(n => (n.data?.order ?? 0) > (referenceNode.data?.order ?? 0));
+    const nodesAbove = siblings.filter(n => ((n.data?.order as number) ?? 0) > ((referenceNode.data?.order as number) ?? 0));
     if (nodesAbove.length === 0) {
-      return (referenceNode.data?.order ?? 0) + 1;
+      return ((referenceNode.data?.order as number) ?? 0) + 1;
     }
-    const minAbove = Math.min(...nodesAbove.map(n => n.data?.order ?? 0));
-    return ((referenceNode.data?.order ?? 0) + minAbove) / 2;
+    const minAbove = Math.min(...nodesAbove.map(n => (n.data?.order as number) ?? 0));
+    return (((referenceNode.data?.order as number) ?? 0) + minAbove) / 2;
   } else {
     // When placing below, we want a lower order than the reference node
-    const nodesBelow = siblings.filter(n => (n.data?.order ?? 0) < (referenceNode.data?.order ?? 0));
+    const nodesBelow = siblings.filter(n => ((n.data?.order as number) ?? 0) < ((referenceNode.data?.order as number) ?? 0));
     if (nodesBelow.length === 0) {
-      return (referenceNode.data?.order ?? 0) - 1;
+      return ((referenceNode.data?.order as number) ?? 0) - 1;
     }
-    const maxBelow = Math.max(...nodesBelow.map(n => n.data?.order ?? 0));
-    return ((referenceNode.data?.order ?? 0) + maxBelow) / 2;
+    const maxBelow = Math.max(...nodesBelow.map(n => (n.data?.order as number) ?? 0));
+    return (((referenceNode.data?.order as number) ?? 0) + maxBelow) / 2;
   }
 };
 
@@ -75,7 +75,7 @@ export const validateAndFixNodeOrders = (nodes: Node[]): Node[] => {
   }
   
   // Fix duplicates by reassigning orders
-  const sortedNodes = [...nodes].sort((a, b) => (a.data?.order ?? 0) - (b.data?.order ?? 0));
+  const sortedNodes = [...nodes].sort((a, b) => ((a.data?.order as number) ?? 0) - ((b.data?.order as number) ?? 0));
   
   return sortedNodes.map((node, index) => ({
     ...node,

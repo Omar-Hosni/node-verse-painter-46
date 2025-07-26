@@ -41,7 +41,7 @@ export async function generateImageForOutputNode({
         
         const uploadPromise = (async () => {
           try {
-            const { imageUUID, imageURL } = await runwareService.uploadImage(nodeData.image);
+            const { imageUUID, imageURL } = await runwareService.uploadImage(nodeData.image as string);
             updateCanvasNodeData(node.id, { 
               imageUUID, 
               imageUrl: imageURL,

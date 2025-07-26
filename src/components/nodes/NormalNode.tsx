@@ -17,7 +17,7 @@ interface NormalNodeData {
   [key: string]: any;
 }
 
-const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => {
+const NormalNode: React.FC<NodeProps> = ({ data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const getIconName = (type: string) => {
@@ -42,13 +42,13 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
     black: "#111111",
   };
 
-  const rawColor = data?.color?.toLowerCase() || "blue";
+  const rawColor = (data?.color as string)?.toLowerCase() || "blue";
   const nodeColor = colorMap[rawColor] || "#3B82F6";
   
   const currentNodeShape = data?.nodeShape || "pill";
-  const nodeTitle = data?.displayName || 'Node';
+  const nodeTitle = (data?.displayName as string) || 'Node';
   const isSkipped = data?.skip || false;
-  const isTextInputNode = data?.type?.includes('input-text');
+  const isTextInputNode = (data?.type as string)?.includes('input-text');
 
   // Apply shape styling
   const shapeStyle = currentNodeShape === 'rectangle' ? '24px' : '24px';
@@ -57,7 +57,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
   const backgroundColor = '#0D0D0D';
   const circleColor = nodeColor;
 
-  const iconName = getIconName(data?.type || '');
+  const iconName = getIconName((data?.type as string) || '');
 
   return (
     <div 
@@ -92,7 +92,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <NodeIcon icon={data?.icon} iconBgColor={data?.iconBgColor} />
+            <NodeIcon icon={data?.icon as string} iconBgColor={data?.iconBgColor as string} />
           </div>
           
           <div style={{
@@ -100,14 +100,14 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
             alignItems: 'center',
             gap: '6px',
           }}>
-            <SvgIcon name={iconName} className="h-2.5 w-2.5" style={{ color: 'white', opacity: 0.4 }} />
+            <SvgIcon name={iconName} className="h-2.5 w-2.5 text-white opacity-40" />
             <div style={{
               color: 'white',
               fontSize: '10px',
               fontWeight: '500',
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}>
-              {nodeTitle}
+              {nodeTitle as string}
             </div>
           </div>
         </>
@@ -122,7 +122,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
             justifyContent: 'center',
             opacity: 0.4,
           }}>
-            <SvgIcon name={iconName} className="h-3 w-3" style={{ color: 'white' }} />
+            <SvgIcon name={iconName} className="h-3 w-3 text-white" />
           </div>
 
           <div style={{
@@ -132,7 +132,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
             fontWeight: '500',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}>
-            {nodeTitle}
+            {nodeTitle as string}
           </div>
 
           <div style={{
@@ -145,7 +145,7 @@ const NormalNode: React.FC<NodeProps<NormalNodeData>> = ({ data, selected }) => 
             justifyContent: 'center',
             fontSize: '16px',
           }}>
-            <NodeIcon icon={data?.icon} iconBgColor={data?.iconBgColor} />
+            <NodeIcon icon={data?.icon as string} iconBgColor={data?.iconBgColor as string} />
           </div>
         </>
       )}
