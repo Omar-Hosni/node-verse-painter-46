@@ -91,61 +91,61 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
   const right_sidebar = selectedNode?.data?.right_sidebar || {};
 
   const poseValuesRef = {
-    zooming: right_sidebar?.zooming,
-    neck: right_sidebar?.neck,
-    head: right_sidebar?.head,
-    stroke: right_sidebar?.stroke,
-    ball_size: right_sidebar?.ball_size,
-    export_version: right_sidebar?.export_version,
+    zooming: (right_sidebar as any)?.zooming,
+    neck: (right_sidebar as any)?.neck,
+    head: (right_sidebar as any)?.head,
+    stroke: (right_sidebar as any)?.stroke,
+    ball_size: (right_sidebar as any)?.ball_size,
+    export_version: (right_sidebar as any)?.export_version,
 
     // Entire location
-    entire_location_x: right_sidebar?.entire_location_x,
-    entire_location_y: right_sidebar?.entire_location_y,
+    entire_location_x: (right_sidebar as any)?.entire_location_x,
+    entire_location_y: (right_sidebar as any)?.entire_location_y,
 
     // Shoulders
-    shoulder_left_x: right_sidebar?.shoulder_left_x,
-    shoulder_left_y: right_sidebar?.shoulder_left_y,
-    shoulder_right_x: right_sidebar?.shoulder_right_x,
-    shoulder_right_y: right_sidebar?.shoulder_right_y,
+    shoulder_left_x: (right_sidebar as any)?.shoulder_left_x,
+    shoulder_left_y: (right_sidebar as any)?.shoulder_left_y,
+    shoulder_right_x: (right_sidebar as any)?.shoulder_right_x,
+    shoulder_right_y: (right_sidebar as any)?.shoulder_right_y,
 
     // Elbows
-    elbow_left_x: right_sidebar?.elbow_left_x,
-    elbow_left_y: right_sidebar?.elbow_left_y,
-    elbow_right_x: right_sidebar?.elbow_right_x,
-    elbow_right_y: right_sidebar?.elbow_right_y,
+    elbow_left_x: (right_sidebar as any)?.elbow_left_x,
+    elbow_left_y: (right_sidebar as any)?.elbow_left_y,
+    elbow_right_x: (right_sidebar as any)?.elbow_right_x,
+    elbow_right_y: (right_sidebar as any)?.elbow_right_y,
 
     // Hands
-    hand_left_x: right_sidebar?.hand_left_x,
-    hand_left_y: right_sidebar?.hand_left_y,
-    hand_right_x: right_sidebar?.hand_right_x,
-    hand_right_y: right_sidebar?.hand_right_y,
+    hand_left_x: (right_sidebar as any)?.hand_left_x,
+    hand_left_y: (right_sidebar as any)?.hand_left_y,
+    hand_right_x: (right_sidebar as any)?.hand_right_x,
+    hand_right_y: (right_sidebar as any)?.hand_right_y,
 
     // Waist
-    waist_left_x: right_sidebar?.waist_left_x,
-    waist_left_y: right_sidebar?.waist_left_y,
-    waist_right_x: right_sidebar?.waist_right_x,
-    waist_right_y: right_sidebar?.waist_right_y,
+    waist_left_x: (right_sidebar as any)?.waist_left_x,
+    waist_left_y: (right_sidebar as any)?.waist_left_y,
+    waist_right_x: (right_sidebar as any)?.waist_right_x,
+    waist_right_y: (right_sidebar as any)?.waist_right_y,
 
     // Knees
-    knee_left_x: right_sidebar?.knee_left_x,
-    knee_left_y: right_sidebar?.knee_left_y,
-    knee_right_x: right_sidebar?.knee_right_x,
-    knee_right_y: right_sidebar?.knee_right_y,
+    knee_left_x: (right_sidebar as any)?.knee_left_x,
+    knee_left_y: (right_sidebar as any)?.knee_left_y,
+    knee_right_x: (right_sidebar as any)?.knee_right_x,
+    knee_right_y: (right_sidebar as any)?.knee_right_y,
 
     // Feet
-    foot_left_x: right_sidebar?.foot_left_x,
-    foot_left_y: right_sidebar?.foot_left_y,
-    foot_right_x: right_sidebar?.foot_right_x,
-    foot_right_y: right_sidebar?.foot_right_y
+    foot_left_x: (right_sidebar as any)?.foot_left_x,
+    foot_left_y: (right_sidebar as any)?.foot_left_y,
+    foot_right_x: (right_sidebar as any)?.foot_right_x,
+    foot_right_y: (right_sidebar as any)?.foot_right_y
   };
 
 
   const lightValuesRef = (i: number) => {
-    return right_sidebar?.lights?.find((light: any) => light.id === i);
+    return (right_sidebar as any)?.lights?.find((light: any) => light.id === i);
   };
 
   const onChangeLightValue = (i: number, key: string, value: any) => {
-    const updatedLights = right_sidebar?.lights?.map((light: any) => {
+    const updatedLights = (right_sidebar as any)?.lights?.map((light: any) => {
       if (light?.id === i) {
         return {
           ...light,
@@ -157,7 +157,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
     updateNodeData(selectedNode!.id, {
       right_sidebar: {
-        ...right_sidebar,
+        ...(right_sidebar as any),
         lights: updatedLights,
       },
     });
@@ -284,7 +284,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
     updateNodeData(selectedNode.id, {
       right_sidebar: {
-        ...right_sidebar,
+        ...(right_sidebar as any),
         ...updatedPoseValues
       },
     });
@@ -301,9 +301,9 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
   //when rive light changes, update the right sidebar
   useEffect(() => {
-    if (!rive || !rive.viewModelInstance || !selectedNode || !right_sidebar.lights) return;
+    if (!rive || !rive.viewModelInstance || !selectedNode || !(right_sidebar as any).lights) return;
 
-    const newLights = right_sidebar.lights.map((light: any, idx: number) => {
+    const newLights = (right_sidebar as any).lights.map((light: any, idx: number) => {
       const g = lights[idx].lightGetters;
 
       if (!g.selected) {
@@ -323,12 +323,12 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     });
 
     // Prevent unnecessary updates
-    const hasChanges = JSON.stringify(newLights) !== JSON.stringify(right_sidebar.lights);
+    const hasChanges = JSON.stringify(newLights) !== JSON.stringify((right_sidebar as any).lights);
     if (!hasChanges) return;
 
     updateNodeData(selectedNode.id, {
       right_sidebar: {
-        ...right_sidebar,
+        ...(right_sidebar as any),
         lights: newLights,
       },
     });

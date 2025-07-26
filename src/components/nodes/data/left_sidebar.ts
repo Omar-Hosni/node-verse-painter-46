@@ -34,8 +34,16 @@ import SvgIcon from '@/components/SvgIcon';
 type NodeOption = {
   type: NodeType;
   label: string;
-  icon: React.ElementType;
+  icon: string;
   description: string;
+  status?: string;
+  image_url?: string;
+  node_desc_image_url?: string;
+  design?: string;
+  functionality?: string;
+  model?: string;
+  lora?: string;
+  data?: any;
 };
 
 type NodeCategory = {

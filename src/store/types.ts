@@ -5,6 +5,30 @@ export type NodeType =
   | 'normal-node'
   | 'layer-image-node'
   | 'preview-realtime-node'
+  | 'control-net-pose'
+  | 'control-net-edge'
+  | 'control-net-lights'
+  | 'control-net-face'
+  | 'control-net-segments'
+  | 'control-net-depth'
+  | 'control-net-normal-map'
+  | 'control-net-reference'
+  | 'image-to-image-reimagine'
+  | 'image-to-image-rescene'
+  | 'image-to-image-objectrelight'
+  | 'image-to-image-reangle'
+  | 'image-to-image-remix'
+  | 'image-to-image-remove-bg'
+  | 'image-to-image-upscale'
+  | 'image-to-image-inpainting'
+  | 'image-to-image-remove-outpainting'
+  | 'image-to-image-3d-maker'
+  | 'image-to-image-merger'
+  | 'input-text'
+  | 'connector'
+  | 'engine-real'
+  | 'gear-anime'
+  | 'gear-killua'
 
 export type Collaborator = {
   id: string;
@@ -69,6 +93,14 @@ export interface NodeOption {
   label: string;
   description: string;
   icon: any;
+  status?: string;
+  image_url?: string;
+  node_desc_image_url?: string;
+  design?: string;
+  functionality?: string;
+  model?: string;
+  lora?: string;
+  data?: any;
 }
 
 export interface CanvasState {

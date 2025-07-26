@@ -24,7 +24,7 @@ import * as Slider from '@radix-ui/react-slider';
 import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
 
 import EmojiPicker from 'emoji-picker-react';
-import RiveInput from './RiveInput';
+import { RiveInput } from './RiveInput';
 
 const CustomSlider = ({ value, min, max, step, onChange }: {
   value: number;
@@ -177,7 +177,7 @@ export const RightSidebar = () => {
         </label>
         <input
           type="text"
-          value={textValue}
+          value={textValue as string}
           onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
           className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
@@ -189,13 +189,13 @@ export const RightSidebar = () => {
     if (!selectedNode) return null;
 
     const sidebar = selectedNode.data?.right_sidebar || {};
-    const sidebarType = sidebar.type || 'source';
-    const source = sidebar.source || 'Image';
+    const sidebarType = (sidebar as any)?.type || 'source';
+    const source = (sidebar as any)?.source || 'Image';
 
     const handleTypeChange = (value: string) => {
       updateNodeData(selectedNode.id, {
         right_sidebar: {
-          ...sidebar,
+          ...(sidebar as any),
           type: value,
         },
       });
@@ -204,7 +204,7 @@ export const RightSidebar = () => {
     const handleSourceChange = (value: string) => {
       updateNodeData(selectedNode.id, {
         right_sidebar: {
-          ...sidebar,
+          ...(sidebar as any),
           source: value,
         },
       });
@@ -347,13 +347,13 @@ export const RightSidebar = () => {
         <label className="block text-sm font-medium text-[#9e9e9e] mb-1">{label}</label>        
         <input
           type="color"
-          value={value}
-          onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
+        value={value as string}
+        onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
           className="w-10 h-10 bg-black rounded-full ml-10 mb-1"
         />
         <input
         type="text"
-        value={value}
+        value={value as string}
         className="w-[100px] h-[30px] rounded-2xl bg-[#2a2a2a] text-center"
         />
       </div>
@@ -425,7 +425,7 @@ export const RightSidebar = () => {
     if (!selectedNode?.data) return null;
     
     // Safely cast the value to string
-    const value = selectedNode.data[property];
+    const value = selectedNode.data[property] as string;
     const textValue = typeof value === 'string' ? value : '';
     
     return (
@@ -434,7 +434,7 @@ export const RightSidebar = () => {
           {label}
         </label>
         <textarea
-          value={textValue}
+          value={textValue as string}
           placeholder={placeholder}
           onChange={(e) => updateNodeData(selectedNode.id, { [property]: e.target.value })}
           className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"

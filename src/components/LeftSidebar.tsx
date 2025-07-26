@@ -400,7 +400,7 @@ export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
 
           <SvgIcon name={icon} className={node.selected ? "h-3.5 w-3.5" : "h-3 w-3"}/>
 
-          <span>{node.data?.displayName || node.type}</span>
+          <span>{(node.data?.displayName as string) || node.type}</span>
         </div>
         {hasChildren && isExpanded && parentToChildrenMap[node.id].map(child =>
           renderNode(child, level + 1)
