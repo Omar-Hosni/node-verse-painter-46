@@ -437,7 +437,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     }
 
     if (!runwareService) {
-      toast.error('Runware service not available. Please check your API key.');
+      toast.error('Runware service not available.');
       return;
     }
 

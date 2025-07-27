@@ -28,19 +28,18 @@ const LayerImageNode: React.FC<NodeProps> = ({
   // Get generation data from runware store
   const latestGeneration = useRunwareStore((state) => state.latestForOutput(id));
   
-  // Get Runware service instance with API key from store
-  const runwayApiKey = useCanvasStore((state) => state.runwayApiKey);
+  // Get Runware service instance with hardcoded API key
   const runwareService = useMemo(() => {
-    if (!runwayApiKey) return null;
-    return getRunwareService({ apiKey: runwayApiKey });
-  }, [runwayApiKey]);
+    const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
+    return getRunwareService({ apiKey });
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!runwareService) {
-      toast.error("Runware service not available. Please check your API key.");
+      toast.error("Runware service not available.");
       return;
     }
 
