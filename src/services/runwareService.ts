@@ -191,7 +191,6 @@ export class RunwareService {
       taskType: "imageInference",
       taskUUID,
       positivePrompt: p.positivePrompt,
-      negativePrompt: p.negativePrompt ?? "",
       model: p.model ?? "runware:100@1",
       width: p.width ?? 1024,
       height: p.height ?? 1024,
@@ -203,6 +202,11 @@ export class RunwareService {
       strength: p.strength ?? 0.8,
       lora: p.lora ?? []
     };
+
+    // Only add negativePrompt if it has a valid value (2+ characters)
+    if (p.negativePrompt && p.negativePrompt.trim().length >= 2) {
+      task.negativePrompt = p.negativePrompt;
+    }
 
     if (p.promptWeighting) task.promptWeighting = p.promptWeighting;
     if (p.seed != null) task.seed = p.seed;
