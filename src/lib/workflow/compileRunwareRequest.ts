@@ -181,9 +181,14 @@ export function compileRunwareRequest({
     ...defaultParams,
     model,
     positivePrompt: positivePrompts.join('\n\n') || 'high quality image',
-    negativePrompt: negativePrompts.join('\n\n') || '',
     lora: loras,
   };
+  
+  // Only add negativePrompt if we have valid negative prompts
+  const negativePromptText = negativePrompts.join('\n\n').trim();
+  if (negativePromptText.length >= 2) {
+    params.negativePrompt = negativePromptText;
+  }
   
   // Add controlnets if any
   if (controlNets.length > 0) {
