@@ -65,9 +65,9 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
   // Get Runware service instance
   const runwareService = useMemo(() => {
-    if (!runwayApiKey) return null;
-    return getRunwareService({ apiKey: runwayApiKey });
-  }, [runwayApiKey]);
+    const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
+    return getRunwareService({ apiKey });
+  }, []);
 
   const rivePath = nodeType.includes("pose")
     ? "/rive/pose6.riv"

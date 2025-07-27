@@ -310,8 +310,8 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       const { generateImageForOutputNode } = await import('@/lib/workflow/generateImageForOutputNode');
       const { RunwareService } = await import('@/services/runwareService');
       
-      // Get the API key from store
-      const apiKey = useCanvasStore.getState().runwayApiKey;
+      // Get the API key - use the hardcoded key from .env
+      const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
       if (!apiKey) {
         toast.error("Please set your Runware API key in the settings.");
         return;
