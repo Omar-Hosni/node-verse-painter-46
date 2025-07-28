@@ -81,7 +81,7 @@ export function compileWorkflow({
   
   switch (flow) {
     case "t2i":
-      return compileT2I(upstreamNodes, model, loras, positivePrompt, negativePrompt);
+      return compileT2I(upstreamNodes, edges, nodeMap, model, loras, positivePrompt, negativePrompt);
     
     case "i2i":
       return compileI2I(upstreamNodes, imageToImageNodes, imageNodes, model, loras, positivePrompt, negativePrompt);
@@ -192,6 +192,8 @@ function extractPrompts(textNodes: WorkflowNode[]): { positivePrompt: string; ne
 
 function compileT2I(
   nodes: WorkflowNode[], 
+  edges: Edge[],
+  nodeMap: Map<string, WorkflowNode>,
   model: string, 
   loras: any[], 
   positivePrompt: string, 
@@ -206,8 +208,17 @@ function compileT2I(
   
   // Build preprocess steps for controlnets
   const preprocess = controlNetNodes
-    .filter(n => n.data.imageUUID || n.data.imageURL)
     .map(n => {
+      // Find connected input image node for this control-net node
+      const inputEdge = edges.find(e => e.target === n.id);
+      const inputImageNode = inputEdge ? nodeMap.get(inputEdge.source) : null;
+      
+      // Skip if no connected image node or no imageUUID
+      if (!inputImageNode || !inputImageNode.data.imageUUID) {
+        console.log(`Skipping control-net node ${n.id}: no connected image with UUID`);
+        return null;
+      }
+      
       // Extract control type from node type or data
       let controlType = 'pose'; // default
       if (n.type && n.type.includes('control-net-pose')) {
@@ -227,13 +238,16 @@ function compileT2I(
         controlType = n.data.type.replace('control-net-', '');
       }
       
+      console.log(`Setting up preprocessing for control-net node ${n.id}, type: ${controlType}, input image UUID: ${inputImageNode.data.imageUUID}`);
+      
       return {
         nodeId: n.id,
         type: "controlnet-preprocess" as const,
-        inputImageUUID: n.data.imageUUID!,
+        inputImageUUID: inputImageNode.data.imageUUID!,
         controlType
       };
-    });
+    })
+    .filter(Boolean) as NonNullable<typeof preprocess[0]>[];
   
   // Build controlNet array for main request
   const controlNet = controlNetNodes.map(n => ({
