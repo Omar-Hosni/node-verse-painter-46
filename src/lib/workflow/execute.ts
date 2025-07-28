@@ -46,6 +46,22 @@ export async function executeWorkflow({
       // Step 4: Execute preprocessing steps
       if (compiled.preprocess) {
         await executePreprocessing(compiled.preprocess, runwareService, store, updateCanvasNodeData);
+        
+        // Update controlNet array with preprocessed guided images
+        if (compiled.main.params.controlNet) {
+          for (const controlNet of compiled.main.params.controlNet) {
+            const nodeId = compiled.preprocess.find(p => 
+              p.controlType === controlNet.type
+            )?.nodeId;
+            
+            if (nodeId) {
+              const asset = store.getAsset(nodeId);
+              if (asset?.guidedImageURL) {
+                controlNet.guideImage = asset.guidedImageURL;
+              }
+            }
+          }
+        }
       }
       
       // Step 5: Execute main generation
