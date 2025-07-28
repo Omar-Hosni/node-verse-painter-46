@@ -130,14 +130,26 @@ async function executePreprocessing(
   store: ReturnType<typeof useRunwareStore.getState>,
   updateCanvasNodeData: (id: string, patch: any) => void
 ): Promise<void> {
+  // Map node control types to Runware preprocessor types
+  const preprocessorMap: Record<string, string> = {
+    'pose': 'openpose',
+    'edge': 'canny', 
+    'depth': 'depth',
+    'segments': 'seg',
+    'normal-map': 'normalbae',
+    'reference': 'canny' // or appropriate preprocessor for reference
+  };
+
   for (const step of preprocessSteps) {
     try {
       console.log(`Executing preprocessing for node ${step.nodeId}, type: ${step.controlType}`);
       
+      const preprocessorType = preprocessorMap[step.controlType] || 'canny';
+      
       // Call Runware's controlnet preprocessing
       const result = await runwareService.imageControlNetPreProcess(
         step.inputImageUUID,
-        step.controlType
+        preprocessorType
       );
       
       const guidedImageURL = result.guidedImageURL;
