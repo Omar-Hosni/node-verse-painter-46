@@ -129,13 +129,13 @@ export class RunwareService {
     return this.txt2img(params, abortSignal);
   }
 
-  async imageControlNetPreProcess(imageUUID: string, controlType: string, abortSignal?: AbortSignal) {
+  async imageControlNetPreProcess(imageUUID: string, preProcessorType: string, abortSignal?: AbortSignal) {
     const taskUUID = crypto.randomUUID();
     const task: RunwareTask = {
       taskType: "imageControlNetPreProcess" as any,
       taskUUID,
       imageUUID,
-      controlType
+      preProcessorType
     };
     const res = await this.run(
       [{ taskType: "authentication", apiKey: this.apiKey }, task],
