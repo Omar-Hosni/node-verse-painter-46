@@ -207,12 +207,33 @@ function compileT2I(
   // Build preprocess steps for controlnets
   const preprocess = controlNetNodes
     .filter(n => n.data.imageUUID || n.data.imageURL)
-    .map(n => ({
-      nodeId: n.id,
-      type: "controlnet-preprocess" as const,
-      inputImageUUID: n.data.imageUUID!,
-      controlType: n.type!.replace('control-net-', '')
-    }));
+    .map(n => {
+      // Extract control type from node type or data
+      let controlType = 'pose'; // default
+      if (n.type && n.type.includes('control-net-pose')) {
+        controlType = 'pose';
+      } else if (n.type && n.type.includes('control-net-edge')) {
+        controlType = 'edge';
+      } else if (n.type && n.type.includes('control-net-depth')) {
+        controlType = 'depth';
+      } else if (n.type && n.type.includes('control-net-segments')) {
+        controlType = 'segments';
+      } else if (n.type && n.type.includes('control-net-normal-map')) {
+        controlType = 'normal-map';
+      } else if (n.type && n.type.includes('control-net-reference')) {
+        controlType = 'reference';
+      } else if (n.data.functionality === 'control-net' && n.data.type) {
+        // Fallback to data.type if available
+        controlType = n.data.type.replace('control-net-', '');
+      }
+      
+      return {
+        nodeId: n.id,
+        type: "controlnet-preprocess" as const,
+        inputImageUUID: n.data.imageUUID!,
+        controlType
+      };
+    });
   
   // Build controlNet array for main request
   const controlNet = controlNetNodes.map(n => ({
