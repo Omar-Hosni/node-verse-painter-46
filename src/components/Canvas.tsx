@@ -306,11 +306,11 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       
       toast.info("Generating image...");
       
-      // Import the generation function and service
-      const { generateImageForOutputNode } = await import('@/lib/workflow/generateImageForOutputNode');
-      const { RunwareService } = await import('@/services/runwareService');
+      // Import the execution function and service
+      const { executeWorkflow } = await import('@/lib/workflow/execute');
+      const { getRunwareService } = await import('@/services/runwareService');
       
-      // Get the API key - use the hardcoded key from .env
+      // Get the API key - use the hardcoded key
       const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
       if (!apiKey) {
         toast.error("Please set your Runware API key in the settings.");
@@ -318,14 +318,14 @@ export const Canvas = ({activeTool, setActiveTool}) => {
       }
       
       // Initialize Runware service
-      const runwareService = new RunwareService({ apiKey });
+      const runwareService = getRunwareService({ apiKey });
       
-      // Generate image for the output node
-      await generateImageForOutputNode({
+      // Execute workflow for the output node
+      await executeWorkflow({
         workflowId: projectId || 'default',
+        outputNodeId: outputNode.id,
         nodes,
         edges,
-        outputNodeId: outputNode.id,
         runwareService,
         updateCanvasNodeData: (nodeId: string, data: any) => {
           useCanvasStore.getState().updateNodeData(nodeId, data);

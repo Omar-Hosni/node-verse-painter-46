@@ -25,8 +25,8 @@ const LayerImageNode: React.FC<NodeProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateNodeData = useCanvasStore((state) => state.updateNodeData);
   
-  // Get generation data from runware store
-  const latestGeneration = useRunwareStore((state) => state.latestForOutput(id));
+  // Get asset data from runware store
+  const runwareAsset = useRunwareStore((state) => state.getAsset(id));
   
   // Get Runware service instance with hardcoded API key
   const runwareService = useMemo(() => {
@@ -58,6 +58,12 @@ const LayerImageNode: React.FC<NodeProps> = ({
         fileName: file.name,
       });
 
+      // Update runware store
+      useRunwareStore.getState().upsertAsset(id, {
+        imageUUID,
+        imageURL,
+      });
+
       // Save to localStorage for caching
       localStorage.setItem(`layer-image-${id}`, imageURL);
       localStorage.setItem(`layer-image-uuid-${id}`, imageUUID);
@@ -80,7 +86,7 @@ const LayerImageNode: React.FC<NodeProps> = ({
     const imageUrl = displayImage;
     if (imageUrl && data?.functionality === 'output') {
       const link = document.createElement('a');
-      link.href = imageUrl;
+      link.href = imageUrl as string;
       link.download = `generated-image-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
@@ -99,16 +105,14 @@ const LayerImageNode: React.FC<NodeProps> = ({
 
   // Determine which image to display
   const displayImage = useMemo(() => {
-    // For output nodes, prioritize generation result
-    if (data?.functionality === 'output') {
-      if (latestGeneration?.status === 'succeeded' && latestGeneration.response?.imageURL) {
-        return latestGeneration.response.imageURL;
-      }
+    // For output nodes, prioritize generation result from asset store
+    if (data?.functionality === 'output' && runwareAsset?.imageURL) {
+      return runwareAsset.imageURL;
     }
     
     // Fall back to node data
     return data?.image || data?.imageUrl;
-  }, [data?.functionality, data?.image, data?.imageUrl, latestGeneration]);
+  }, [data?.functionality, data?.image, data?.imageUrl, runwareAsset]);
 
   // Load image from localStorage if available (fallback)
   useEffect(() => {
@@ -132,7 +136,7 @@ const LayerImageNode: React.FC<NodeProps> = ({
       {hasImage ? (
         <div className="w-full h-full relative">
           <img
-            src={displayImage}
+            src={displayImage as string}
             alt={data?.displayName as string || 'Layer Image'}
             className="w-full h-full object-cover rounded-lg"
           />
@@ -148,16 +152,7 @@ const LayerImageNode: React.FC<NodeProps> = ({
               </button>
             )}
           </div>
-          {latestGeneration?.status === 'running' && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-              <div className="text-white text-sm">Generating...</div>
-            </div>
-          )}
-          {latestGeneration?.status === 'failed' && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-              <div className="text-red-400 text-sm">Generation failed</div>
-            </div>
-          )}
+          {/* Generation status overlays removed - handled by main UI */}
           {data?.loading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
               <div className="animate-spin text-white text-2xl">⌛</div>
@@ -173,8 +168,6 @@ const LayerImageNode: React.FC<NodeProps> = ({
         >
           {data?.loading || data?.uploading ? (
             <div className="animate-spin text-2xl">⌛</div>
-          ) : latestGeneration?.status === 'running' ? (
-            <div className="text-white text-sm">Generating...</div>
           ) : (
             <>
               <ImageIcon className="h-8 w-8 mb-2" />

@@ -18,7 +18,8 @@ export type RunwareTask =
       scale?: 2 | 4;
       model?: string;
       faceEnhance?: boolean;
-    };
+    }
+  | { taskType: string; taskUUID: string; [key: string]: any }; // Catch-all for new task types
 
 export interface RunwareResponse {
   data: any[];
@@ -126,6 +127,103 @@ export class RunwareService {
   async applyControlNet(params: GenerateImageParams, abortSignal?: AbortSignal) {
     // Reuse txt2img builder; you already map controlNet inside it.
     return this.txt2img(params, abortSignal);
+  }
+
+  async imageControlNetPreProcess(imageUUID: string, controlType: string, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "imageControlNetPreProcess" as any,
+      taskUUID,
+      imageUUID,
+      controlType
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return {
+      guidedImageURL: out.guidedImageURL || out.imageURL,
+      imageUUID: out.imageUUID
+    };
+  }
+
+  async fluxKontext(params: any, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "fluxKontext" as any,
+      taskUUID,
+      ...params
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return this.normalizeGenResult(out);
+  }
+
+  async ipadapters(params: any, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "ipadapters" as any,
+      taskUUID,
+      ...params
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return this.normalizeGenResult(out);
+  }
+
+  async removeBackground(params: { imageUUID: string }, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "removeBackground" as any,
+      taskUUID,
+      ...params
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return {
+      imageURL: out.imageURL,
+      imageUUID: out.imageUUID
+    };
+  }
+
+  async inpaint(params: any, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "inpaint" as any,
+      taskUUID,
+      ...params
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return this.normalizeGenResult(out);
+  }
+
+  async outpaint(params: any, abortSignal?: AbortSignal) {
+    const taskUUID = crypto.randomUUID();
+    const task: RunwareTask = {
+      taskType: "outpaint" as any,
+      taskUUID,
+      ...params
+    };
+    const res = await this.run(
+      [{ taskType: "authentication", apiKey: this.apiKey }, task],
+      abortSignal
+    );
+    const out = this.findByUUID(res, taskUUID);
+    return this.normalizeGenResult(out);
   }
 
   /** (Optional) model discovery if Runware supports it */

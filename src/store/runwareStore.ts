@@ -1,27 +1,37 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type GenStatus = "idle" | "running" | "succeeded" | "failed" | "canceled";
+export type Status = "idle" | "running" | "succeeded" | "failed" | "canceled";
 
 export interface GenerationRecord {
   id: string;
   workflowId: string;
   outputNodeId: string;
+  flow: "t2i" | "i2i" | "flux-kontext" | "tool";
   request: any;
   response?: any;
-  status: GenStatus;
+  status: Status;
   startedAt?: number;
   endedAt?: number;
   error?: string;
 }
 
+export interface AssetRecord {
+  nodeId: string;
+  imageURL?: string;
+  imageUUID?: string;
+  guidedImageURL?: string; // for controlNet preprocessors
+  lastUpdated: number;
+}
+
 export interface RunwareStore {
   generations: Record<string, GenerationRecord>;
-  byOutputNode: Record<string, string>;
+  assets: Record<string, AssetRecord>;
   
-  create: (workflowId: string, outputNodeId: string, request: any) => string;
-  setStatus: (id: string, status: GenStatus, patch?: Partial<GenerationRecord>) => void;
-  latestForOutput: (outputNodeId: string) => GenerationRecord | undefined;
+  createGen: (rec: Omit<GenerationRecord, "id" | "status" | "startedAt">) => string;
+  setGenStatus: (id: string, status: Status, patch?: Partial<GenerationRecord>) => void;
+  upsertAsset: (nodeId: string, patch: Partial<AssetRecord>) => void;
+  getAsset: (nodeId: string) => AssetRecord | undefined;
   clearWorkflow: (workflowId: string) => void;
 }
 
@@ -29,15 +39,13 @@ export const useRunwareStore = create<RunwareStore>()(
   persist(
     (set, get) => ({
       generations: {},
-      byOutputNode: {},
+      assets: {},
       
-      create: (workflowId: string, outputNodeId: string, request: any) => {
+      createGen: (rec: Omit<GenerationRecord, "id" | "status" | "startedAt">) => {
         const id = crypto.randomUUID();
         const record: GenerationRecord = {
+          ...rec,
           id,
-          workflowId,
-          outputNodeId,
-          request,
           status: "idle",
         };
         
@@ -46,16 +54,12 @@ export const useRunwareStore = create<RunwareStore>()(
             ...state.generations,
             [id]: record,
           },
-          byOutputNode: {
-            ...state.byOutputNode,
-            [outputNodeId]: id,
-          },
         }));
         
         return id;
       },
       
-      setStatus: (id: string, status: GenStatus, patch?: Partial<GenerationRecord>) => {
+      setGenStatus: (id: string, status: Status, patch?: Partial<GenerationRecord>) => {
         set((state) => {
           const existing = state.generations[id];
           if (!existing) return state;
@@ -77,29 +81,42 @@ export const useRunwareStore = create<RunwareStore>()(
         });
       },
       
-      latestForOutput: (outputNodeId: string) => {
+      upsertAsset: (nodeId: string, patch: Partial<AssetRecord>) => {
+        set((state) => {
+          const existing = state.assets[nodeId];
+          const updated: AssetRecord = {
+            ...existing,
+            nodeId,
+            lastUpdated: Date.now(),
+            ...patch,
+          };
+          
+          return {
+            assets: {
+              ...state.assets,
+              [nodeId]: updated,
+            },
+          };
+        });
+      },
+      
+      getAsset: (nodeId: string) => {
         const state = get();
-        const generationId = state.byOutputNode[outputNodeId];
-        return generationId ? state.generations[generationId] : undefined;
+        return state.assets[nodeId];
       },
       
       clearWorkflow: (workflowId: string) => {
         set((state) => {
           const filteredGenerations: Record<string, GenerationRecord> = {};
-          const filteredByOutputNode: Record<string, string> = {};
           
           Object.entries(state.generations).forEach(([id, record]) => {
             if (record.workflowId !== workflowId) {
               filteredGenerations[id] = record;
-              if (state.byOutputNode[record.outputNodeId] === id) {
-                filteredByOutputNode[record.outputNodeId] = id;
-              }
             }
           });
           
           return {
             generations: filteredGenerations,
-            byOutputNode: filteredByOutputNode,
           };
         });
       },
@@ -108,7 +125,7 @@ export const useRunwareStore = create<RunwareStore>()(
       name: 'runware-store',
       partialize: (state) => ({
         generations: state.generations,
-        byOutputNode: state.byOutputNode,
+        assets: state.assets,
       }),
     }
   )
