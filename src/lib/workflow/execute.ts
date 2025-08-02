@@ -62,6 +62,20 @@ export async function executeWorkflow({
             }
           }
         }
+
+        // ✅ Validate guideImage format
+        for (const cn of compiled.main.params.controlNet || []) {
+          const valid = typeof cn.guideImage === "string" && (
+            cn.guideImage.startsWith("http") ||
+            cn.guideImage.startsWith("data:image/") ||
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cn.guideImage)
+          );
+
+          if (!valid) {
+            throw new Error(`Invalid guideImage for controlNet type "${cn.type}": ${cn.guideImage}`);
+          }
+        }
+
       }
       
       // Step 5: Execute main generation
@@ -162,11 +176,20 @@ async function executePreprocessing(
       
       const preprocessorType = preprocessorMap[step.controlType] || 'canny';
       
+      console.log(`[RUNWARE][Preprocess] node: ${step.nodeId}`);
+      console.log(`inputImage: ${step.inputImageUUID}`);
+      console.log(`type: ${preprocessorType}`);
+
+
       // Call Runware's controlnet preprocessing
       const result = await runwareService.imageControlNetPreProcess(
         step.inputImageUUID,
         preprocessorType
       );
+
+
+
+      console.log(result)
       
       const guidedImageURL = result.guidedImageURL;
       

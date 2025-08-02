@@ -13,8 +13,8 @@ interface ApiKeyModalProps {
 export const ApiKeyModal = ({ open, onOpenChange }: ApiKeyModalProps) => {
   const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
-  const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
-  const storedApiKey = useCanvasStore(state => state.runwayApiKey);
+  const setRunwareApiKey = useCanvasStore(state => state.setRunwareApiKey);
+  const storedApiKey = useCanvasStore(state => state.runwareApiKey);
 
   useEffect(() => {
     if (storedApiKey) {
@@ -28,7 +28,7 @@ export const ApiKeyModal = ({ open, onOpenChange }: ApiKeyModalProps) => {
       return;
     }
 
-    setRunwayApiKey(apiKey.trim());
+    setRunwareApiKey(apiKey.trim());
     setError('');
     onOpenChange(false);
   };

@@ -108,7 +108,7 @@ export interface CanvasState {
   edges: Edge[];
   selectedNode: Node | null;
   selectedEdge: Edge | null;
-  runwayApiKey: string | null;
+  runwareApiKey: string | null;
   credits: number | null;
   subscription: UserSubscription | null;
   clipboard: Node | null;
@@ -133,7 +133,7 @@ export interface CanvasState {
   setSelectedNode: (node: Node | null) => void;
   setSelectedNodeById: (node: Node | null) => void;
   setSelectedEdge: (edge: Edge | null) => void;
-  setRunwayApiKey: (apiKey: string) => void;
+  setRunwareApiKey: (apiKey: string) => void;
   uploadControlNetImage: (nodeId: string, imageData: File) => Promise<void>;
   uploadInputImage: (nodeId: string, imageData: File) => Promise<void>;
   

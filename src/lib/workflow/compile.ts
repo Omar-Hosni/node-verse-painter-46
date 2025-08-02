@@ -213,11 +213,24 @@ function compileT2I(
       const inputEdge = edges.find(e => e.target === n.id);
       const inputImageNode = inputEdge ? nodeMap.get(inputEdge.source) : null;
       
-      // Skip if no connected image node or no imageUUID
-      if (!inputImageNode || !inputImageNode.data.imageUUID) {
-        console.log(`Skipping control-net node ${n.id}: no connected image with UUID`);
+      if (!inputImageNode) {
+        console.log(`Skipping control-net node ${n.id}: no connected image`);
         return null;
       }
+
+      if (!inputImageNode.data.imageUUID && inputImageNode.data.image) {
+        // Fallback: use image if it's already a public URL (starts with http)
+        if (inputImageNode.data.image.startsWith('http')) {
+          console.warn(`No imageUUID found for ${inputImageNode.id}, but using URL: ${inputImageNode.data.image}`);
+        } else {
+          throw new Error(
+            `Node ${inputImageNode.id} has no valid imageUUID or public image URL. Must upload first.`
+          );
+        }
+      }
+
+      // const inputUUID = inputImageNode.data.imageUUID || inputImageNode.data.image
+      const inputUUID = inputImageNode.data.image
       
       // Extract control type from node type or data
       let controlType = 'pose'; // default
@@ -242,8 +255,8 @@ function compileT2I(
       
       return {
         nodeId: n.id,
-        type: "controlnet-preprocess" as const,
-        inputImageUUID: inputImageNode.data.imageUUID!,
+        type: "controlnet-preprocess",
+        inputImageUUID: inputUUID,
         controlType
       };
     })

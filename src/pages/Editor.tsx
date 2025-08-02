@@ -26,7 +26,7 @@ const Editor = () => {
   const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Outline');
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
-  const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
+  const setRunwareApiKey = useCanvasStore(state => state.setRunwareApiKey);
   const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
   const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
@@ -48,7 +48,7 @@ const Editor = () => {
     checkAuth();
     
     // Set API key - this can later be moved to user settings
-    setRunwayApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
+    setRunwareApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
 
     // Load project if projectId is provided
     if (projectId) {
@@ -72,7 +72,7 @@ const Editor = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [projectId, navigate, setRunwayApiKey, fetchUserCredits, fetchUserSubscription]);
+  }, [projectId, navigate, setRunwareApiKey, fetchUserCredits, fetchUserSubscription]);
 
   // Set up presence channel for collaborators
   const setupPresenceChannel = async () => {

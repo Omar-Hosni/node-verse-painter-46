@@ -2,77 +2,81 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Image as ImageIcon, Download } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
-import { useRunwareStore } from '@/store/runwareStore';
 import { getRunwareService } from '@/services/runwareService';
-import { toast } from "sonner";
+
+
+const API_KEY = "ZrfRoATgCFTd3Aui4A3O5BHgD4oflCTn"; 
 
 interface LayerImageNodeData {
   displayName?: string;
   functionality?: string;
   image?: string;
   imageUrl?: string;
-  imageUUID?: string;
   loading?: boolean;
   uploading?: boolean;
   [key: string]: any;
 }
 
-const LayerImageNode: React.FC<NodeProps> = ({
+const LayerImageNode: React.FC<NodeProps<LayerImageNodeData>> = ({
   id, 
   data, 
   selected 
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const updateNodeData = useCanvasStore((state) => state.updateNodeData);
-  
-  // Get asset data from runware store
-  const runwareAsset = useRunwareStore((state) => state.getAsset(id));
-  
-  // Get Runware service instance with hardcoded API key
-  const runwareService = useMemo(() => {
-    const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
-    return getRunwareService({ apiKey });
-  }, []);
+  const { updateNodeData } = useCanvasStore();
+
+  const runware = useMemo(() => getRunwareService({ apiKey: API_KEY }), []);
+
+  // const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   localStorage.clear()
+
+  //   try {
+  //     updateNodeData(id, { uploading: true });
+
+  //     const base64Image = await fileToBase64(file);
+      
+  //     // Save to store
+  //     updateNodeData(id, { 
+  //       image: base64Image,
+  //       uploading: false
+  //     });
+
+  //     // Persist in localStorage
+  //     localStorage.setItem(`layer-image-${id}`, base64Image);
+  //   } catch (error) {
+  //     console.error('Upload error:', error);
+  //     updateNodeData(id, { uploading: false });
+  //   }
+  // };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!runwareService) {
-      toast.error("Runware service not available.");
-      return;
-    }
 
     try {
       updateNodeData(id, { uploading: true });
       const base64Image = await fileToBase64(file);
 
       // Upload to Runware
-      const { imageUUID, imageURL } = await runwareService.uploadImage(base64Image);
+      const { imageUUID, imageURL } = await runware.uploadImage(base64Image);
+      console.log(imageUUID)
+      console.log(imageURL)
 
       updateNodeData(id, {
         image: imageURL,
         imageUrl: imageURL,
         imageUUID,
-        uploading: false,
-        fileName: file.name,
+        uploading: false
       });
 
-      // Update runware store
-      useRunwareStore.getState().upsertAsset(id, {
-        imageUUID,
-        imageURL,
-      });
-
-      // Save to localStorage for caching
       localStorage.setItem(`layer-image-${id}`, imageURL);
       localStorage.setItem(`layer-image-uuid-${id}`, imageUUID);
-      
-      toast.success("Image uploaded to Runware successfully!");
     } catch (error) {
       console.error("Upload error:", error);
       updateNodeData(id, { uploading: false });
-      toast.error("Upload failed. Please try again.");
     }
   };
 
@@ -83,10 +87,9 @@ const LayerImageNode: React.FC<NodeProps> = ({
   };
 
   const handleDownload = () => {
-    const imageUrl = displayImage;
-    if (imageUrl && data?.functionality === 'output') {
+    if (data?.image && data?.functionality === 'output') {
       const link = document.createElement('a');
-      link.href = imageUrl as string;
+      link.href = data.image as string;
       link.download = `generated-image-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
@@ -103,30 +106,20 @@ const LayerImageNode: React.FC<NodeProps> = ({
     });
   };
 
-  // Determine which image to display
-  const displayImage = useMemo(() => {
-    // For output nodes, prioritize generation result from asset store
-    if (data?.functionality === 'output' && runwareAsset?.imageURL) {
-      return runwareAsset.imageURL;
-    }
-    
-    // Fall back to node data
-    return data?.image || data?.imageUrl;
-  }, [data?.functionality, data?.image, data?.imageUrl, runwareAsset]);
 
-  // Load image from localStorage if available (fallback)
   useEffect(() => {
-    if (!displayImage && !data?.loading && data?.functionality !== 'output') {
-      const savedImage = localStorage.getItem(`layer-image-${id}`);
-      if (savedImage) {
-        updateNodeData(id, { image: savedImage, imageUrl: savedImage });
-      }
+    const storedImage = localStorage.getItem(`layer-image-${id}`);
+    if (storedImage && !data?.image) {
+      updateNodeData(id, { image: storedImage });
     }
-  }, [id, displayImage, data?.loading, data?.functionality, updateNodeData]);
+  }, [id, data?.image, updateNodeData]);
+
+
 
   const isOutputNode = data?.functionality === 'output';
   const isInputNode = data?.functionality === 'input';
-  const hasImage = Boolean(displayImage);
+  const hasImage = Boolean(data?.image || data?.imageUrl);
+  const imageSource = (data?.image || data?.imageUrl) as string;
 
   return (
     <div
@@ -136,11 +129,11 @@ const LayerImageNode: React.FC<NodeProps> = ({
       {hasImage ? (
         <div className="w-full h-full relative">
           <img
-            src={displayImage as string}
+            src={imageSource}
             alt={data?.displayName as string || 'Layer Image'}
-            className="w-full h-full object-cover rounded-lg"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 flex items-center justify-between rounded-b-lg">
+          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 flex items-center justify-between">
             <span>{data?.displayName as string || 'Image Layer'}</span>
             {isOutputNode && (
               <button
@@ -152,16 +145,15 @@ const LayerImageNode: React.FC<NodeProps> = ({
               </button>
             )}
           </div>
-          {/* Generation status overlays removed - handled by main UI */}
           {data?.loading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
               <div className="animate-spin text-white text-2xl">⌛</div>
             </div>
           )}
         </div>
       ) : (
         <div 
-          className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors rounded-lg ${
+          className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors ${
             isInputNode ? 'cursor-pointer hover:bg-[#222]' : ''
           }`}
           onClick={isInputNode ? triggerUpload : undefined}

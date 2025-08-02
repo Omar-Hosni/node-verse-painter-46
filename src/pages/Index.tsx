@@ -8,12 +8,12 @@ import { AppHeader } from '@/components/AppHeader';
 import { Toolbar } from '@/components/Toolbar';
 
 const Index = () => {
-  const setRunwayApiKey = useCanvasStore(state => state.setRunwayApiKey);
+  const setRunwareApiKey = useCanvasStore(state => state.setRunwareApiKey);
   const addNode = useCanvasStore(state => state.addNode);
   
   // Set the API key on component mount
   useEffect(() => {
-    setRunwayApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
+    setRunwareApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
     
     // Add some initial nodes in a horizontal layout
     // This demonstrates the horizontal flow
@@ -22,7 +22,7 @@ const Index = () => {
     addNode('control-net-edge', { x: 600, y: 250 }, 2);
     addNode('layer-image-node', { x: 850, y: 250 }, 3);
     
-  }, [setRunwayApiKey, addNode]);
+  }, [setRunwareApiKey, addNode]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">

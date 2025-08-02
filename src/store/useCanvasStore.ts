@@ -51,7 +51,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   edges: [],
   selectedNode: null,
   selectedEdge: null,
-  runwayApiKey: null,
+  runwareApiKey: null,
   credits: null,
   subscription: null,
   clipboard: null,
@@ -269,8 +269,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ selectedEdge: edge });
   },
 
-  setRunwayApiKey: (apiKey) => {
-    set({ runwayApiKey: apiKey });
+  setRunwareApiKey: (apiKey) => {
+    set({ runwareApiKey: apiKey });
   },
 
 
@@ -278,7 +278,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     await uploadControlNetImage(
       nodeId, 
       imageData, 
-      get().runwayApiKey,
+      get().runwareApiKey,
       get().updateNodeData
     );
   },
@@ -287,7 +287,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     await uploadInputImage(
       nodeId, 
       imageData, 
-      get().runwayApiKey,
+      get().runwareApiKey,
       get().updateNodeData
     );
   },
@@ -499,7 +499,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     await generateImage(
       get().nodes,
       get().edges,
-      get().runwayApiKey,
+      get().runwareApiKey,
       get().updateNodeData,
       get().useCreditsForGeneration
     );

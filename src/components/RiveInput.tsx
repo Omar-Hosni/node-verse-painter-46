@@ -58,14 +58,16 @@ const CustomSlider = ({
 };
 
 export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
-  const { selectedNode, updateNodeData, runwayApiKey } = useCanvasStore();
+  const { selectedNode, updateNodeData, runwareApiKey } = useCanvasStore();
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const location = useLocation();
   const projectId = location.pathname.split("/").pop();
+  const guidedImageURL = (selectedNode?.data as any)?.guidedImageURL; //controlnet preprocessed input image
+
 
   // Get Runware service instance
   const runwareService = useMemo(() => {
-    const apiKey = "LGwIZIClC1TdL4ulzqWVTf2CAFm4AUpG";
+    const apiKey = "ZrfRoATgCFTd3Aui4A3O5BHgD4oflCTn";
     return getRunwareService({ apiKey });
   }, []);
 
