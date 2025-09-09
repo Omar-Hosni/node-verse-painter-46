@@ -1,21 +1,36 @@
 import { Node, Edge } from '@xyflow/react';
+import { PreprocessedImageData } from '../utils/controlNetUtils';
 
 export type NodeType = 
-  | 'comment-node'
   | 'normal-node'
-  | 'layer-image-node'
   | 'preview-realtime-node'
+  | 'preview-image'
+  | 'text-tool'
+  | 'rectangle-node'
+  | 'circle-node'
+  | 'star-node'
+  | 'frame-node'
+  | 'imageInput'
+  | 'textInput'
+  | 'controlNet'
+  | 'rerendering'
+  | 'tool'
+  | 'engine'
+  | 'gear'
+  | 'output'
+  // Specific ControlNet types
   | 'control-net-pose'
   | 'control-net-edge'
-  | 'control-net-lights'
   | 'control-net-face'
   | 'control-net-segments'
   | 'control-net-depth'
   | 'control-net-normal-map'
   | 'control-net-reference'
+  | 'seed-image-lights'
+  // Specific Image-to-Image types
   | 'image-to-image-reimagine'
   | 'image-to-image-rescene'
-  | 'image-to-image-objectrelight'
+  | 'image-to-image-object-relight'
   | 'image-to-image-reangle'
   | 'image-to-image-remix'
   | 'image-to-image-remove-bg'
@@ -24,11 +39,18 @@ export type NodeType =
   | 'image-to-image-remove-outpainting'
   | 'image-to-image-3d-maker'
   | 'image-to-image-merger'
+  // Input types
   | 'input-text'
+  // Helper types
   | 'connector'
+  // Engine types
   | 'engine-real'
+  // Gear types
   | 'gear-anime'
   | 'gear-killua'
+  // Drag and drop image types
+  | 'image-node'
+  | 'image-layer'
 
 export type Collaborator = {
   id: string;
@@ -87,20 +109,73 @@ export interface CollaborativeFabricObject {
   };
 }
 
+// Workflow execution types
+export interface NodeData {
+  // Common properties
+  id: string;
+  type: string;
+  
+  // Image Input Node
+  imageFile?: File;
+  imageUrl?: string;
+  imageType?: 'object' | 'scene' | 'fuse';
+  
+  // Text Input Node
+  prompt?: string;
+  
+  // ControlNet Node
+  preprocessor?: string;
+  preprocessedImage?: PreprocessedImageData;
+  isPreprocessing?: boolean;
+  hasPreprocessedImage?: boolean;
+  
+  // Engine Node
+  model?: string;
+  width?: number;
+  height?: number;
+  steps?: number;
+  cfgScale?: number;
+  strength?: number;
+  loras?: Array<{model: string; weight: number}>;
+  
+  // Gear Node
+  loraModel?: string;
+  weight?: number;
+  
+  // Rerendering Node
+  rerenderingType?: 'reimagine' | 'reference' | 'rescene' | 'reangle' | 'remix';
+  referenceType?: string;
+  degrees?: number;
+  direction?: string;
+  creativity?: number;
+  
+  // Tool Node
+  toolType?: 'removebg' | 'upscale' | 'inpaint' | 'outpaint';
+  upscaleFactor?: 2 | 3 | 4;
+  maskImage?: string;
+  inpaintPrompt?: string;
+  outpaintDirection?: 'up' | 'down' | 'left' | 'right' | 'all';
+  outpaintAmount?: number;
+  
+  // Output Node
+  generatedImage?: string;
+  
+  // Right sidebar data
+  right_sidebar?: {
+    creativity?: number;
+    referenceType?: string;
+    degrees?: number;
+    direction?: string;
+    pin?: boolean;
+  };
+}
+
 //for LeftSidebar and Editor, etc.
 export interface NodeOption {
   type: NodeType;
   label: string;
   description: string;
   icon: any;
-  status?: string;
-  image_url?: string;
-  node_desc_image_url?: string;
-  design?: string;
-  functionality?: string;
-  model?: string;
-  lora?: string;
-  data?: any;
 }
 
 export interface CanvasState {
@@ -163,6 +238,10 @@ export interface CanvasState {
   generateImageFromNodes: () => Promise<void>;
   sendWorkflowToAPI: () => Promise<any>;
   
+  // Tool management
+  activeTool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame';
+  setActiveTool: (tool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame') => void;
+
   // New properties for drawing collaboration
   fabricObjects: CollaborativeFabricObject[];
   

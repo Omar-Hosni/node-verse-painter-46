@@ -47,7 +47,7 @@ interface PoseControl extends BaseNode {
     head: number;
   };
    rules: {
-    from: ["layer-image", "preview-image", "preview-realtime"];
+    from: ["preview-image", "preview-realtime"];
     to: ["preview-image"];
   };
 }
@@ -316,6 +316,64 @@ interface TextPrompt extends BaseNode {
   };
 }
 
+interface TextTool extends BaseNode {
+  design: 'text-node',
+  functionality: 'text-tool',
+  type: 'text-tool',
+  right_sidebar: {
+    // Position
+    location: { x: number; y: number };
+    pin: boolean;
+    size: { width: number; height: number };
+    
+    // Typography
+    font: string;
+    weight: string;
+    fontSize: number;
+    align: 'left' | 'center' | 'right';
+    lineSpacing: number;
+    letterSpacing: number;
+    
+    // Style
+    visibility: boolean;
+    opacity: number;
+    blendMode: string;
+    color: string;
+    
+    // Text content
+    text: string;
+  };
+  rules: {
+    from: [];
+    to: [];
+  };
+}
+
+interface ImageTool extends BaseNode {
+  design: 'image-node',
+  functionality: 'image-tool',
+  type: 'image-tool',
+  right_sidebar: {
+    // Position
+    location: { x: number; y: number };
+    pin: boolean;
+    size: { width: number; height: number };
+    
+    // Style
+    visibility: boolean;
+    opacity: number;
+    blendMode: string;
+    
+    // Image content
+    imageUrl: string;
+    imageName: string;
+  };
+  rules: {
+    from: [];
+    to: [];
+  };
+}
+
 
 interface Merger extends BaseNode {
   design: 'normal-node',
@@ -336,7 +394,7 @@ interface Router extends BaseNode {
 
 //Render (preview)
 interface ImageOutput extends BaseNode {
-  design: 'layer-image-node',
+  design: 'previewNode',
   functionality: 'preview',
   type:"preview-image",
   right_sidebar: {
@@ -471,24 +529,14 @@ interface Gear extends BaseNode {
   };
 }
 
-//Layers (Input Nodes)
-interface ImageLayer extends BaseNode {
-  design: 'layer-image-node',
-  functionality: 'layer',
-  type: 'layer-image',
-}
+//Layers (Input Nodes) - REMOVED
+// interface ImageLayer extends BaseNode {
+//   design: 'previewNode',
+//   functionality: 'layer',
+//   type: 'layer-image',
+// }
 
-interface Shape extends BaseNode {
-  design: 'shape-node',
-  functionality: 'layer',
-  type: 'layer-triangle' | 'layer-circle' | 'layer-square' | 'layer-frame' | 'layer-section'
-}
-
-interface Comment extends BaseNode {
-  design: 'comment-node',
-  functionality: 'layer',
-  type:"layer-comment"
-}
+// Removed shape and comment nodes
 
 
 
@@ -510,12 +558,11 @@ type Node =
   | Inpainting
   | ThreeDMaker
   | TextPrompt
+  | TextTool
+  | ImageTool
   | Merger
   | Router
   | ImageOutput
   | Realtime
   | Engine
-  | Gear
-  | ImageLayer
-  | Shape 
-  | Comment;
+  | Gear;

@@ -4,8 +4,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas } from '@/components/Canvas';
 import { LeftSidebar } from '@/components/LeftSidebar';
 import { RightSidebar } from '@/components/RightSidebar';
-import { AppHeader } from '@/components/AppHeader';
-import { Toolbar } from '@/components/Toolbar';
+import { EditorHeader } from '@/components/EditorHeader';
+import EnhancedLoadingScreen from '@/components/EnhancedLoadingScreen';
+
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,12 +17,18 @@ import {FloatingPaintCanvas} from '@/components/FloatingPaintCanvas';
 import { useReactFlow } from '@xyflow/react';
 import LeftSidebarNodeDesc from '@/components/LeftSidebarNodeDesc';
 import { Lasso } from '@/components/Lasso';
+import { MaskEditor } from '@/components/MaskEditor';
+import { OutpaintControls } from '@/components/OutpaintControls';
+import { useEditingTools } from '@/hooks/useEditingTools';
+import { Toolbar } from '@/components/Toolbar';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('Untitled Project');
   const [loading, setLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState('init');
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Outline');
   const loadProject = useCanvasStore(state => state.loadProject);
@@ -31,9 +38,13 @@ const Editor = () => {
   const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
   const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
-  
-  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'comment' | 'paint' | 'circle' | 'rectangle' | 'text' | 'frame' | 'triangle' | 'labeledGroup' | 'lasso'>('select');
+  const {activeTool, setActiveTool} = useCanvasStore()
+
+
   const [selectedInsertNode, setSelectedInsertNode] = useState<NodeOption | null>(null);
+  
+  // Initialize editing tools
+  const editingTools = useEditingTools();
 
   useEffect(() => {
     // Check authentication and redirect if not authenticated
@@ -48,7 +59,7 @@ const Editor = () => {
     checkAuth();
     
     // Set API key - this can later be moved to user settings
-    setRunwareApiKey('mroO1ot3dGvbiI9c7e9lQuvpxXyXxAjl');
+    setRunwareApiKey("v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ");
 
     // Load project if projectId is provided
     if (projectId) {
@@ -154,10 +165,20 @@ const Editor = () => {
 
   const loadProjectData = async () => {
     setLoading(true);
+    setLoadingStep('init');
+    setLoadingProgress(0);
     
     if (projectId) {
       try {
-        // First get project name
+        // Step 1: Initialize workspace
+        setLoadingStep('init');
+        setLoadingProgress(20);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for UX
+        
+        // Step 2: Load project data
+        setLoadingStep('project');
+        setLoadingProgress(40);
+        
         const { data, error } = await supabase
           .from('projects')
           .select('name')
@@ -170,11 +191,22 @@ const Editor = () => {
           setProjectName(data.name);
         }
         
-        // Then load the canvas data
+        setLoadingProgress(70);
+        
+        // Step 3: Load canvas data
+        setLoadingStep('canvas');
+        setLoadingProgress(80);
+        
         const success = await loadProject(projectId);
         if (!success) {
           toast.error('Failed to load project canvas data');
         }
+        
+        setLoadingProgress(100);
+        
+        // Small delay to show completion
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
       } catch (error: any) {
         console.error('Error loading project:', error);
         toast.error(`Failed to load project: ${error.message}`);
@@ -199,9 +231,33 @@ const Editor = () => {
         // Set flag to prevent loop with own updates
         setIsLocalUpdate(true);
         
+        // Ensure preprocessed data is preserved in the saved state
+        const serializableNodes = nodes.map(node => {
+          if ((node.type?.includes('control-net') || node.type === 'seed-image-lights') && 
+              node.data?.preprocessedImage) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                // Ensure preprocessed data is preserved
+                preprocessedImage: node.data.preprocessedImage,
+                hasPreprocessedImage: !!node.data.preprocessedImage,
+                preprocessor: node.data.preprocessor,
+                // Preserve right_sidebar state
+                right_sidebar: {
+                  ...node.data.right_sidebar,
+                  preprocessedImage: node.data.preprocessedImage?.guideImageURL,
+                  showPreprocessed: !!node.data.preprocessedImage,
+                },
+              },
+            };
+          }
+          return node;
+        });
+        
         // Convert to serializable JSON
         const canvasData = {
-          nodes: JSON.parse(JSON.stringify(nodes)),
+          nodes: JSON.parse(JSON.stringify(serializableNodes)),
           edges: JSON.parse(JSON.stringify(edges))
         };
         
@@ -242,35 +298,82 @@ const Editor = () => {
 
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen bg-[#121212]">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-    </div>;
+    const loadingSteps = [
+      { 
+        id: 'init', 
+        label: 'Initializing workspace', 
+        completed: loadingStep !== 'init', 
+        active: loadingStep === 'init' 
+      },
+      { 
+        id: 'project', 
+        label: 'Loading project data', 
+        completed: loadingStep === 'canvas' || loadingProgress === 100, 
+        active: loadingStep === 'project' 
+      },
+      { 
+        id: 'canvas', 
+        label: 'Setting up canvas', 
+        completed: loadingProgress === 100, 
+        active: loadingStep === 'canvas' 
+      },
+    ];
+
+    return (
+      <EnhancedLoadingScreen
+        steps={loadingSteps}
+        currentStep={loadingStep}
+        message={
+          loadingStep === 'init' ? 'Initializing workspace...' :
+          loadingStep === 'project' ? 'Loading project data...' :
+          loadingStep === 'canvas' ? 'Setting up canvas...' :
+          'Loading project...'
+        }
+        progress={loadingProgress}
+      />
+    );
   }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#121212] text-white text-sm">
-      <AppHeader 
+      <EditorHeader 
         projectName={projectName} 
         onSave={handleSave} 
         onBackToDashboard={handleBackToDashboard}
-        showLogoutButton={true}
-        onLogout={handleLogout}
         projectId={projectId}
       />
       <div className="flex flex-1 relative">
         <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} setSelectedInsertNode={setSelectedInsertNode}/>
-        <LeftSidebarNodeDesc selectedInsertNode={selectedInsertNode} setSelectedInsertNode={setSelectedInsertNode}/>
 
         <div className="flex-1 relative" id="canvas-area">
-          <Canvas activeTool={activeTool} setActiveTool={setActiveTool}/>
+          <Canvas onCanvasClick={() => setSelectedInsertNode(null)} />
           <div id="canvas-wrapper" className="absolute inset-0 pointer-events-none">
-            <FloatingPaintCanvas isPainting={activeTool === 'paint'} />
+            <FloatingPaintCanvas isPainting={false} />
           </div>
         </div>
 
         <RightSidebar />
+        
+        {/* Preview Panel Overlay */}
+        <LeftSidebarNodeDesc selectedInsertNode={selectedInsertNode} setSelectedInsertNode={setSelectedInsertNode}/>
+        
+
+        {/* Editing Tool Interfaces */}
+        <MaskEditor
+          isOpen={editingTools.state.maskEditor.isOpen}
+          imageUrl={editingTools.state.maskEditor.imageUrl || ''}
+          onMaskComplete={editingTools.maskEditor.onComplete}
+          onCancel={editingTools.maskEditor.close}
+        />
+        
+        <OutpaintControls
+          isOpen={editingTools.state.outpaintControls.isOpen}
+          initialDirection={editingTools.state.outpaintControls.direction}
+          initialAmount={editingTools.state.outpaintControls.amount}
+          onOutpaintSettings={editingTools.outpaintControls.onSettings}
+          onCancel={editingTools.outpaintControls.close}
+        />
       </div>
-      {/* <Toolbar /> */}
       <Toolbar activeTool={activeTool as any} onToolChange={(tool) => setActiveTool(tool as any)} setActiveTab={setActiveTab}/>
 
     </div>

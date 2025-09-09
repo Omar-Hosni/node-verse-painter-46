@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://rsms.me/inter/inter.css');
 
@@ -7,7 +6,10 @@
 @tailwind utilities;
 
 @layer base {
-  html, body, #root {
+
+  html,
+  body,
+  #root {
     font-size: 14px;
   }
 
@@ -81,6 +83,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
   }
@@ -106,6 +109,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -118,13 +122,13 @@
 
 /* Node styling */
 .react-flow__node {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .react-flow__node:hover {
-  transform: translateY(-2px);
+  /* Removed transform to prevent stacking context issues with z-index */
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -135,7 +139,7 @@
 /* Handle styling */
 .react-flow__handle {
   opacity: 1;
-  transition: opacity 0.3s, transform 0.2s;
+  transition: opacity 0.3s;
   border-radius: 50%;
   background-color: white;
   z-index: 50;
@@ -157,24 +161,72 @@
 /* Keep hover effect */
 .react-flow__node:hover .react-flow__handle {
   opacity: 1;
-  transform: scale(1.2);
+  /* Removed transform to prevent stacking context issues with z-index */
 }
 
-/* Edge hover effect */
-.react-flow__edge:hover .react-flow__edge-path {
-  stroke-width: 3;
+/* Edge styling */
+.react-flow .react-flow__edges .react-flow__edge .react-flow__edge-path {
+  stroke: #007AFF !important;
+  stroke-width: 2.5 !important;
+  stroke-dasharray: none !important;
+  marker-start: url(#custom-circle) !important;
+  marker-end: url(#custom-arrow) !important;
 }
 
-/* Edge interaction */
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke: #ff69b4;
-  stroke-width: 3;
+.react-flow .react-flow__edges .react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3.5 !important;
+}
+
+.react-flow .react-flow__edges .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #007bff !important;
+  stroke-width: 3 !important;
+}
+
+/* Ensure arrow markers are visible with maximum z-index */
+.react-flow__arrowhead,
+.react-flow__arrowhead-closed {
+  fill: #007AFF !important;
+  stroke: #007AFF !important;
+  z-index: 999999999 !important;
+}
+
+/* Custom markers with maximum z-index */
+#custom-circle,
+#custom-arrow {
+  z-index: 999999999 !important;
+}
+
+/* Override global handle styling for preview nodes */
+.preview-node-handle {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  transform: none !important;
+  border: none !important;
+}
+
+.preview-node-handle:hover {
+  background-color: transparent !important;
+  transform: none !important;
+}
+
+/* Force React Flow viewport to render edges on top of all nodes */
+.react-flow__viewport {
+  z-index: auto !important;
+}
+
+.react-flow__viewport .react-flow__edges {
+  z-index: 10000 !important; /* High enough to be above all nodes, but reasonable */
+}
+
+/* Allow nodes to use their individual z-index values from the layer system */
+.react-flow__viewport .react-flow__nodes {
+  z-index: auto !important;
 }
 
 /* Handle hover effect */
 .react-flow__handle:hover {
   background-color: #ff69b4;
-  transform: scale(1.5);
+  /* Removed transform to prevent stacking context issues */
 }
 
 /* Node header styling */
@@ -306,4 +358,46 @@ body {
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+/* Color picker customizations */
+.color-picker-container .react-colorful {
+  margin-top: 0 !important;
+}
+
+.color-picker-container .react-colorful__interactive {
+  margin-top: 0 !important;
+}
+
+.color-picker-container .react-colorful__hue {
+  height: 16px !important;
+  border-radius: 16px !important;
+}
+
+.color-picker-container .react-colorful__pointer {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.color-picker-container .react-colorful__saturation-pointer {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.color-picker-container .react-colorful__hue-pointer {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  /* WebKit */
 }

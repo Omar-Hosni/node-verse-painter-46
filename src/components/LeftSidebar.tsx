@@ -1,32 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useCanvasStore } from '@/store/useCanvasStore';
-import { useReactFlow } from '@xyflow/react';
-import { 
-  Cpu, 
-  Layers, 
-  Image as ImageIcon, 
-  Type, 
-  FileOutput, 
-  HelpCircle, 
-  ChevronDown, 
+import { useCanvasStore } from "@/store/useCanvasStore";
+import { useReactFlow } from "@xyflow/react";
+import {
+  Cpu,
+  Layers,
+  Image as ImageIcon,
+  Type,
+  FileOutput,
+  HelpCircle,
+  ChevronDown,
   ChevronRight,
   LayoutList,
   SquarePlus,
   FileImage,
   Shuffle,
   Search,
-  PlusCircle
-} from 'lucide-react';
-
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-
-import { IoMdArrowDropdown, IoMdArrowDropright  } from "react-icons/io";
-import { calculateZIndices, TreeNode } from "@/utils/zIndexCalculator";
+  PlusCircle,
+} from "lucide-react";
 
 import {
   Collapsible,
@@ -35,658 +26,390 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Node } from '@xyflow/react';
-import { NodeType, NodeOption } from '@/store/types';
+import { NodeType, NodeOption } from "@/store/types";
+import { getHighestOrder } from "@/store/nodeActions";
+import { insertCategories, assetCategories } from "./nodes/data/left_sidebar";
+import { LayerPanel } from "./LayerPanel";
+import SvgIcon from "./SvgIcon";
+import { TextInput } from "./PropertyComponents";
 
-import { DndContext } from '@dnd-kit/core';
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import Sortable from 'sortablejs';
-import { getHighestOrder } from '@/store/nodeActions';
+// ToggleButton component - same as RightSidebar
+const ToggleButton = React.memo(
+  ({
+    options,
+    value,
+    onChange,
+  }: {
+    options: { label: string | React.ReactNode; value: string }[];
+    value: string;
+    onChange: (value: string) => void;
+  }) => (
+    <div
+      className="flex bg-[#1a1a1a] rounded-full w-full p-0.5"
+      style={{ minHeight: "30px", height: "30px" }}
+    >
+      {options.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => onChange(option.value)}
+          className={`flex-1 h-full text-sm transition-all flex items-center justify-center rounded-full ${
+            value === option.value
+              ? "bg-[#333333] text-white"
+              : "text-[#9e9e9e] hover:text-white"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+);
 
-import { insertCategories, assetCategories } from './nodes/data/left_sidebar';
-
-import _3dmaker from './nodes/data/icons/3dmaker.svg'
-import SvgIcon from './SvgIcon';
-
-
-
-export const LeftSidebar = ({activeTab, setActiveTab, setSelectedInsertNode}: {
-  activeTab: 'Outline' | 'Insert' | 'Assets';
-  setActiveTab: (tab: 'Outline' | 'Insert' | 'Assets') => void;
+export const LeftSidebar = ({
+  activeTab,
+  setActiveTab,
+  setSelectedInsertNode,
+}: {
+  activeTab: "Outline" | "Insert" | "Assets";
+  setActiveTab: (tab: "Outline" | "Insert" | "Assets") => void;
   setSelectedInsertNode: (insertNode) => void;
 }) => {
-
-  const addNode = useCanvasStore(state => state.addNode);
+  const addNode = useCanvasStore((state) => state.addNode);
   const reactFlowInstance = useReactFlow();
-  const {getNodes} = useReactFlow()
-  
-  // Get nodes from the canvas
-  const canvasNodes = useCanvasStore(state => state.nodes);
-  const canvasEdges = useCanvasStore(state => state.edges);
-  const [currentSelectedNode, setCurrentSelectedNode] = useState<Node | null>(null);
-  const { setSelectedNode, setSelectedNodeById, onNodesChange, selectedNode } = useCanvasStore();
+  const { getNodes } = useReactFlow();
 
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
-    'Inputs': true,
-    'Models': true,
-    'LoRAs': false,
-    'ControlNets': true,
-    'Output': true,
-    'Components': true,
-    'Renders': false,
-    'Uploaded': false
-  });
-
-  // Track expanded nodes in the outline view
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-  const sortableRef = useRef(null);
-  const [hierarchy, setHierarchy] = useState<{ topLevelNodes: Node[], parentToChildrenMap: Record<string, Node[]> }>({ topLevelNodes: [], parentToChildrenMap: {} });
-
-  useEffect(() => {
-    const result = organizeHierarchy();
-    setHierarchy(result);
-  }, [canvasNodes, canvasEdges]);
-
-  useEffect(()=>{
-
-  },[getNodes(), getNodes().length])
-  
-  
-  // Toggle expanded state of a node
-  const toggleNodeExpanded = (nodeId: string) => {
-    console.log('toggle node expanded attempted')
-    setExpandedNodes(prev => ({
-      ...prev,
-      [nodeId]: !prev[nodeId]
-    }));
-  };
-  
-  // Get node icon based on node type
-  const getNodeIcon = (nodeType: string | undefined) => {
-    if (!nodeType) return <div className="w-4 h-4 rounded-sm bg-gray-400"></div>;
-    
-    if (nodeType?.includes('model')) return <Cpu className="h-4 w-4 mr-2 text-blue-400" />;
-    if (nodeType?.includes('lora')) return <Layers className="h-4 w-4 mr-2 text-purple-400" />;
-    if (nodeType?.includes('controlnet')) return <ImageIcon className="h-4 w-4 mr-2 text-green-400" />;
-    if (nodeType?.includes('input')) return <Type className="h-4 w-4 mr-2 text-yellow-400" />;
-    if (nodeType?.includes('output') || nodeType?.includes('preview')) return <FileOutput className="h-4 w-4 mr-2 text-pink-400" />;
-    
-    return <div className="w-4 h-4 rounded-sm bg-gray-400"></div>;
-  };
-  
-  /**
-   * Enhanced hierarchical organization logic:
-   * - Builds a complete dependency tree based on edge connections
-   * - Any node that receives connections from other nodes is considered a parent
-   * - This creates a natural hierarchy based on dataflow in the canvas
-   */
-
-  const SortableNode = ({ node, parentToChildrenMap, level }: { node: Node, parentToChildrenMap: Record<string, Node[]>, level: number }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: node.id });
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      paddingLeft: `${level * 16 + 8}px`
-      };
-      const hasChildren = parentToChildrenMap[node.id]?.length > 0;
-
-      return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-          {renderNode(node, level)}
-        </div>
-      );
-  };
-
-
-  const handleDragEnd = ({ active, over }: { active: any, over: any }) => {
-    if (!active || !over || active.id === over.id) return;
-
-    const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
-    const nodes = useCanvasStore.getState().nodes;
-
-    const findSubtree = (nodeId: string, subtree: Node[] = []): Node[] => {
-      const node = nodes.find(n => n.id === nodeId);
-      if (node) subtree.push(node);
-      const children = parentToChildrenMap[nodeId] || [];
-      children.forEach(child => findSubtree(child.id, subtree));
-      return subtree;
-    };
-
-    // Create a flat list preserving hierarchy grouping
-    let flatList: Node[] = [];
-    topLevelNodes.forEach(topNode => {
-      if (parentToChildrenMap[topNode.id]) {
-        flatList.push(...findSubtree(topNode.id));
-      } else {
-        flatList.push(topNode);
-      }
-    });
-
-    // Find the subtree of the node being moved
-    const activeSubtree = findSubtree(active.id);
-
-    // Remove all nodes in the active subtree from the flat list
-    flatList = flatList.filter(node => !activeSubtree.some(subNode => subNode.id === node.id));
-
-    // Find the index of the target node in the flat list
-    const overIndex = flatList.findIndex(n => n.id === over.id);
-
-    // Insert the active subtree at the new index
-    flatList.splice(overIndex, 0, ...activeSubtree);
-
-    // Deduplicate to prevent scattered nodes
-    const seen = new Set();
-    const deduped = flatList.filter(node => {
-      if (seen.has(node.id)) return false;
-      seen.add(node.id);
-      return true;
-    });
-
-    // Update orders (maintain parent-child relative order)
-    deduped.forEach((node, idx) => {
-      node.data = { ...node.data, order: idx }; // 0-based order
-    });
-
-    // Update nodes using onNodesChange
-    const nodeChanges = deduped.map(node => ({
-      id: node.id,
-      type: 'replace' as const,
-      item: node
-    }));
-    onNodesChange(nodeChanges);
-  };
-
-
-  const organizeHierarchy = () => {
-    const parentToChildrenMap: Record<string, Node[]> = {};
-    const childrenSet = new Set<string>();
-
-    const frames = canvasNodes.filter(n => n.type === 'labeledFrameGroupNode');
-
-    const isNodeInsideFrame = (node: Node, frame: Node): boolean => {
-      if (!frame.width || !frame.height) return false;
-      return (
-        node.position.x >= frame.position.x &&
-        node.position.y >= frame.position.y &&
-        node.position.x <= frame.position.x + frame.width &&
-        node.position.y <= frame.position.y + frame.height
-      );
-    };
-
-    // 🏠 Add nodes inside frames to hierarchy
-    canvasNodes.forEach(node => {
-      if (node.type !== 'labeledFrameGroupNode') {
-        const parentFrame = frames.find(frame => isNodeInsideFrame(node, frame));
-        if (parentFrame) {
-          if (!parentToChildrenMap[parentFrame.id]) parentToChildrenMap[parentFrame.id] = [];
-          parentToChildrenMap[parentFrame.id].push(node);
-          childrenSet.add(node.id);
-        }
-      }
-    });
-
-    // 🔗 Edge-based grouping (as-is)
-    canvasEdges.forEach(edge => {
-      const source = canvasNodes.find(n => n.id === edge.source);
-      const target = canvasNodes.find(n => n.id === edge.target);
-      if (source && target) {
-        if (!parentToChildrenMap[target.id]) parentToChildrenMap[target.id] = [];
-        if (!parentToChildrenMap[target.id].some(n => n.id === source.id)) {
-          parentToChildrenMap[target.id].push(source);
-          childrenSet.add(source.id);
-        }
-      }
-    });
-
-    // 🔢 Top-level nodes
-    const topLevelNodes = canvasNodes
-      .filter(n => !childrenSet.has(n.id))
-      .sort((a, b) => {
-        const orderA = typeof a.data?.order === 'number' ? a.data.order : 0;
-        const orderB = typeof b.data?.order === 'number' ? b.data.order : 0;
-        return orderB - orderA;
-      });
-
-    return { topLevelNodes, parentToChildrenMap };
-  };
-
-
-
-  useEffect(() => {
-    if (sortableRef.current) {
-      const sortable = Sortable.create(sortableRef.current, {
-        animation: 150,
-        onEnd: (evt) => {
-          if (evt.oldIndex !== undefined && evt.newIndex !== undefined && sortableRef.current) {
-            const children = Array.from(sortableRef.current.children) as HTMLElement[];
-            handleDragEnd({ 
-              active: { id: children[evt.oldIndex]?.dataset?.id },
-              over: { id: children[evt.newIndex]?.dataset?.id }
-            });
-          }
-        }
-      });
-
-      return () => sortable.destroy();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
+    {
+      Inputs: true,
+      Models: true,
+      LoRAs: false,
+      ControlNets: true,
+      Output: true,
+      Components: true,
+      Renders: false,
+      Uploaded: false,
     }
-  }, [hierarchy.topLevelNodes]);
-
-
-  const moveNodeInOrder = (draggedId: string, targetId: string) => {
-    const nodes = [...useCanvasStore.getState().nodes];
-    const dragged = nodes.find(n => n.id === draggedId);
-    const target = nodes.find(n => n.id === targetId);
-    if (!dragged || !target) return;
-
-    // Swap their order values
-    const temp = typeof dragged.data?.order === 'number' ? dragged.data.order : 0;
-    const targetOrder = typeof target.data?.order === 'number' ? target.data.order : 0;
-    dragged.data = { ...dragged.data, order: targetOrder };
-    target.data = { ...target.data, order: temp };
-
-    const nodeChanges = [dragged, target].map(node => ({
-      id: node.id,
-      type: 'replace' as const,
-      item: node
-    }));
-    onNodesChange(nodeChanges);
-  };
-
-  const renderNode = (node: Node, level = 0) => {
-    const { parentToChildrenMap } = hierarchy;
-    const hasChildren = parentToChildrenMap[node.id]?.length > 0;
-    const isExpanded = expandedNodes[node.id] !== false;
-    
-    const getIconName = (nodeName) =>{
-      let iconName = "";
-      
-      if (nodeName.includes('pose')) {
-        iconName = "pose";
-      } else if (nodeName.includes('3dmaker')) {
-        iconName = "3dmaker";
-      } else if (nodeName.includes('depth')) {
-        iconName = "depth";
-      } else if (nodeName.includes('edge')) {
-        iconName = "edge";
-      } else if (nodeName.includes('engine')) {
-        iconName = "engine";
-      } else if (nodeName.includes('face')) {
-        iconName = "face";
-      } else if (nodeName.includes('gear')) {
-        iconName = "gear";
-      } else if (nodeName.includes('image_output')) {
-        iconName = "image_output";
-      } else if (nodeName.includes('inpainting')) {
-        iconName = "inpainting";
-      } else if (nodeName.includes('lights')) {
-        iconName = "lights";
-      } else if (nodeName.includes('merger')) {
-        iconName = "merger";
-      } else if (nodeName.includes('normal_map')) {
-        iconName = "normal_map";
-      } else if (nodeName.includes('objectrelight')) {
-        iconName = "objectrelight";
-      } else if (nodeName.includes('outpainting')) {
-        iconName = "outpainting";
-      } else if (nodeName.includes('placeholder')) {
-        iconName = "placeholder";
-      } else if (nodeName.includes('realtime')) {
-        iconName = "realtime";
-      } else if (nodeName.includes('reangle')) {
-        iconName = "reangle";
-      } else if (nodeName.includes('reference')) {
-        iconName = "reference";
-      } else if (nodeName.includes('reimagine')) {
-        iconName = "reimagine";
-      } else if (nodeName.includes('remove')) {
-        iconName = "removebg";
-      } else if (nodeName.includes('rescene')) {
-        iconName = "rescene";
-      } else if (nodeName.includes('router')) {
-        iconName = "router";
-      } else if (nodeName.includes('segments')) {
-        iconName = "segments";
-      } else if (nodeName.includes('text')) {
-        iconName = "text";
-      } else if (nodeName.includes('upscale')) {
-        iconName = "upscale";
-      }
-      else if (nodeName.includes('layer-image')) {
-        iconName = "image_input";
-      }else{
-        iconName = "default"
-      }
-
-      return iconName;
-    }
-
-    const icon = getIconName(node.id)
-
-    return (
-      <div key={node.id}
-        className={`mb-1 ${level > 0 && selectedNode && 
-          parentToChildrenMap && Object.keys(parentToChildrenMap)?.includes(selectedNode?.id) 
-          ? "bg-[#0c1620] rounded-s-xl" 
-          : ""}`}
-        data-id={node.id}>
-        
-        <div
-          className={
-          `${node.selected ? 
-            "p-2 gap-2 flex items-center cursor-pointer bg-[#007aff]" : 
-            "p-2 gap-2 flex items-center cursor-pointer hover:bg-field text-gray-400"} 
-          ${isExpanded ? "rounded-t-xl" : "rounded-xl"}`
-          }
-          style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => {
-            const selected = canvasNodes.find(n => n.id === node.id);
-            if (selected) {
-              console.log(selected)              
-              setSelectedNode(selected)
-              setCurrentSelectedNode(selected)
-              setSelectedNodeById(selected)
-            }
-          }}
-        >
-
-          {hasChildren ? (
-            <button onClick={(e) => { e.stopPropagation(); toggleNodeExpanded(node.id); }} className="mr-1 rounded-sm hover:bg-gray-600 hover:transition-all">
-              {isExpanded ? <IoMdArrowDropdown className="h-3 w-3 text-white" /> : <IoMdArrowDropright className="h-3 w-3 text-white" />}
-            </button>
-          ) : <span className="w-4 mr-1" />}
-
-          <SvgIcon name={icon} className={node.selected ? "h-3.5 w-3.5" : "h-3 w-3"}/>
-
-          <span>{(node.data?.displayName as string) || node.type}</span>
-        </div>
-        {hasChildren && isExpanded && parentToChildrenMap[node.id].map(child =>
-          renderNode(child, level + 1)
-        )}
-      </div>
-    );
-  };
+  );
 
   const toggleCategory = (category: string) => {
-    setOpenCategories(prev => ({
+    setOpenCategories((prev) => ({
       ...prev,
-      [category]: !prev[category]
+      [category]: !prev[category],
     }));
   };
 
   // Filter nodes based on search term
   const filterNodeOptions = (options: NodeOption[]) => {
     if (!searchTerm) return options;
-    
-    return options.filter(option => 
-      option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      option.description.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        option.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
-  
+
   // Create a flat list of all options for search
-  const allNodeOptions = insertCategories.flatMap(category => category.options);
-  const { topLevelNodes, parentToChildrenMap } = organizeHierarchy();
+  const allNodeOptions = insertCategories.flatMap(
+    (category) => category.options
+  );
 
   // Handler for adding a node
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
 
-    console.log(nodeType)
+    console.log(nodeType);
     const center = {
       x: window.innerWidth / 2,
-      y: window.innerHeight / 2
+      y: window.innerHeight / 2,
     };
-  
+
     // Convert screen coordinates to flow coordinates
     const position = reactFlowInstance.screenToFlowPosition({
       x: center.x,
-      y: center.y
+      y: center.y,
     });
-    
-    const order = getHighestOrder(getNodes())+1;
+
+    const order = getHighestOrder(getNodes()) + 1;
     addNode(nodeType, position, order);
   };
 
   return (
-    <div className="w-[14%] h-full bg-[#0d0d0d] border-r border-gray-700 flex flex-col overflow-hidden transition-all duration-200">
-      {/* Tab selector */}
-      <div className="flex justify-center items-center bg-transparent py-2">
-        <div className="flex bg-[#151515] rounded-full p-1">
-          {['Outline', 'Insert', 'Assets'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as 'Outline' | 'Insert' | 'Assets')}
-              className={`px-5 py-[2.5%] rounded-full text-sm font-medium transition-all duration-200
-                ${activeTab === tab
-                  ? 'bg-[#2b2b2b] text-white shadow'
-                  : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      
-      {/* Search bar */}
-      <div className="p-2 border-b border-gray-700">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="
-              w-full pl-10 pr-4 py-2 
-              bg-[#1f1f1f] text-sm text-white 
-              placeholder:text-gray-400 
-              border-none rounded-full 
-              focus:ring-2 focus:ring-blue-500 focus:outline-none
-              transition duration-200 ease-in-out
-            "
+    <div className="w-[265px] h-full bg-[#0d0d0d] border-r border-[#1d1d1d] flex flex-col overflow-hidden">
+      {/* Fixed tab selector at the top */}
+      <div style={{ padding: "16px", paddingBottom: "0px" }}>
+        <div className="mb-4">
+          <ToggleButton
+            options={[
+              { label: "Outline", value: "Outline" },
+              { label: "Insert", value: "Insert" },
+              { label: "Assets", value: "Assets" },
+            ]}
+            value={activeTab}
+            onChange={(value) =>
+              setActiveTab(value as "Outline" | "Insert" | "Assets")
+            }
           />
         </div>
       </div>
 
-      {/* Scrollable content area - implementing the user's solution */}
-      <ScrollArea className="h-[calc(90vh-112px)] overflow-y-auto">
-        <div className="p-2 lg:p-4">
-          {/* Outline Tab - Hierarchical Workflow Components */}
-          {activeTab === 'Outline' && (
-            <div>
-              <h3 className="text-sm text-gray-400 mb-3 ml-1 flex items-center justify-between">
-                <div className="flex items-center">
-                  <LayoutList className="h-4 w-4 mr-2" />
-                  <span className="font-medium">Workflow Components</span>
-                </div>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-700">
-                  <PlusCircle className="h-4 w-4" />
-                </Button>
-              </h3>
-              
-          <div ref={sortableRef}>
-            {topLevelNodes.map(node => renderNode(node))}
-          </div>
+      {/* Divider line */}
+      <div
+        style={{
+          width: "233px",
+          height: "1px",
+          backgroundColor: "#1d1d1d",
+          marginLeft: "16px",
+          marginBottom: "6px",
+        }}
+      ></div>
+
+      {/* Scrollable content area */}
+      <ScrollArea className="h-[calc(100vh-80px-40px-1px)] overflow-y-auto">
+        <div
+          style={{
+            paddingLeft: "16px",
+            paddingRight: "16px",
+            paddingTop: "0px",
+            paddingBottom: "0px",
+          }}
+        >
+          {/* Outline Tab - New Layer Panel */}
+          {activeTab === "Outline" && (
+            <div style={{ paddingTop: "6px" }}>
+              <LayerPanel />
             </div>
           )}
-          
+
           {/* Insert Tab - Node Categories */}
-          {activeTab === 'Insert' && !searchTerm && (
+          {activeTab === "Insert" && (
             <div>
-
-          {insertCategories.map((category) => (
-            <div key={category.name} className="mb-8">
-              <div className="flex flex-row items-center mb-3 ml-4">
-                <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
-                  <category.icon className="h-4 w-4 text-white" />
-                </div>
-                <div className="text-sm font-semibold text-gray-400">
-                  <span>{category.name}</span>
+              {/* Search bar with dividers */}
+              <div style={{ paddingTop: "6px", paddingBottom: "12px" }}>
+                <div className="relative h-[30px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9e9e9e] z-10 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search nodes..."
+                    className="w-full h-full bg-[#1a1a1a] rounded-full pl-10 pr-3 py-1.5 text-sm text-white placeholder-[#9e9e9e] outline-none"
+                  />
                 </div>
               </div>
+              <div
+                className="border-t border-[#1d1d1d]"
+                style={{ paddingTop: "16px" }}
+              >
+                {searchTerm ? (
+                  // Show filtered results when searching
+                  <div className="mb-8">
+                    <div className="flex flex-row items-center mb-3 ml-4">
+                      <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
+                        <Search className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="text-sm font-semibold text-[#9e9e9e]">
+                        <span>Search Results</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {allNodeOptions
+                        .filter(
+                          (option) =>
+                            option.label
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase()) ||
+                            option.description
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                        )
+                        .map((option) => (
+                          <div
+                            key={option.type}
+                            onClick={() => {
+                              if (option.status !== "coming-soon") {
+                                setSelectedInsertNode(option);
+                              }
+                            }}
+                            className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
+                                    px-8 py-6 flex items-center justify-center cursor-pointer 
+                                    overflow-hidden ${
+                                      option?.image_url ? "p-0" : "flex-col"
+                                    } 
+                                    ${
+                                      option.status === "coming-soon"
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                    }`}
+                          >
+                            {/* Image or icon + label */}
+                            {option?.image_url ? (
+                              <img
+                                src={option.image_url}
+                                alt={option.label}
+                                className="scale-[220%] rounded-2xl"
+                              />
+                            ) : (
+                              <>
+                                <SvgIcon
+                                  name={option.icon.toString()}
+                                  className="h-8 w-8 text-[#f3f2f2] mb-2"
+                                />
+                                <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
+                                  {option.label}
+                                </span>
+                              </>
+                            )}
 
-              <div className="grid grid-cols-2 gap-2">
-                {category.options.map((option) => (
-                  <div
-                    key={option.type}
-                    // onClick={
-                    //   option.status === 'coming-soon'
-                    //     ? undefined
-                    //     : () => handleAddNode(option.type)
-                    // }
-                    onClick={() => {
-                      if (option.status !== 'coming-soon') {
-                        setSelectedInsertNode(option);
-                      }
-                    }}
-                    className={`relative bg-[#151515] hover:border hover:border-blue-500 rounded-2xl 
-                                px-8 py-6 flex items-center justify-center cursor-pointer 
-                                overflow-hidden ${option?.image_url ? "p-0" : "flex-col"} 
-                                ${option.status === 'coming-soon' ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    {/* Image or icon + label */}
-                    {option?.image_url ? (
-                      <img
-                        src={option.image_url}
-                        alt={option.label}
-                        className="scale-[220%] rounded-2xl"
-                      />
-                    ) : (
-                      <>
-                        <SvgIcon
-                          name={option.icon.toString()}
-                          className="h-8 w-8 text-[#f3f2f2] mb-2"
-                        />
-                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis py-2">
-                          {option.label}
-                        </span>
-                      </>
-                    )}
-
-                    {/* Overlay for "Coming Soon" */}
-                    {option.status === 'coming-soon' && (
-                      <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
-                        <span className="text-white text-xs font-semibold">Coming Soon</span>
+                            {/* Overlay for "Coming Soon" */}
+                            {option.status === "coming-soon" && (
+                              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                                <span className="text-white text-xs font-semibold">
+                                  Coming Soon
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                    {allNodeOptions.filter(
+                      (option) =>
+                        option.label
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()) ||
+                        option.description
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase())
+                    ).length === 0 && (
+                      <div className="text-center text-[#9e9e9e] py-8">
+                        No nodes found matching "{searchTerm}"
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                ) : (
+                  // Show categories when not searching
+                  insertCategories.map((category) => (
+                    <div key={category.name} className="mb-8">
+                      <div className="flex flex-row items-center mb-3 ml-4">
+                        <div className="text-sm font-semibold mr-2 bg-[#2b2b2b] p-1 rounded-md">
+                          <category.icon className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="text-sm font-semibold text-[#9e9e9e]">
+                          <span>{category.name}</span>
+                        </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-2">
+                        {category.options.map((option) => (
+                          <div
+                            key={option.type}
+                            // onClick={
+                            //   option.status === 'coming-soon'
+                            //     ? undefined
+                            //     : () => handleAddNode(option.type)
+                            // }
+                            onClick={() => {
+                              if (option.status !== "coming-soon") {
+                                setSelectedInsertNode(option);
+                              }
+                            }}
+                            className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
+                                px-8 py-6 flex items-center justify-center cursor-pointer 
+                                overflow-hidden ${
+                                  option?.image_url ? "p-0" : "flex-col"
+                                } 
+                                ${
+                                  option.status === "coming-soon"
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
+                          >
+                            {/* Image or icon + label */}
+                            {option?.image_url ? (
+                              <img
+                                src={option.image_url}
+                                alt={option.label}
+                                className="scale-[220%] rounded-2xl"
+                              />
+                            ) : (
+                              <>
+                                <SvgIcon
+                                  name={option?.icon}
+                                  className="h-8 w-8 text-[#f3f2f2] mb-2"
+                                />
+                                <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
+                                  {option.label}
+                                </span>
+                              </>
+                            )}
+
+                            {/* Overlay for "Coming Soon" */}
+                            {option.status === "coming-soon" && (
+                              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                                <span className="text-white text-xs font-semibold">
+                                  Coming Soon
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
-          
-          {/* Search Results */}
-         {activeTab === 'Insert' && searchTerm && (
-          <div>
-            <h3 className="text-sm text-gray-400 mb-3 ml-4">
-              Search results for "{searchTerm}"
-            </h3>
-            {filterNodeOptions(allNodeOptions).length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {filterNodeOptions(allNodeOptions).map((option) => (
-                  <div
-                    key={option.type}
-                    onClick={
-                      option.status === 'coming-soon'
-                        ? undefined
-                        : () => handleAddNode(option.type)
-                    }
-                    className={`relative bg-[#151515] hover:border hover:border-blue-500 rounded-2xl 
-                                px-8 py-6 flex flex-col items-center justify-center cursor-pointer 
-                                overflow-hidden ${option.status === 'coming-soon' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {option?.image_url ? (
-                      <img
-                        src={option.image_url}
-                        alt={option.label}
-                        className="scale-[220%] rounded-2xl"
-                      />
-                    ) : (
-                      <>
-                        <SvgIcon name={option.icon.toString()} className="h-8 w-8 text-[#f3f2f2] mb-2" />
-                        <span className="text-xs text-gray-500 text-center font-medium">
-                          {option.label}
-                        </span>
-                      </>
-                    )}
-
-                    {option.status === 'coming-soon' && (
-                      <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
-                        <span className="text-white text-xs font-semibold">Coming Soon</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 text-sm p-2 italic ml-4">
-                No components match your search.
-              </div>
-            )}
-
-          </div>
-        )}
-
-          
           {/* Assets Tab - Images and Components */}
-          {activeTab === 'Assets' && (
+          {activeTab === "Assets" && (
             <div className="space-y-6">
               {assetCategories.map((category) => (
                 <div key={category.name}>
-                  <Collapsible 
-                    open={openCategories[category.name]} 
+                  <Collapsible
+                    open={openCategories[category.name]}
                     onOpenChange={() => toggleCategory(category.name)}
                   >
                     <CollapsibleTrigger className="flex items-center w-full text-left mb-2">
                       <div className="flex items-center gap-2 text-gray-300">
                         <span className="text-blue-400">
-                          {openCategories[category.name] ? 
-                            <ChevronDown className="h-4 w-4" /> : 
+                          {openCategories[category.name] ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
                             <ChevronRight className="h-4 w-4" />
-                          }
+                          )}
                         </span>
                         <category.icon className="h-4 w-4" />
                         <span className="font-medium">{category.name}</span>
                       </div>
                     </CollapsibleTrigger>
-                    
+
                     <CollapsibleContent className="pl-6 space-y-2">
-                      {category.items
-                        .filter(item => 
-                          !searchTerm || 
-                          item.name.toLowerCase().includes(searchTerm.toLowerCase())
-                        )
-                        .map((item, index) => (
-                          <div key={index}>
-                            {item.type === 'component' ? (
-                              <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
-                                <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
-                                <span className="text-sm text-gray-300">{item.name}</span>
-                              </div>
-                            ) : (
-                              <div className="mb-2">
-                                {item.image && (
-                                  <div className="relative group">
-                                    <img 
-                                      src={item.image} 
-                                      alt={item.name} 
-                                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                      {category.items.map((item, index) => (
+                        <div key={index}>
+                          {item.type === "component" ? (
+                            <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
+                              <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
+                              <span className="text-sm text-gray-300">
+                                {item.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mb-2">
+                              {item.image && (
+                                <div className="relative group">
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </CollapsibleContent>
                   </Collapsible>
                 </div>

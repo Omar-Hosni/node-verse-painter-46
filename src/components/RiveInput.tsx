@@ -5,11 +5,15 @@ import {
   useViewModelInstanceBoolean,
   useViewModelInstanceNumber,
   useViewModelInstanceColor,
-  useViewModelInstanceTrigger
 } from "@rive-app/react-webgl2";
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useLocation } from "react-router-dom";
-import { getRunwareService } from '@/services/runwareService';
+import { useWorkflowStore } from "@/store/workflowStore";
+import { getRunwareService } from "@/services/runwareService";
+import { dataUrlToFile, generateImageFilename } from "@/utils/imageUtils";
+import { RgbaColorPicker } from 'react-colorful';
+import { Pipette } from 'lucide-react';
+import { ColorPicker } from './RightSidebar';
 import { toast } from "sonner";
 
 const colorNumberToHexString = (colorNum: number | null) => {
@@ -20,11 +24,24 @@ const colorNumberToHexString = (colorNum: number | null) => {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 };
 
-const hexToRGB = (hex: string) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return { r, g, b };
+const parseColorToRGB = (color: string) => {
+  // Handle rgba format
+  const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+  if (rgbaMatch) {
+    return {
+      r: parseInt(rgbaMatch[1], 10),
+      g: parseInt(rgbaMatch[2], 10),
+      b: parseInt(rgbaMatch[3], 10)
+    };
+  }
+
+  // Handle hex format
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 255, g: 255, b: 255 };
 };
 
 const CustomSlider = ({
@@ -42,15 +59,15 @@ const CustomSlider = ({
 }) => {
   return (
     <Slider.Root
-      className="relative flex items-center select-none touch-none w-[82px] h-5"
+      className="relative flex items-center select-none touch-none w-full h-5"
       min={min}
       max={max}
       step={step}
       value={[value]}
       onValueChange={(val) => onChange(val[0])}
     >
-      <Slider.Track className="bg-gray-700 relative grow rounded-full h-[2px]">
-        <Slider.Range className="absolute bg-blue-500 h-full rounded-full" />
+      <Slider.Track className="relative grow rounded-full h-[2px]" style={{ backgroundColor: '#2b2b2b' }}>
+        <Slider.Range className="absolute h-full rounded-full" style={{ backgroundColor: '#007AFF' }} />
       </Slider.Track>
       <Slider.Thumb className="block w-3 h-3 bg-white rounded-full shadow hover:bg-gray-200 focus:outline-none" />
     </Slider.Root>
@@ -58,29 +75,52 @@ const CustomSlider = ({
 };
 
 export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
-  const { selectedNode, updateNodeData, runwareApiKey } = useCanvasStore();
+  const { selectedNode, updateNodeData, runwareApiKey, setRunwareApiKey, nodes, edges } = useCanvasStore();
+  const { 
+    setNodes, 
+    setEdges, 
+    initializeServices
+  } = useWorkflowStore();
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const location = useLocation();
   const projectId = location.pathname.split("/").pop();
-  const guidedImageURL = (selectedNode?.data as any)?.guidedImageURL; //controlnet preprocessed input image
 
+    // Initialize workflow services when API key is available
+    useEffect(() => {
+        if (runwareApiKey) {
+          initializeServices(runwareApiKey);
+        }
+      }, [runwareApiKey, initializeServices]);
 
-  // Get Runware service instance
-  const runwareService = useMemo(() => {
-    const apiKey = "ZrfRoATgCFTd3Aui4A3O5BHgD4oflCTn";
-    return getRunwareService({ apiKey });
-  }, []);
+    // Get Runware service instance
+    const runwareService = useMemo(() => {
+    // Use API key from store, fallback to environment variable, then to null
+    const apiKey = runwareApiKey || import.meta.env.REACT_APP_RUNWARE_API_KEY || null;
+    
+    if (!apiKey) {
+        console.warn("No Runware API key available. Check runwareApiKey in store or REACT_APP_RUNWARE_API_KEY environment variable.");
+        return null;
+    }
+    
+    try {
+        console.log("Creating Runware service with API key:", apiKey.substring(0, 8) + "...");
+        return getRunwareService(apiKey);
+    } catch (error) {
+        console.error("Failed to create Runware service:", error);
+        return null;
+    }
+    }, [runwareApiKey]);
 
   const rivePath = nodeType.includes("pose")
     ? "/rive/pose6.riv"
     : nodeType.includes("lights")
-    ? "/rive/lights10.riv"
-    : null;
-    
+      ? "/rive/lights10.riv"
+      : null;
+
   const artboard = nodeType.includes("lights") ? "Artboard" : "final for nover";
 
   const isPose = nodeType.includes("pose");
-  
+
   const isLights = nodeType.includes("lights");
   const { rive, RiveComponent } = useRive({
     src: rivePath || "",
@@ -90,64 +130,64 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     stateMachines: "State Machine 1",
   });
 
-  const right_sidebar = (selectedNode?.data as any)?.right_sidebar || {};
+  const { right_sidebar } = selectedNode?.data;
 
   const poseValuesRef = {
-    zooming: (right_sidebar as any)?.zooming,
-    neck: (right_sidebar as any)?.neck,
-    head: (right_sidebar as any)?.head,
-    stroke: (right_sidebar as any)?.stroke,
-    ball_size: (right_sidebar as any)?.ball_size,
-    export_version: (right_sidebar as any)?.export_version,
+    zooming: right_sidebar?.zooming,
+    neck: right_sidebar?.neck,
+    head: right_sidebar?.head,
+    stroke: right_sidebar?.stroke,
+    ball_size: right_sidebar?.ball_size,
+    export_version: right_sidebar?.export_version,
 
     // Entire location
-    entire_location_x: (right_sidebar as any)?.entire_location_x,
-    entire_location_y: (right_sidebar as any)?.entire_location_y,
+    entire_location_x: right_sidebar?.entire_location_x,
+    entire_location_y: right_sidebar?.entire_location_y,
 
     // Shoulders
-    shoulder_left_x: (right_sidebar as any)?.shoulder_left_x,
-    shoulder_left_y: (right_sidebar as any)?.shoulder_left_y,
-    shoulder_right_x: (right_sidebar as any)?.shoulder_right_x,
-    shoulder_right_y: (right_sidebar as any)?.shoulder_right_y,
+    shoulder_left_x: right_sidebar?.shoulder_left_x,
+    shoulder_left_y: right_sidebar?.shoulder_left_y,
+    shoulder_right_x: right_sidebar?.shoulder_right_x,
+    shoulder_right_y: right_sidebar?.shoulder_right_y,
 
     // Elbows
-    elbow_left_x: (right_sidebar as any)?.elbow_left_x,
-    elbow_left_y: (right_sidebar as any)?.elbow_left_y,
-    elbow_right_x: (right_sidebar as any)?.elbow_right_x,
-    elbow_right_y: (right_sidebar as any)?.elbow_right_y,
+    elbow_left_x: right_sidebar?.elbow_left_x,
+    elbow_left_y: right_sidebar?.elbow_left_y,
+    elbow_right_x: right_sidebar?.elbow_right_x,
+    elbow_right_y: right_sidebar?.elbow_right_y,
 
     // Hands
-    hand_left_x: (right_sidebar as any)?.hand_left_x,
-    hand_left_y: (right_sidebar as any)?.hand_left_y,
-    hand_right_x: (right_sidebar as any)?.hand_right_x,
-    hand_right_y: (right_sidebar as any)?.hand_right_y,
+    hand_left_x: right_sidebar?.hand_left_x,
+    hand_left_y: right_sidebar?.hand_left_y,
+    hand_right_x: right_sidebar?.hand_right_x,
+    hand_right_y: right_sidebar?.hand_right_y,
 
     // Waist
-    waist_left_x: (right_sidebar as any)?.waist_left_x,
-    waist_left_y: (right_sidebar as any)?.waist_left_y,
-    waist_right_x: (right_sidebar as any)?.waist_right_x,
-    waist_right_y: (right_sidebar as any)?.waist_right_y,
+    waist_left_x: right_sidebar?.waist_left_x,
+    waist_left_y: right_sidebar?.waist_left_y,
+    waist_right_x: right_sidebar?.waist_right_x,
+    waist_right_y: right_sidebar?.waist_right_y,
 
     // Knees
-    knee_left_x: (right_sidebar as any)?.knee_left_x,
-    knee_left_y: (right_sidebar as any)?.knee_left_y,
-    knee_right_x: (right_sidebar as any)?.knee_right_x,
-    knee_right_y: (right_sidebar as any)?.knee_right_y,
+    knee_left_x: right_sidebar?.knee_left_x,
+    knee_left_y: right_sidebar?.knee_left_y,
+    knee_right_x: right_sidebar?.knee_right_x,
+    knee_right_y: right_sidebar?.knee_right_y,
 
     // Feet
-    foot_left_x: (right_sidebar as any)?.foot_left_x,
-    foot_left_y: (right_sidebar as any)?.foot_left_y,
-    foot_right_x: (right_sidebar as any)?.foot_right_x,
-    foot_right_y: (right_sidebar as any)?.foot_right_y
+    foot_left_x: right_sidebar?.foot_left_x,
+    foot_left_y: right_sidebar?.foot_left_y,
+    foot_right_x: right_sidebar?.foot_right_x,
+    foot_right_y: right_sidebar?.foot_right_y
   };
 
 
   const lightValuesRef = (i: number) => {
-    return (right_sidebar as any)?.lights?.find((light: any) => light.id === i);
+    return right_sidebar?.lights?.find((light) => light.id === i);
   };
 
   const onChangeLightValue = (i: number, key: string, value: any) => {
-    const updatedLights = (right_sidebar as any)?.lights?.map((light: any) => {
+    const updatedLights = right_sidebar?.lights?.map(light => {
       if (light?.id === i) {
         return {
           ...light,
@@ -157,9 +197,9 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
       return light;
     });
 
-    updateNodeData(selectedNode!.id, {
+    updateNodeData(selectedNode.id, {
       right_sidebar: {
-        ...(right_sidebar as any),
+        ...right_sidebar,
         lights: updatedLights,
       },
     });
@@ -180,7 +220,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     const { value: power, setValue: setPower } = useViewModelInstanceNumber(`power${i}`, rive?.viewModelInstance);
     const { value: selected, setValue: setSelected } = useViewModelInstanceBoolean(`select light ${i}`, rive?.viewModelInstance);
     const { value: angle, setValue: setAngle } = useViewModelInstanceNumber(`angle${i}`, rive?.viewModelInstance);
-    const { value: lightLocationX, setValue: setLightLocationX } = useViewModelInstanceNumber(`location${i} X`, rive?.viewModelInstance); 
+    const { value: lightLocationX, setValue: setLightLocationX } = useViewModelInstanceNumber(`location${i} X`, rive?.viewModelInstance);
     const { value: lightLocationY, setValue: setLightLocationY } = useViewModelInstanceNumber(`location${i} Y`, rive?.viewModelInstance);
     const { value: lightAdded, setValue: setLightAdded } = useViewModelInstanceBoolean(`add light${i}`, rive?.viewModelInstance);
 
@@ -191,7 +231,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     };
   };
 
-    // Initial  values
+  // Initial  values
   const lights = [
     lightControls(1),
     lightControls(2),
@@ -199,7 +239,6 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     lightControls(4),
   ];
   // lights[1].lightSetters.setLightAdded(true)
-  // console.log(lights[1].lightGetters.lightAdded)
 
   // Rive view model bindings for pose
   const { value: zooming, setValue: setZooming } = useViewModelInstanceNumber("zooming", rive?.viewModelInstance);
@@ -207,7 +246,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
   const { value: head, setValue: setHead } = useViewModelInstanceNumber("head", rive?.viewModelInstance);
   const { value: stroke, setValue: setStroke } = useViewModelInstanceNumber("stroke", rive?.viewModelInstance);
   const { value: ballSize, setValue: setBallSize } = useViewModelInstanceNumber("ball size", rive?.viewModelInstance);
-  
+
   const { value: entireLocationX, setValue: setEntireLocationX } = useViewModelInstanceNumber("entire location x", rive?.viewModelInstance);
   const { value: entireLocationY, setValue: setEntireLocationY } = useViewModelInstanceNumber("entire location y", rive?.viewModelInstance);
 
@@ -344,10 +383,9 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
   ]);
 
 
-  // console.log(right_sidebar)
 
   //initialize values for pose and light upon rendering/node select 
-  useEffect(()=>{
+  useEffect(() => {
     if (!rive || !rive.viewModelInstance) return;
 
     if (isPose) {
@@ -392,107 +430,174 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
       setFootRightY(poseValuesRef.foot_right_y);
     }
 
-  if (isLights) {
-    setEditingLights(true);
+    if (isLights) {
+      setEditingLights(true);
 
-    for (let i = 1; i <= 4; i++) {
-      const lightRef = lightValuesRef(i);
-      if (!lightRef) continue;
+      for (let i = 1; i <= 4; i++) {
+        const lightRef = lightValuesRef(i);
+        if (!lightRef) continue;
 
-      lights[i - 1].lightSetters.setSelected(false);
-      lights[i - 1].lightSetters.setSize(lightRef.size ?? 100);
-      lights[i - 1].lightSetters.setWidth(lightRef.width ?? 100);
-      lights[i - 1].lightSetters.setPower(lightRef.power ?? 100);
+        i > 1 ? lights[i - 1].lightSetters.setSelected(false): lights[i - 1].lightSetters.setSelected(true);
+        lights[i - 1].lightSetters.setSize(lightRef.size ?? 100);
+        lights[i - 1].lightSetters.setWidth(lightRef.width ?? 100);
+        lights[i - 1].lightSetters.setPower(lightRef.power ?? 100);
 
-      const { r, g, b } = hexToRGB((lightRef.color ?? "#ffffff").toString());
-      lights[i - 1].lightSetters.setRgb(r, g, b);
+        const { r, g, b } = parseColorToRGB((lightRef.color ?? "#ffffff").toString());
+        lights[i - 1].lightSetters.setRgb(r, g, b);
 
-      lights[i - 1].lightSetters.setAngle(lightRef.angle ?? 0);
-      lights[i - 1].lightSetters.setLightLocationX(lightRef.locationX ?? 250);
-      lights[i - 1].lightSetters.setLightLocationY(lightRef.locationY ?? 250);
-      
+        lights[i - 1].lightSetters.setAngle(lightRef.angle ?? 0);
+        lights[i - 1].lightSetters.setLightLocationX(lightRef.locationX ?? 250);
+        lights[i - 1].lightSetters.setLightLocationY(lightRef.locationY ?? 250);
+      }
+
+      for (let i = 2; i <= 4; i++) {
+        const lightRef = lightValuesRef(i)
+        if (!lightRef) return;
+        lights[i - 1].lightSetters.setLightAdded(lightRef.add ?? false)
+      }
     }
-
-    for(let i = 2; i <=4; i++){
-      const lightRef = lightValuesRef(i)
-      if(!lightRef) return;
-      lights[i-1].lightSetters.setLightAdded(lightRef.add ?? false)
-    }
-  }
-  },[rive])
-
+  }, [rive])
 
 
   useEffect(() => {
     if (!rive) return;
-    // Get canvas from rive instance
-    const riveCanvas = (rive as any).canvas as HTMLCanvasElement;
-    if (riveCanvas) {
-      canvasRef.current = riveCanvas;
+    const canvas = rive.canvas as HTMLCanvasElement;
+    if (canvas) {
+      canvasRef.current = canvas;
     }
   }, [rive]);
 
+
   const handleDone = async () => {
     if (!canvasRef.current) {
-      toast.error('Canvas not available');
+      toast.error("Canvas not ready. Please try again.");
       return;
     }
 
     if (!runwareService) {
-      toast.error('Runware service not available.');
+      const hasStoreKey = !!runwareApiKey;
+      const hasEnvKey = !!import.meta.env.REACT_APP_RUNWARE_API_KEY;
+      console.error("Runware service unavailable:", { hasStoreKey, hasEnvKey });
+      toast.error("Upload service unavailable. Please configure your Runware API key and try again.");
       return;
     }
 
     if (!selectedNode) {
-      toast.error('No node selected');
+      toast.error("No node selected");
+      return;
+    }
+
+    // Prevent duplicate upload attempts
+    if ((selectedNode.data as any)?.isUploading) {
+      toast.warning("Upload already in progress. Please wait...");
       return;
     }
 
     try {
       const canvas = canvasRef.current;
-      const dataUrl = canvas.toDataURL('image/png');
-      
-      // Update node immediately with the image data
-      updateNodeData(selectedNode.id, { 
+      const dataUrl = canvas.toDataURL("image/png");
+
+      // Convert dataUrl to File for runware service
+      const filename = generateImageFilename(nodeType);
+      const imageFile = dataUrlToFile(dataUrl, filename);
+
+      // Update node immediately with the image data and loading state
+      updateNodeData(selectedNode.id, {
         image: dataUrl,
         imageUrl: dataUrl,
-        isUploading: true 
+        isUploading: true,
       });
 
-      // Upload to Runware instead of Firebase
-      const { imageUUID, imageURL } = await runwareService.uploadImage(dataUrl);
-      
-      // Update with Runware data
-      updateNodeData(selectedNode.id, { 
-        image: imageURL,
-        imageUrl: imageURL,
-        imageUUID: imageUUID,
-        isUploading: false 
+      // Show loading indicator
+      toast.loading("Uploading image to Runware...", { id: `upload-${selectedNode.id}` });
+
+      // Upload to Runware with File object and get both UUID and URL
+      const uploadResult = await runwareService.uploadImageWithBothValues(
+        imageFile
+      );
+      const { imageUUID, imageURL } = uploadResult;
+
+      // Store workflow-specific metadata according to design
+      const getWorkflowSpecificData = (nodeType: string, imageUUID: string, imageURL: string) => {
+        const baseData = {
+          image: imageURL,
+          imageUrl: imageURL,
+          imageUUID: imageUUID,
+        };
+
+        if (nodeType.includes('pose')) {
+          return {
+            ...baseData,
+            workflowType: 'controlnet' as const,
+            controlnetConfig: {
+              guideImage: imageURL,
+            },
+          };
+        }
+
+        if (nodeType.includes('lights')) {
+          return {
+            ...baseData,
+            workflowType: 'seedImage' as const,
+            seedImageConfig: {
+              seedImage: imageURL,
+            },
+          };
+        }
+
+        return baseData;
+      };
+
+      const workflowData = getWorkflowSpecificData(nodeType, imageUUID, imageURL);
+
+      // Update with Runware data and workflow-specific metadata
+      updateNodeData(selectedNode.id, {
+        ...workflowData,
+        isUploading: false,
       });
 
-      toast.success('Image uploaded to Runware successfully!');
-      console.log('Image uploaded to Runware:', { imageUUID, imageURL });
-      
+      // Dismiss loading toast and show success message
+      toast.dismiss(`upload-${selectedNode.id}`);
+      toast.success("Image uploaded successfully! Ready for workflow processing.");
+      console.log("Image uploaded to Runware:", { imageUUID, imageURL });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error("Error uploading image:", error);
+      
+      // Always reset uploading state
       updateNodeData(selectedNode.id, { isUploading: false });
-      toast.error('Failed to upload image to Runware');
+      
+      // Dismiss loading toast
+      toast.dismiss(`upload-${selectedNode.id}`);
+      
+      // Provide specific error messages based on error type
+      if (error && typeof error === 'object' && 'type' in error) {
+        const runwareError = error as any;
+        switch (runwareError.type) {
+          case 'AUTHENTICATION_ERROR':
+            toast.error("Authentication failed. Please check your API key and try again.");
+            break;
+          case 'NETWORK_ERROR':
+            toast.error("Network error. Please check your connection and try again.");
+            break;
+          case 'VALIDATION_ERROR':
+            toast.error(`Invalid input: ${runwareError.message || 'Please check your image and try again.'}`);
+            break;
+          case 'TIMEOUT_ERROR':
+            toast.error("Upload timed out. Please try again with a smaller image or check your connection.");
+            break;
+          case 'CONNECTION_ERROR':
+            toast.error("Connection error. Please check your internet connection and try again.");
+            break;
+          default:
+            toast.error(`Upload failed: ${runwareError.message || 'Please try again.'}`);
+        }
+      } else if (error instanceof Error) {
+        toast.error(`Upload failed: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred during upload. Please try again.");
+      }
     }
   };
-
-  const downloadScreenshot = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const image = canvas.toDataURL("image/png");
-
-      const link = document.createElement("a");
-      link.download = "rive-screenshot.png";
-      link.href = image;
-      link.click();
-
-  };
-
 
   //when click done in lights, set export version to true and download image
   useEffect(() => {
@@ -501,9 +606,8 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
     // User done editing
     if (editingLights === false) {
-      
-       for(let i=1; i<=4; i++){
-        lights[i-1].lightSetters.setSelected(false)
+      for (let i = 1; i <= 4; i++) {
+        lights[i - 1].lightSetters.setSelected(false);
       }
 
       setExportVersion(true);
@@ -533,67 +637,182 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
       return () => clearTimeout(timer);
     }
+    
   }, [exportVersion, selectedNode, isPose]);
-
-
 
   if (!rivePath) return null;
 
   return (
-    <div className="mb-4">
-      <div className="w-[235px] h-[235px] border-2 border-[#1e1e1e] overflow-hidden rounded-2xl">
-        <RiveComponent className="w-full h-full block" />
+    <div>
+      {/* Rive Preview */}
+      <div className="flex items-center">
+        <div className="flex-1 flex gap-1.5 justify-center items-center" style={{ minHeight: '235px', height: '235px' }}>
+          <div className="w-[235px] h-[235px] overflow-hidden relative" style={{ borderRadius: '19px', border: '1.5px solid #1d1d1d' }}>
+            {/* Always render Rive component - RightSidebar handles preprocessed images */}
+            <RiveComponent
+              className="w-full h-full block"
+              canvas={canvasRef.current}
+              style={{ borderRadius: '16px' }}
+            />
+          </div>
+        </div>
       </div>
 
       {isPose && (
-        <div className="text-white text-sm space-y-4 mt-4">
-          {[
-            { label: "Export Version", type: "checkbox", value: poseValuesRef?.export_version ?? false, onChange: (val: boolean) => {
-              setExportVersion(val);
-              updateNodeData(selectedNode.id, { right_sidebar: { ...right_sidebar, export_version: val } });
-            }},
-            { label: "Zooming", type: "slider", value: poseValuesRef.zooming ?? 100, set: setZooming, key: "zooming" },
-            { label: "Neck", type: "slider", value: poseValuesRef.neck ?? 50, set: setNeck, key: "neck" },
-            { label: "Head", type: "slider", value: poseValuesRef.head ?? 0, set: setHead, key: "head" },
-          ].map((item, idx) => (
-            <div key={idx} className="mb-4 flex items-center justify-between w-full">
-              <label className="text-md text-[#9e9e9e]">{item.label}</label>
-              {item.type === "checkbox" ? (
-                <input type="checkbox" checked={item.value} onChange={(e) => item.onChange(e.target.checked)} />
-              ) : (
-                <div className="flex items-center">
-                  <input
-                    value={`${item.value}%`}
-                    type="text"
-                    className="mr-2 text-sm text-center w-[60px] h-[30px] rounded-full bg-[#191919] border border-[#2a2a2a]"
-                    readOnly
-                  />
-                  <CustomSlider
-                    value={item.value}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onChange={(val) => {
-                      item.set(val);
-                      updateNodeData(selectedNode.id, {
-                        right_sidebar: {
-                          ...right_sidebar,
-                          [item.key]: val,
-                        },
-                      });
-                    }}
-                  />
-                </div>
-              )}
+        <div className="text-white text-sm space-y-2.5 mt-2.5">
+          {/* Export Version - Hidden as requested */}
+          <div style={{ display: 'none' }}>
+            <input
+              type="checkbox"
+              checked={poseValuesRef?.export_version ?? false}
+              onChange={(e) => {
+                setExportVersion(e.target.checked);
+                updateNodeData(selectedNode.id, { right_sidebar: { ...right_sidebar, export_version: e.target.checked } });
+              }}
+            />
+          </div>
+
+          {/* Zooming */}
+          <div className="flex items-center">
+            <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Zooming</label>
+            <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={poseValuesRef.zooming ?? 100}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setZooming(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        zooming: val,
+                      },
+                    });
+                  }}
+                  className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ minHeight: '30px', height: '30px' }}
+                />
+              </div>
+              <div className="flex-1 flex items-center">
+                <CustomSlider
+                  value={poseValuesRef.zooming ?? 100}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(val) => {
+                    setZooming(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        zooming: val,
+                      },
+                    });
+                  }}
+                />
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Neck */}
+          <div className="flex items-center">
+            <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Neck</label>
+            <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={poseValuesRef.neck ?? 50}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setNeck(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        neck: val,
+                      },
+                    });
+                  }}
+                  className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ minHeight: '30px', height: '30px' }}
+                />
+              </div>
+              <div className="flex-1 flex items-center">
+                <CustomSlider
+                  value={poseValuesRef.neck ?? 50}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(val) => {
+                    setNeck(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        neck: val,
+                      },
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Head */}
+          <div className="flex items-center">
+            <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Head</label>
+            <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={poseValuesRef.head ?? 0}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setHead(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        head: val,
+                      },
+                    });
+                  }}
+                  className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ minHeight: '30px', height: '30px' }}
+                />
+              </div>
+              <div className="flex-1 flex items-center">
+                <CustomSlider
+                  value={poseValuesRef.head ?? 0}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(val) => {
+                    setHead(val);
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...right_sidebar,
+                        head: val,
+                      },
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {isLights && (
-        <div className="text-white text-sm space-y-4 mt-4">
-          <div className="mb-4 flex items-center justify-between w-full">
-            <label className="text-md text-[#9e9e9e]">Export Version</label>
+        <div className="text-white text-sm space-y-2.5 mt-2.5">
+          {/* Export Version - Hidden as requested */}
+          <div style={{ display: 'none' }}>
             <input
               type="checkbox"
               checked={right_sidebar?.export_version ?? false}
@@ -611,55 +830,138 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
           {(() => {
             const selectedIndex = [0, 1, 2, 3].find(i => lights[i].lightGetters.selected);
-            const ref = lightValuesRef(selectedIndex !== undefined ? selectedIndex + 1 : 1); // default to 1-based ID
+            const ref = lightValuesRef(selectedIndex !== undefined ? selectedIndex + 1 : 1);
             const lightSetters = lights[selectedIndex ?? 0].lightSetters;
 
             return (
-              <div className="p-2 border border-gray-700 rounded-lg">
-                <div className="mb-4 text-[#9e9e9e] text-md font-medium">
-                  Editing Light {selectedIndex !== undefined ? selectedIndex + 1 : "(none selected)"}
-                </div>
-
-                {["size", "width", "power"].map((key) => (
-                  <div key={key} className="mb-4 flex items-center justify-between w-full">
-                    <label className="text-md text-[#9e9e9e] capitalize">{key}</label>
-                    <div className="flex items-center">
+              <>
+                {/* Power */}
+                <div className="flex items-center">
+                  <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Power</label>
+                  <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+                    <div className="flex-1">
                       <input
-                        value={`${ref?.[key] ?? 100}%`}
-                        type="text"
-                        readOnly
-                        className="mr-2 text-sm text-center w-[60px] h-[30px] rounded-full bg-[#191919] border border-[#2a2a2a]"
+                        type="number"
+                        value={ref?.power ?? 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onChange={(e) => {
+                          if (selectedIndex === undefined) return;
+                          const val = parseInt(e.target.value);
+                          lightSetters.setPower(val);
+                          onChangeLightValue(selectedIndex + 1, "power", val);
+                        }}
+                        className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{ minHeight: '30px', height: '30px' }}
                       />
+                    </div>
+                    <div className="flex-1 flex items-center">
                       <CustomSlider
-                        value={ref?.[key] ?? 100}
+                        value={ref?.power ?? 100}
                         min={0}
                         max={100}
                         step={1}
                         onChange={(val) => {
                           if (selectedIndex === undefined) return;
-                          lightSetters[`set${key.charAt(0).toUpperCase() + key.slice(1)}`](val);
-                          onChangeLightValue(selectedIndex + 1, key, val);
+                          lightSetters.setPower(val);
+                          onChangeLightValue(selectedIndex + 1, "power", val);
                         }}
                       />
                     </div>
                   </div>
-                ))}
-
-                <div className="mb-4 flex items-center justify-between w-full">
-                  <label className="text-md text-[#9e9e9e]">Color</label>
-                  <input
-                    type="color"
-                    value={ref?.color ?? "#ffffff"}
-                    onChange={(e) => {
-                      if (selectedIndex === undefined) return;
-                      const { r, g, b } = hexToRGB(e.target.value);
-                      lightSetters.setRgb(r, g, b);
-                      onChangeLightValue(selectedIndex + 1, "color", e.target.value);
-                    }}
-                    className="w-[30px] h-[30px] p-0 border-none bg-transparent rounded-full"
-                  />
                 </div>
-              </div>
+
+                {/* Color */}
+                <div className="flex items-center">
+                  <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Color</label>
+                  <div className="flex-1 flex gap-1.5 h-[30px]">
+                    <ColorPicker
+                      value={ref?.color ?? "#ffffff"}
+                      onChange={(value) => {
+                        if (selectedIndex === undefined) return;
+                        const { r, g, b } = parseColorToRGB(value);
+                        lightSetters.setRgb(r, g, b);
+                        onChangeLightValue(selectedIndex + 1, "color", value);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Width */}
+                <div className="flex items-center">
+                  <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Width</label>
+                  <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={ref?.width ?? 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onChange={(e) => {
+                          if (selectedIndex === undefined) return;
+                          const val = parseInt(e.target.value);
+                          lightSetters.setWidth(val);
+                          onChangeLightValue(selectedIndex + 1, "width", val);
+                        }}
+                        className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{ minHeight: '30px', height: '30px' }}
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center">
+                      <CustomSlider
+                        value={ref?.width ?? 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onChange={(val) => {
+                          if (selectedIndex === undefined) return;
+                          lightSetters.setWidth(val);
+                          onChangeLightValue(selectedIndex + 1, "width", val);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Size */}
+                <div className="flex items-center">
+                  <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">Size</label>
+                  <div className="flex-1 flex gap-1.5 h-[30px] items-center">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={ref?.size ?? 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onChange={(e) => {
+                          if (selectedIndex === undefined) return;
+                          const val = parseInt(e.target.value);
+                          lightSetters.setSize(val);
+                          onChangeLightValue(selectedIndex + 1, "size", val);
+                        }}
+                        className="w-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none focus:bg-[#333333] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{ minHeight: '30px', height: '30px' }}
+                      />
+                    </div>
+                    <div className="flex-1 flex items-center">
+                      <CustomSlider
+                        value={ref?.size ?? 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onChange={(val) => {
+                          if (selectedIndex === undefined) return;
+                          lightSetters.setSize(val);
+                          onChangeLightValue(selectedIndex + 1, "size", val);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
             );
           })()}
         </div>

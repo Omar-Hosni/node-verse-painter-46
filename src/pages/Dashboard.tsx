@@ -1,21 +1,19 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit, CreditCard, Clock, ArrowUpRight } from 'lucide-react';
-import { AppHeader } from '@/components/AppHeader';
+import { Plus, Trash2, Edit, Clock, Home, History, FolderOpen, Users, Briefcase, FileText, Search } from 'lucide-react';
+import SimpleLoadingScreen from '@/components/SimpleLoadingScreen';
 import { toast } from 'sonner';
-import { useCanvasStore } from '@/store/useCanvasStore';
 
 interface Project {
   id: string;
@@ -31,12 +29,30 @@ const Dashboard = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [activeTab, setActiveTab] = useState('My Files');
   const navigate = useNavigate();
-  const credits = useCanvasStore(state => state.credits);
-  const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
-  const subscription = useCanvasStore(state => state.subscription);
-  const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
-  
+
+  // Dashboard preview images
+  const dashboardImages = [
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1894.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1895.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1896.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1897.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1898.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1899.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1900.png',
+    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1901.png',
+  ];
+
+  const navigationItems = [
+    { name: 'Home', icon: Home },
+    { name: 'Recent', icon: History },
+    { name: 'My Files', icon: FolderOpen },
+    { name: 'Templates', icon: FileText },
+    { name: 'Community', icon: Users },
+    { name: 'Nover Folio', icon: Briefcase },
+  ];
+
   useEffect(() => {
     // Check authentication
     const checkAuth = async () => {
@@ -45,29 +61,25 @@ const Dashboard = () => {
         navigate('/auth');
         return;
       }
-      
+
       // Fetch projects
       fetchProjects();
-      
-      // Fetch credits and subscription
-      fetchUserCredits();
-      fetchUserSubscription();
     };
-    
+
     checkAuth();
-    
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate('/auth');
       }
     });
-    
+
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, fetchUserCredits, fetchUserSubscription]);
-  
+  }, [navigate]);
+
   const fetchProjects = async () => {
     setLoading(true);
     try {
@@ -75,9 +87,9 @@ const Dashboard = () => {
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      
+
       setProjects(data || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -86,13 +98,13 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-  
+
   const createNewProject = async () => {
     if (!newProjectName.trim()) {
       toast.error('Project name is required');
       return;
     }
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -110,14 +122,14 @@ const Dashboard = () => {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       toast.success('Project created successfully!');
       setShowNewProjectDialog(false);
       setNewProjectName('');
       setNewProjectDescription('');
-      
+
       // Navigate to editor with new project
       navigate(`/editor/${data.id}`);
     } catch (error) {
@@ -125,20 +137,20 @@ const Dashboard = () => {
       toast.error('Failed to create project');
     }
   };
-  
+
   const deleteProject = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) {
       return;
     }
-    
+
     try {
       const { error } = await supabase
         .from('projects')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
-      
+
       toast.success('Project deleted successfully!');
       fetchProjects();
     } catch (error) {
@@ -146,12 +158,7 @@ const Dashboard = () => {
       toast.error('Failed to delete project');
     }
   };
-  
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
-  };
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -159,143 +166,296 @@ const Dashboard = () => {
       day: 'numeric',
     });
   };
-  
-  return (
-    <div className="min-h-screen bg-[#121212] text-white">
-      <AppHeader 
-        showLogoutButton={true}
-        onLogout={handleLogout}
-      />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
-            <p className="text-gray-400">Manage your projects and subscription</p>
-          </div>
-          
-          <div className="flex gap-3">
-            <Button
-              onClick={() => navigate('/subscription')}
-              variant="outline"
-              className="gap-2 bg-[#1A1A1A] text-gray-300 border-[#333] hover:bg-[#2A2A2A]"
-            >
-              <CreditCard className="h-4 w-4" />
-              {credits !== null ? `${credits.toLocaleString()} credits` : 'Loading credits...'}
-            </Button>
-            
-            <Button
-              onClick={() => navigate('/subscription')}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <ArrowUpRight className="h-4 w-4" />
-              Get More Credits
-            </Button>
+
+  // Button components from EditorHeader
+  const PrimaryButton = ({
+    onClick,
+    children,
+    icon: Icon,
+    disabled = false,
+    className = ""
+  }: {
+    onClick: () => void;
+    children: React.ReactNode;
+    icon?: React.ComponentType<{ className?: string }>;
+    disabled?: boolean;
+    className?: string;
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 justify-center transition-colors ${className}`}
+      style={{
+        backgroundColor: disabled ? undefined : '#007AFF',
+        minHeight: '30px',
+        height: '30px'
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#0056CC';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#007AFF';
+        }
+      }}
+    >
+      {Icon && <Icon className="h-4 w-4" />}
+      {children}
+    </button>
+  );
+
+  const SecondaryButton = ({
+    onClick,
+    children,
+    icon: Icon,
+    disabled = false,
+    className = ""
+  }: {
+    onClick: () => void;
+    children: React.ReactNode;
+    icon?: React.ComponentType<{ className?: string }>;
+    disabled?: boolean;
+    className?: string;
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 justify-center transition-colors ${className}`}
+      style={{
+        backgroundColor: disabled ? undefined : '#1a1a1a',
+        minHeight: '30px',
+        height: '30px'
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#333333';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = '#1a1a1a';
+        }
+      }}
+    >
+      {Icon && <Icon className="h-4 w-4" />}
+      {children}
+    </button>
+  );
+
+  const renderPageHeader = () => {
+    return (
+      <header className="flex items-center justify-between" style={{ paddingTop: '22px', paddingBottom: '22px', paddingLeft: '16px', paddingRight: '22px' }}>
+        {/* Page Title */}
+        <h1 className="text-lg font-medium text-white w-[80px]">{activeTab}</h1>
+
+        {/* Search Bar */}
+        <div className="flex-1 max-w-md mx-8">
+          <div className="relative h-[30px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9e9e9e] z-10 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full h-full bg-white/[0.04] rounded-full pl-10 pr-3 py-1.5 text-sm text-white placeholder-[#9e9e9e] outline-none"
+            />
           </div>
         </div>
-        
-        {/* Subscription info card */}
-        <div className="mt-6 p-4 rounded-lg bg-[#1A1A1A] border border-[#333]">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-900 p-2 rounded-full">
-                <CreditCard className="h-6 w-6 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="font-medium">Current Plan: <span className="text-blue-400 capitalize">{subscription?.tier || 'Free'}</span></h3>
-                <p className="text-sm text-gray-400">
-                  {subscription?.tier === 'free' 
-                    ? 'Upgrade for more credits and features' 
-                    : `Next billing: ${subscription?.expires_at ? formatDate(subscription.expires_at) : 'Not available'}`}
-                </p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => navigate('/subscription')}
-              className={subscription?.tier === 'free' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#2A2A2A] hover:bg-[#333]'}
-            >
-              {subscription?.tier === 'free' ? 'Upgrade Plan' : 'Manage Subscription'}
-            </Button>
-          </div>
+
+        {/* Buttons Container */}
+        <div className="w-[265px] flex gap-3 items-center justify-end">
+          <SecondaryButton
+            onClick={() => { }}
+          >
+            Invite
+          </SecondaryButton>
+          <PrimaryButton
+            onClick={() => setShowNewProjectDialog(true)}
+          >
+            New Project
+            <Plus className="h-4 w-4" />
+          </PrimaryButton>
         </div>
-        
-        {/* Projects section */}
-        <div className="mt-10">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Projects</h2>
-            <Button 
-              onClick={() => setShowNewProjectDialog(true)}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
+      </header>
+    );
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Home':
+        return (
+          <div className="pl-4 pr-[22px]">
+            <p className="text-gray-400">This is the home page content.</p>
           </div>
-          
-          {loading ? (
-            <div className="flex justify-center items-center h-60">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-8 text-center">
-              <h3 className="text-xl font-medium mb-2">No projects yet</h3>
-              <p className="text-gray-400 mb-4">Create your first project to get started</p>
-              <Button 
-                onClick={() => setShowNewProjectDialog(true)}
-                className="gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4" />
-                Create Project
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map(project => (
-                <div 
-                  key={project.id} 
-                  className="bg-[#1A1A1A] rounded-lg border border-[#333] p-4"
+        );
+      case 'Recent':
+        return (
+          <div className="pl-4 pr-[22px]">
+            <p className="text-gray-400">Your recently accessed projects will appear here.</p>
+          </div>
+        );
+      case 'Templates':
+        return (
+          <div className="pl-4 pr-[22px]">
+            <p className="text-gray-400">Browse and use project templates.</p>
+          </div>
+        );
+      case 'Community':
+        return (
+          <div className="pl-4 pr-[22px]">
+            <p className="text-gray-400">Explore community projects and collaborate.</p>
+          </div>
+        );
+      case 'Nover Folio':
+        return (
+          <div className="pl-4 pr-[22px]">
+            <p className="text-gray-400">Your portfolio showcase - coming soon!</p>
+          </div>
+        );
+      case 'My Files':
+      default:
+        return (
+          <div className="pl-4 pr-[22px]">
+
+            {loading ? (
+              <div className="h-60">
+                <SimpleLoadingScreen
+                  message="Loading your projects"
+                  size="medium"
+                  showLogo={false}
+                />
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-8 text-center">
+                <h3 className="text-xl font-medium mb-2">No projects yet</h3>
+                <p className="text-gray-400 mb-4">Create your first project to get started</p>
+                <Button
+                  onClick={() => setShowNewProjectDialog(true)}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700"
                 >
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-medium truncate">{project.name}</h3>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteProject(project.id);
-                        }}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-400 text-sm mt-1 h-10 overflow-hidden">
-                    {project.description || 'No description'}
-                  </p>
-                  
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="flex items-center text-xs text-gray-400">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatDate(project.updated_at)}
-                    </div>
-                    
-                    <Button 
-                      size="sm"
-                      onClick={() => navigate(`/editor/${project.id}`)}
-                      className="gap-1 bg-[#2A2A2A]"
+                  <Plus className="h-4 w-4" />
+                  Create Project
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
+                {projects.map((project, index) => (
+                  <div
+                    key={project.id}
+                    className="relative group cursor-pointer"
+                    onClick={() => navigate(`/editor/${project.id}`)}
+                  >
+                    {/* 1:7 Aspect Ratio Image */}
+                    <div
+                      className="relative rounded-lg overflow-hidden bg-[#1A1A1A]"
+                      style={{ aspectRatio: '1 / 0.7' }}
                     >
-                      <Edit className="h-3 w-3" />
-                      Open
-                    </Button>
+                      <img
+                        src={dashboardImages[index % dashboardImages.length]}
+                        alt={`Preview for ${project.name}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Image failed to load:', dashboardImages[index % dashboardImages.length]);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', dashboardImages[index % dashboardImages.length]);
+                        }}
+                      />
+                      {/* Hover overlay with gradient and details */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {/* Project details at bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <div className="flex justify-between items-end">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-white truncate text-sm">
+                                {project.name}
+                              </h3>
+                              <div className="flex items-center text-xs text-gray-300 mt-1">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {formatDate(project.updated_at)}
+                              </div>
+                            </div>
+
+                            {/* Delete button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteProject(project.id);
+                              }}
+                              className="text-gray-400 hover:text-red-400 transition-colors ml-2 p-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0D0D0D] text-white flex">
+      {/* Left Sidebar */}
+      <div className="w-[265px] p-4">
+        {/* User Avatar Component */}
+        <div className="flex items-center mb-8 pl-3 pt-3">
+          {/* Avatar Image */}
+          <img
+            src="/src/components/ui/avatar image example.png"
+            alt="User Avatar"
+            className="w-[30px] h-[30px] rounded-full object-cover flex-shrink-0"
+          />
+
+          {/* User Info */}
+          <div className="ml-3 flex flex-col">
+            <span className="text-white text-sm font-Medium leading-none">Mostafa mohamed</span>
+            <span className="text-white/50 text-sm font-medium leading-none mt-0.5">Free account </span>
+          </div>
+        </div>
+
+        <nav className="space-y-1">
+          {navigationItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <button
+                key={item.name}
+                onClick={() => setActiveTab(item.name)}
+                className={`w-full flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors group ${activeTab === item.name
+                  ? 'bg-white/[0.04] text-white'
+                  : 'text-white/50 hover:text-white'
+                  }`}
+              >
+                <IconComponent className={`h-4 w-4 transition-colors ${activeTab === item.name
+                  ? 'text-white'
+                  : 'text-white/50 group-hover:text-white'
+                  }`} strokeWidth={1.5} />
+                <span className="flex-1 text-left">{item.name}</span>
+                {item.name === 'Nover Folio' && (
+                  <span className="bg-[#007AFF] text-white px-2 py-0 text-[10px] rounded-2xl">
+                    Soon
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {renderPageHeader()}
+        <div className="flex-1">
+          {renderContent()}
         </div>
       </div>
-      
+
       {/* New Project Dialog */}
       <Dialog open={showNewProjectDialog} onOpenChange={setShowNewProjectDialog}>
         <DialogContent className="bg-[#1A1A1A] border-[#333] text-white">

@@ -41,15 +41,18 @@ function HelperLinesRenderer({ horizontal, vertical }: HelperLinesProps) {
     
     ctx.scale(dpi, dpi);
     ctx.clearRect(0, 0, width, height);
-    ctx.strokeStyle = '#0041d0';
+    ctx.strokeStyle = '#007AFF';
+    ctx.lineWidth = 1;
     
     if (typeof vertical === 'number') {
+      ctx.beginPath();
       ctx.moveTo(vertical * transform[2] + transform[0], 0);
       ctx.lineTo(vertical * transform[2] + transform[0], height);
       ctx.stroke();
     }
     
     if (typeof horizontal === 'number') {
+      ctx.beginPath();
       ctx.moveTo(0, horizontal * transform[2] + transform[1]);
       ctx.lineTo(width, horizontal * transform[2] + transform[1]);
       ctx.stroke();

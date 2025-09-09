@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import React, { useState, useEffect } from 'react';
+import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
 import SvgIcon from '@/components/SvgIcon';
 import NodeIcon from '../NodeIcon';
 
@@ -9,182 +9,273 @@ interface NormalNodeData {
   functionality?: string;
   image_url?: string;
   order?: number;
-  color?: string;
+  nodeStyle?: string;
+  nodeFillColor?: string;
   nodeShape?: string;
   icon?: string;
   iconBgColor?: string;
-  skip?: boolean;
   [key: string]: any;
 }
 
-const NormalNode: React.FC<NodeProps> = ({ data, selected }) => {
+type NormalNodeProps = NodeProps<NormalNodeData>;
+
+const NormalNode: React.FC<NormalNodeProps> = React.memo(({ data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { getZoom } = useReactFlow();
+  const [currentZoom, setCurrentZoom] = useState(getZoom());
 
+  // Update zoom level when node is selected or hovered
+  useEffect(() => {
+    if (!selected && !isHovered) return;
+
+    let animationFrameId: number;
+    const updateZoom = () => {
+      const newZoom = getZoom();
+      if (newZoom !== currentZoom) {
+        setCurrentZoom(newZoom);
+      }
+      animationFrameId = requestAnimationFrame(updateZoom);
+    };
+
+    animationFrameId = requestAnimationFrame(updateZoom);
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [getZoom, currentZoom, selected, isHovered]);
+
+  // Get the icon name based on node type
   const getIconName = (type: string) => {
-    if(type==="connector") return "router";
-    if(type.includes('engine')) return "engine";
-    if(type.includes('gear')) return "gear";
-    if(type.includes('remove')) return "removebg";
+    if (type === "connector") return "router";
+    if (type.includes('engine')) return "engine";
+    if (type.includes('gear')) return "gear";
+    if (type.includes('remove')) return "removebg";
+    if (type.includes('remix')) return "merger";
+    if (type.includes('relight')) return "objectrelight";
+    if (type.includes('normal')) return "normal_map";
 
+
+    // Extract last part after dash (e.g., 'control-net-pose' -> 'pose')
     const parts = type.split('-');
     return parts[parts.length - 1];
   };
 
-  // Color mapping to hex colors
-  const colorMap: Record<string, string> = {
-    purple: "#8B5CF6",
-    orange: "#F97316", 
-    red: "#EF4444",
-    green: "#10B981",
-    blue: "#3B82F6",
-    pink: "#EC4899",
-    cyan: "#06B6D4",
-    black: "#111111",
+  const iconName = getIconName(data.type || '');
+
+  // Determine node styling
+  const nodeStyle = data?.nodeStyle || "accent";
+  const nodeFillColor = data?.nodeFillColor;
+  const nodeShape = data?.nodeShape;
+  const nodeType = data?.type || '';
+
+  // Check if this node type supports custom fill colors
+  const supportsFillMode = [
+    'engine', 'gear', 'input-text', 'image-to-image-reangle',
+    'control-net-pose', 'control-net-lights', 'control-net-edge',
+    'control-net-depth', 'control-net-reference'
+  ].some(type => nodeType.includes(type));
+
+  // Set background color
+  const hasCustomBackground = supportsFillMode && nodeStyle === "fill" && nodeFillColor;
+  const backgroundColor = hasCustomBackground ? nodeFillColor : '#0D0D0D';
+  const bgClass = hasCustomBackground ? '' : 'bg-[#0D0D0D]';
+
+  // Determine shape properties
+  const isSquare = nodeShape === "square";
+  const isTextInputNode = nodeType.includes('input-text');
+
+
+  // Style configuration
+  const containerClasses = [
+    'inline-flex',
+    'items-center',
+    'justify-center',
+    isSquare ? 'flex-col' : 'flex-row',
+    isSquare ? 'gap-4' : '',
+    isSquare ? 'rounded-[48px]' : 'rounded-full',
+    bgClass
+  ].filter(Boolean).join(' ');
+
+  const containerStyle = {
+    position: 'relative' as const,
+    padding: isSquare ? '40px 52px' : '28px 28px 28px 56px',
+    backgroundColor: hasCustomBackground ? backgroundColor : undefined
   };
 
-  const rawColor = (data?.color as string)?.toLowerCase() || "blue";
-  const nodeColor = colorMap[rawColor] || "#3B82F6";
-  
-  const currentNodeShape = data?.nodeShape || "pill";
-  const nodeTitle = (data?.displayName as string) || 'Node';
-  const isSkipped = data?.skip || false;
-  const isTextInputNode = (data?.type as string)?.includes('input-text');
-
-  // Apply shape styling
-  const shapeStyle = currentNodeShape === 'rectangle' ? '24px' : '24px';
-  
-  // Background color - always dark
-  const backgroundColor = '#0D0D0D';
-  const circleColor = nodeColor;
-
-  const iconName = getIconName((data?.type as string) || '');
-
   return (
-    <div 
+    <div
+      className={containerClasses}
+      style={containerStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: backgroundColor,
-        border: selected ? '1px solid #007AFF' : '1px solid transparent',
-        borderRadius: shapeStyle,
-        padding: '14px 10px',
-        width: 'fit-content',
-        height: currentNodeShape === 'square' ? '80px' : '48px',
-        display: 'flex',
-        flexDirection: currentNodeShape === 'square' ? 'column' : 'row',
-        alignItems: 'center',
-        justifyContent: currentNodeShape === 'square' ? 'center' : 'space-between',
-        gap: currentNodeShape === 'square' ? '8px' : '12px',
-        position: 'relative',
-        transition: 'all 0.2s ease',
-        opacity: isSkipped ? 0.5 : 1,
-      }}
     >
-      {currentNodeShape === 'square' ? (
+      {/* Node Content */}
+      {isSquare ? (
+        // pill layout: icon on top, label below
         <>
-          {/* Square layout - icon on top, text below */}
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: circleColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <NodeIcon icon={data?.icon as string} iconBgColor={data?.iconBgColor as string} />
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}>
-            <SvgIcon name={iconName} className="h-2.5 w-2.5 text-white opacity-40" />
-            <div style={{
-              color: 'white',
-              fontSize: '10px',
-              fontWeight: '500',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            }}>
-              {nodeTitle as string}
-            </div>
+          <NodeIcon
+            icon={data.icon}
+            iconBgColor={hasCustomBackground ? "rgba(0, 0, 0, 0.15)" : data.iconBgColor}
+            className="!w-28 !h-28 !text-6xl !min-w-28 !max-w-28 !min-h-28 !max-h-28"
+            style={{
+              width: '112px',
+              height: '112px',
+              minWidth: '112px',
+              maxWidth: '112px',
+              minHeight: '112px',
+              maxHeight: '112px',
+              flexShrink: 0,
+              flexGrow: 0
+            }}
+          />
+          <div className="flex items-center justify-center gap-10">
+            <SvgIcon name={iconName} className="h-10 w-10" />
+            <span className="text-white text-4xl whitespace-nowrap" style={{ fontWeight: 500 }}>
+              {data.displayName || 'Node'}
+            </span>
           </div>
         </>
       ) : (
+        // Rectangle layout: label on left, icon on right
         <>
-          {/* Regular layout - left icon, middle text, right circle */}
-          <div style={{
-            width: '20px',
-            height: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: 0.4,
-          }}>
-            <SvgIcon name={iconName} className="h-3 w-3 text-white" />
+          <div className="flex items-center space-x-10" style={{ marginRight: '40px' }}>
+            <SvgIcon name={iconName} className="h-10 w-10" />
+            <span className="text-white text-4xl whitespace-nowrap" style={{ fontWeight: 500 }}>
+              {data.displayName || 'Node'}
+            </span>
           </div>
-
-          <div style={{
-            flex: 1,
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: '500',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}>
-            {nodeTitle as string}
-          </div>
-
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: circleColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '16px',
-          }}>
-            <NodeIcon icon={data?.icon as string} iconBgColor={data?.iconBgColor as string} />
-          </div>
+          <NodeIcon
+            icon={data.icon}
+            iconBgColor={hasCustomBackground ? "rgba(0, 0, 0, 0.15)" : data.iconBgColor}
+            className="!w-28 !h-28 !text-6xl !min-w-28 !max-w-28 !min-h-28 !max-h-28"
+            style={{
+              width: '112px',
+              height: '112px',
+              minWidth: '112px',
+              maxWidth: '112px',
+              minHeight: '112px',
+              maxHeight: '112px',
+              flexShrink: 0,
+              flexGrow: 0
+            }}
+          />
         </>
       )}
 
-      {/* Left Handle - appears on hover for non-text-input nodes */}
-      {!isTextInputNode && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="input"
-          style={{
-            background: isHovered ? '#007AFF' : 'transparent',
-            border: isHovered ? '2px solid #007AFF' : 'none',
-            width: isHovered ? '8px' : '8px',
-            height: isHovered ? '8px' : '8px',
-            opacity: isHovered ? 1 : 0,
-            transition: 'all 0.2s ease',
-            left: '-6px',
-          }}
-        />
-      )}
 
-      {/* Right Handle - appears on hover */}
+      {/* Connection Handles */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        style={{
+          width: '40px',
+          height: '40px',
+          backgroundColor: 'transparent',
+          opacity: 0,
+          border: 'none',
+          left: '-40px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 10
+        }}
+      />
+
       <Handle
         type="source"
         position={Position.Right}
         id="output"
         style={{
-          background: isHovered ? '#007AFF' : 'transparent',
-          border: isHovered ? '2px solid #007AFF' : 'none',
-          width: isHovered ? '8px' : '8px',
-          height: isHovered ? '8px' : '8px',
-          opacity: isHovered ? 1 : 0,
-          transition: 'all 0.2s ease',
-          right: '-6px',
+          width: '40px',
+          height: '40px',
+          backgroundColor: 'transparent',
+          opacity: 0,
+          border: 'none',
+          right: '-40px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 10
         }}
       />
+
+      {/* Hover Indicators - always present for smooth transitions */}
+      <svg
+        style={{
+          position: 'absolute',
+          left: '-40px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: `${10 / currentZoom}px`,
+          height: `${10 / currentZoom}px`,
+          pointerEvents: 'none',
+          zIndex: 11,
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 10ms ease-out',
+          transitionDelay: isHovered ? '5ms' : '0ms'
+        }}
+        viewBox="0 0 25 25"
+        >
+          <circle cx="12.5" cy="12.5" r="12.5" fill="#007AFF" />
+        </svg>
+      )}
+      <svg
+        style={{
+          position: 'absolute',
+          right: '-40px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: `${10 / currentZoom}px`,
+          height: `${10 / currentZoom}px`,
+          pointerEvents: 'none',
+          zIndex: 11,
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 10ms ease-out',
+          transitionDelay: isHovered ? '5ms' : '0ms'
+        }}
+        viewBox="0 0 25 25"
+      >
+        <circle cx="12.5" cy="12.5" r="12.5" fill="#007AFF" />
+      </svg>
+
+      {/* Selection Border - always present for smooth transitions */}
+      <svg
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 99999999
+        }}
+      >
+        <rect
+          x={0.5 / currentZoom}
+          y={0.5 / currentZoom}
+          width={`calc(100% - ${1 / currentZoom}px)`}
+          height={`calc(100% - ${1 / currentZoom}px)`}
+          fill="none"
+          stroke="#3b82f6"
+          strokeOpacity={
+            selected
+              ? 1
+              : isHovered
+                ? 0
+                : 0
+          }
+          strokeWidth={1 / currentZoom}
+          vectorEffect="non-scaling-stroke"
+          rx={isSquare ? "46" : "77"}
+          ry={isSquare ? "46" : "77"}
+          style={{
+            transition: 'stroke-opacity 10ms ease-out',
+            transitionDelay: isHovered && !selected ? '5ms' : '0ms'
+          }}
+        />
+      </svg>
     </div>
   );
-};
+});
 
 export default NormalNode;

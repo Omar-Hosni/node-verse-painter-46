@@ -17,7 +17,7 @@ export const saveProject = async (
       return null;
     }
 
-    // Convert to serializable JSON
+    // Convert to serializable JSON, ensuring preprocessed data is preserved
     const canvasData = {
       nodes: JSON.parse(JSON.stringify(nodes)),
       edges: JSON.parse(JSON.stringify(edges))
@@ -95,11 +95,35 @@ export const loadProject = async (
         resetNodeIdCounterFunc();
       }
       
+      // Restore preprocessed data for ControlNet nodes
+      const nodesWithPreprocessedData = nodes.map(node => {
+        // Check if this is a ControlNet node with preprocessed data
+        if ((node.type?.includes('control-net') || node.type === 'seed-image-lights') && 
+            node.data?.preprocessedImage) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              // Ensure preprocessed data is properly restored
+              hasPreprocessedImage: true,
+              isPreprocessing: false,
+              // Restore right_sidebar display data
+              right_sidebar: {
+                ...node.data.right_sidebar,
+                preprocessedImage: node.data.preprocessedImage.guideImageURL,
+                showPreprocessed: true,
+              },
+            },
+          };
+        }
+        return node;
+      });
+      
       // Set the canvas data
-      setNodes(nodes);
+      setNodes(nodesWithPreprocessedData);
       setEdges(edges);
       setSelectedNode(null);
-      setHistory({ nodes, edges });
+      setHistory({ nodes: nodesWithPreprocessedData, edges });
       
       return true;
     } else {

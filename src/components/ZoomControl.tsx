@@ -1,6 +1,6 @@
 import { useReactFlow } from '@xyflow/react';
 import { useState, useEffect } from 'react';
-import { Search, Plus, Minus } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 export const ZoomControl = () => {
   const { getViewport, setViewport } = useReactFlow();
@@ -19,26 +19,47 @@ export const ZoomControl = () => {
   const zoomPercentage = Math.round(zoom * 100);
 
   const setZoomPercentage = (percent: number) => {
-    const clampedZoom = Math.max(0, Math.min(percent, 100)) / 100;
-    setViewport({ zoom: clampedZoom, x: 0, y: 0 });
-    setZoom(clampedZoom);
+    const clamped = Math.max(0, Math.min(percent, 100)) / 100; // keep your 0–100% range
+    setViewport({ zoom: clamped, x: 0, y: 0 });
+    setZoom(clamped);
   };
 
   return (
-    <div className="flex items-center bg-[#1a1a1a] rounded-full px-3 py-1 text-sm text-gray-300">
-      <Search className="h-4 w-4 text-gray-400" />
-      
-      {/* Input field without steppers */}
+    <div
+      className="
+        flex items-center justify-center
+        h-[33px] w-[78px]
+        rounded-[16px] bg-[#1A1A1A]
+        text-[12px] leading-none
+        text-white/70
+      "
+    >
+      <Search className="h-4 w-4 mr-1.5 text-white/40" aria-hidden />
+
       <input
-        type="text" // Changed to text to remove steppers
+        type="text"
+        inputMode="numeric"
         value={zoomPercentage}
         onChange={(e) => {
-          const value = e.target.value.replace(/\D/g, ''); // Allow only numbers
-          if (value) setZoomPercentage(Number(value));
+          const value = e.target.value.replace(/\D/g, '');
+          if (value !== '') setZoomPercentage(Number(value));
         }}
-        className="w-12 bg-transparent text-center text-gray-400 outline-none"
+        onKeyDown={(e) => {
+          // Prevent typing non-numeric signs like e/E/+/- and submitting on Enter
+          if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+        }}
+        className="
+          w-[30px] text-center
+          bg-transparent outline-none
+          text-white/80
+          caret-transparent selection:bg-transparent
+          placeholder-white/40
+          appearance-none
+        "
+        aria-label="Zoom percentage"
       />
-      <span>%</span>
+      <span className="ml-0.5 text-white/60">%</span>
     </div>
   );
 };
