@@ -23,6 +23,7 @@ import { MaskEditor } from '@/components/MaskEditor';
 import { OutpaintControls } from '@/components/OutpaintControls';
 import { useEditingTools } from '@/hooks/useEditingTools';
 import { Toolbar } from '@/components/Toolbar';
+import { useClerkIntegration } from '@/hooks/useClerkIntegration';
 
 const Editor = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -33,6 +34,7 @@ const Editor = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [activeTab, setActiveTab] = useState<'Outline' | 'Insert' | 'Assets'>('Outline');
+  const clerkAuth = useClerkIntegration();
   const loadProject = useCanvasStore(state => state.loadProject);
   const saveProject = useCanvasStore(state => state.saveProject);
   const setRunwareApiKey = useCanvasStore(state => state.setRunwareApiKey);
@@ -40,7 +42,7 @@ const Editor = () => {
   const fetchUserSubscription = useCanvasStore(state => state.fetchUserSubscription);
   const setIsLocalUpdate = useCanvasStore(state => state.setIsLocalUpdate);
   const updateCollaborators = useCanvasStore(state => state.updateCollaborators);
-  const {activeTool, setActiveTool} = useCanvasStore()
+  const {activeTool, setActiveTool} = useCanvasStore();
 
 
   const [selectedInsertNode, setSelectedInsertNode] = useState<NodeOption | null>(null);
@@ -50,9 +52,10 @@ const Editor = () => {
 
   useEffect(() => {
     // Check authentication and redirect if not authenticated
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+    const checkAuth = () => {
+      if (!clerkAuth.isLoaded) return;
+      
+      if (!clerkAuth.isSignedIn) {
         navigate('/auth');
         return;
       }
@@ -74,25 +77,11 @@ const Editor = () => {
     // Fetch user credits and subscription info
     fetchUserCredits();
     fetchUserSubscription();
-    
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/auth');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [projectId, navigate, setRunwareApiKey, fetchUserCredits, fetchUserSubscription]);
+  }, [clerkAuth.isLoaded, clerkAuth.isSignedIn, projectId, navigate, setRunwareApiKey, fetchUserCredits, fetchUserSubscription]);
 
   // Set up presence channel for collaborators
   const setupPresenceChannel = async () => {
-    if (!projectId) return;
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!projectId || !clerkAuth.userId) return;
     
     // Get current user's profile data
     let firstName = '';
@@ -102,7 +91,7 @@ const Editor = () => {
     try {
       // Use the Edge Function to get profile data
       const { data: profile, error } = await supabase.functions.invoke('get_profile_data', {
-        body: { user_id: user.id }
+        body: { user_id: clerkAuth.userId }
       });
       
       if (error) {
@@ -120,7 +109,7 @@ const Editor = () => {
     const channel = supabase.channel(`project:${projectId}`, {
       config: { 
         presence: {
-          key: user.id,
+          key: clerkAuth.userId,
         },
       },
     });
@@ -152,7 +141,7 @@ const Editor = () => {
 
         // Track the user's presence once connected
         await channel.track({
-          email: user.email || '',
+          email: clerkAuth.userEmail || '',
           first_name: firstName,
           last_name: lastName,
           avatar_url: avatarUrl,
@@ -222,8 +211,7 @@ const Editor = () => {
     if (projectId) {
       // Update existing project
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        if (!clerkAuth.userId) {
           toast.error('You must be logged in to save a project');
           return;
         }
@@ -293,8 +281,7 @@ const Editor = () => {
     navigate('/dashboard');
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     navigate('/auth');
   };
 

@@ -14,6 +14,8 @@ import {
 import { Plus, Trash2, Edit, Clock, Home, History, FolderOpen, Users, Briefcase, FileText, Search } from 'lucide-react';
 import SimpleLoadingScreen from '@/components/SimpleLoadingScreen';
 import { toast } from 'sonner';
+import { useClerkIntegration } from '@/hooks/useClerkIntegration';
+import { SignOutButton } from '@clerk/clerk-react';
 
 interface Project {
   id: string;
@@ -31,6 +33,7 @@ const Dashboard = () => {
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [activeTab, setActiveTab] = useState('My Files');
   const navigate = useNavigate();
+  const clerkAuth = useClerkIntegration();
 
   // Dashboard preview images
   const dashboardImages = [
@@ -55,30 +58,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Check authentication
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+    const checkAuth = () => {
+      if (!clerkAuth.isLoaded) return;
+      
+      if (!clerkAuth.isSignedIn) {
         navigate('/auth');
         return;
       }
 
-      // Fetch projects
+      // Fetch projects when authenticated
       fetchProjects();
     };
 
     checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/auth');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+  }, [clerkAuth.isLoaded, clerkAuth.isSignedIn, navigate]);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -105,17 +98,16 @@ const Dashboard = () => {
       return;
     }
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('You must be logged in to create a project');
-        return;
-      }
+    if (!clerkAuth.userId) {
+      toast.error('You must be logged in to create a project');
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('projects')
         .insert({
-          user_id: session.user.id,
+          user_id: clerkAuth.userId,
           name: newProjectName.trim(),
           description: newProjectDescription.trim() || null,
           canvas_data: { nodes: [], edges: [] }
@@ -271,11 +263,10 @@ const Dashboard = () => {
           </SecondaryButton>
           <SecondaryButton
             onClick={async () => {
-              await supabase.auth.signOut();
               navigate('/auth');
             }}
           >
-            Logout
+            <SignOutButton />
           </SecondaryButton>
           <PrimaryButton
             onClick={() => setShowNewProjectDialog(true)}

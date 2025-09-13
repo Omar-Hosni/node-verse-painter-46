@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ReactFlowProvider } from '@xyflow/react';
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { ClerkAuthProvider } from "./contexts/ClerkAuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -20,7 +21,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ReactFlowProvider>
-        <TooltipProvider>
+        <ClerkAuthProvider>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -106,7 +108,8 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </ClerkAuthProvider>
       </ReactFlowProvider>
     </QueryClientProvider>
   );

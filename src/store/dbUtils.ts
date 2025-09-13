@@ -5,6 +5,20 @@ import { toast } from 'sonner';
 import { UserSubscription, UserCredits, Json } from './types';
 import { addUserCredits, getUserCredits } from '@/services/stripeService';
 
+// Import Clerk auth context
+let clerkAuthContext: any = null;
+
+export const setClerkAuthContext = (context: any) => {
+  clerkAuthContext = context;
+};
+
+const getClerkUser = () => {
+  if (!clerkAuthContext) {
+    throw new Error('Clerk auth context not initialized');
+  }
+  return clerkAuthContext;
+};
+
 // Save a project to the database
 export const saveProject = async (
   name: string,
@@ -13,8 +27,8 @@ export const saveProject = async (
   edges: Edge[]
 ): Promise<string | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const clerkAuth = getClerkUser();
+    if (!clerkAuth.userId) {
       toast.error('You must be logged in to save a project');
       return null;
     }
@@ -31,7 +45,7 @@ export const saveProject = async (
         name,
         description,
         canvas_data: canvasData,
-        user_id: user.id,
+        user_id: clerkAuth.userId,
       })
       .select('id')
       .single();
@@ -153,18 +167,18 @@ export const loadProject = async (
 // Fetch user credits
 export const fetchUserCredits = async (): Promise<number | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const clerkAuth = getClerkUser();
+    if (!clerkAuth.userId) {
       return null;
     }
 
     // Special case for admin user with unlimited credits
-    if (user.email === 'omarhosny.barcelona@gmail.com') {
+    if (clerkAuth.userEmail === 'omarhosny.barcelona@gmail.com') {
       return 999999; // Effectively unlimited
     }
 
     // Get credits from the database
-    const credits = await getUserCredits(user.id);
+    const credits = await getUserCredits(clerkAuth.userId);
     return credits;
   } catch (error) {
     console.error('Error fetching credits:', error);
@@ -175,8 +189,8 @@ export const fetchUserCredits = async (): Promise<number | null> => {
 // Fetch user subscription
 export const fetchUserSubscription = async (): Promise<UserSubscription | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const clerkAuth = getClerkUser();
+    if (!clerkAuth.userId) {
       return null;
     }
 
@@ -200,14 +214,14 @@ export const useCreditsForGeneration = async (currentCredits: number | null): Pr
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const clerkAuth = getClerkUser();
+    if (!clerkAuth.userId) {
       toast.error('User not authenticated');
       return false;
     }
 
     // Special case for admin user - no credits deducted
-    if (user.email === 'omarhosny.barcelona@gmail.com') {
+    if (clerkAuth.userEmail === 'omarhosny.barcelona@gmail.com') {
       return true;
     }
 
@@ -218,7 +232,7 @@ export const useCreditsForGeneration = async (currentCredits: number | null): Pr
     const { error } = await supabase
       .from('user_credits')
       .update({ credits: newCredits, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id);
+      .eq('user_id', clerkAuth.userId);
 
     if (error) {
       console.error('Error updating credits:', error);
