@@ -217,7 +217,7 @@ export const useCreditsForGeneration = async (currentCredits: number | null): Pr
     // Update user credits in database
     const { error } = await supabase
       .from('user_credits')
-      .update({ credits: newCredits, last_updated: new Date().toISOString() })
+      .update({ credits: newCredits, updated_at: new Date().toISOString() })
       .eq('user_id', user.id);
 
     if (error) {
