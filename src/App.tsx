@@ -54,33 +54,53 @@ const App = () => {
               <Route 
                 path="/dashboard" 
                 element={
-                  <SignedIn>
-                    <Dashboard />
-                  </SignedIn>
+                  <>
+                    <SignedIn>
+                      <Dashboard />
+                    </SignedIn>
+                    <SignedOut>
+                      <Navigate to="/auth" />
+                    </SignedOut>
+                  </>
                 } 
               />
               <Route 
                 path="/editor" 
                 element={
-                  <SignedIn>
-                    <Editor />
-                  </SignedIn>
+                  <>
+                    <SignedIn>
+                      <Editor />
+                    </SignedIn>
+                    <SignedOut>
+                      <Navigate to="/auth" />
+                    </SignedOut>
+                  </>
                 } 
               />
               <Route 
                 path="/editor/:projectId" 
                 element={
-                  <SignedIn>
-                    <Editor />
-                  </SignedIn>
+                  <>
+                    <SignedIn>
+                      <Editor />
+                    </SignedIn>
+                    <SignedOut>
+                      <Navigate to="/auth" />
+                    </SignedOut>
+                  </>
                 } 
               />
               <Route 
                 path="/subscription" 
                 element={
-                  <SignedIn>
-                    <Subscription />
-                  </SignedIn>
+                  <>
+                    <SignedIn>
+                      <Subscription />
+                    </SignedIn>
+                    <SignedOut>
+                      <Navigate to="/auth" />
+                    </SignedOut>
+                  </>
                 } 
               />
               <Route path="*" element={<NotFound />} />
