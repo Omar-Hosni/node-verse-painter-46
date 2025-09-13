@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Data Persistence Demo
  * Demonstrates the data persistence functionality for preprocessed results

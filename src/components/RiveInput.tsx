@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useMemo } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import {

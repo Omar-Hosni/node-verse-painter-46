@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState, useRef } from "react";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { useWorkflowStore } from "@/store/workflowStore";

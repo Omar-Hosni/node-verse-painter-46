@@ -199,9 +199,9 @@ export const EditorHeader = ({
           // include it but don't traverse beyond it
           if (isPreviewBoundary(nextId)) {
             const node = nodeMap.get(nextId);
-            const hasPersistedImage = node?.data?.imageUrl || 
-                                    node?.data?.generatedImage || 
-                                    node?.data?.right_sidebar?.imageUrl;
+            const hasPersistedImage = (node?.data as any)?.imageUrl || 
+                                    (node?.data as any)?.generatedImage || 
+                                    (node?.data as any)?.right_sidebar?.imageUrl;
             
             visited.add(nextId);
             segmentNodes.add(nextId);

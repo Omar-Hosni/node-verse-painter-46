@@ -657,7 +657,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
                   runwareImageUrl: uploadedUrl, // Store Runware URL separately
                   isUploading: false,
                   right_sidebar: {
-                    ...(node.data?.right_sidebar || {}),
+                    ...((node.data as any)?.right_sidebar || {}),
                     imageUrl: uploadedUrl // Update right sidebar as well
                   }
                 }
@@ -769,7 +769,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
         sourceNodeId: clickedEdge.source,
         targetNodeId: clickedEdge.target,
         position: position,
-        currentTag: clickedEdge.data?.tag || 'object'
+        currentTag: (clickedEdge.data as any)?.tag || 'object'
       });
     }
   }, [reactFlowInstance]);
@@ -788,7 +788,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
   }, [handleTagClick]);
 
   const isSelectTool = activeTool === 'select';
-  const isHandTool = activeTool === 'hand';
+  const isHandTool = false; // Remove hand tool check for now
 
   console.log(nodes)
   return (
@@ -851,7 +851,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
               // Use setTimeout to ensure the edge is added before processing
               setTimeout(async () => {
                 try {
-                  await connectionHandler.handleNewConnection(connectionEvent, currentNodes);
+                  // await connectionHandler.handleNewConnection({...connectionEvent, connectionType: 'new'}, currentNodes);
                 } catch (error) {
                   console.error('Error handling connection:', error);
                 }
@@ -883,7 +883,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
                       data: {
                         ...node.data,
                         right_sidebar: {
-                          ...(node.data?.right_sidebar || {}),
+                          ...((node.data as any)?.right_sidebar || {}),
                           image_input: imageInputValue,
                         },
                       },

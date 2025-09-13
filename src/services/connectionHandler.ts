@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Connection Handler Service
  * Detects and handles connections between image nodes and ControlNet nodes

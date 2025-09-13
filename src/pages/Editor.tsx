@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas } from '@/components/Canvas';

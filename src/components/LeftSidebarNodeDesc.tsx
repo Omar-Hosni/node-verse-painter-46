@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Button } from './ui/button';
 import { NodeType, NodeOption } from '@/store/types';

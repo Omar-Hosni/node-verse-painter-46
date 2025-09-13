@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { memo, useState, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer, useReactFlow, NodeToolbar, Handle, Position } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';

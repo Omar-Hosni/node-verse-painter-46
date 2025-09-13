@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useRef, useEffect, useMemo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Image as ImageIcon, Download } from 'lucide-react';

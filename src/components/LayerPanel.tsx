@@ -84,8 +84,8 @@ export const LayerPanel = () => {
             const relativeY = draggedNode.position.y - targetNode.position.y;
             
             // Ensure the node stays within frame bounds
-            const frameWidth = targetNode.data?.width || 400;
-            const frameHeight = targetNode.data?.height || 300;
+            const frameWidth = (targetNode.data as any)?.width || 400;
+            const frameHeight = (targetNode.data as any)?.height || 300;
             newPosition = {
               x: Math.max(10, Math.min(relativeX, frameWidth - 110)),
               y: Math.max(10, Math.min(relativeY, frameHeight - 60))

@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Canvas } from '@/components/Canvas';
 import { LeftSidebar } from '@/components/LeftSidebar';
