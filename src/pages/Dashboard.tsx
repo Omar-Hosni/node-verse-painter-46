@@ -263,7 +263,7 @@ const Dashboard = () => {
         </div>
 
         {/* Buttons Container */}
-        <div className="w-[265px] flex gap-3 items-center justify-end">
+        <div className="w-[320px] flex gap-2 items-center justify-end">
           <SecondaryButton
             onClick={() => navigate('/subscription')}
           >
