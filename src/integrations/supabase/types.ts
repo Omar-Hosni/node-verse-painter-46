@@ -198,6 +198,10 @@ export type Database = {
         Args: { credit_amount?: number; user_email: string }
         Returns: boolean
       }
+      get_user_id_by_email: {
+        Args: { user_email: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
