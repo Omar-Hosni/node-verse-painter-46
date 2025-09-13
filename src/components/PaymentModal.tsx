@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, CheckCircle, Loader2 } from 'lucide-react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 
 interface PaymentModalProps {
@@ -26,9 +26,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) =
   const [isLoading, setIsLoading] = useState(false);
   const credits = useCanvasStore(state => state.credits);
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   const handlePayment = async () => {
-    if (!selectedPackage || !user?.primaryEmailAddress?.emailAddress) {
+    if (!selectedPackage || !user) {
       toast.error('Please select a package');
       return;
     }
@@ -41,11 +42,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) =
 
     setIsLoading(true);
     try {
-      // Call the create-credit-checkout edge function
+      // Get Clerk session token
+      const token = await getToken();
+      
+      // Call the create-credit-checkout edge function with Clerk auth
       const { data, error } = await supabase.functions.invoke('create-credit-checkout', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: {
           packageType: 'topup',
-          userEmail: user.primaryEmailAddress.emailAddress,
           credits: pkg.credits,
           amount: pkg.price,
         },

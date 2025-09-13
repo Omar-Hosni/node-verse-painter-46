@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/AppHeader';
 import { CreditCard, Check, X, Loader2 } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -15,6 +15,7 @@ const Subscription = () => {
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const navigate = useNavigate();
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   // Stripe products mapping
   const plans = {
@@ -58,12 +59,17 @@ const Subscription = () => {
   // Check current subscription status
   useEffect(() => {
     const checkSubscription = async () => {
-      if (!user?.primaryEmailAddress?.emailAddress) return;
+      if (!user) return;
       
       try {
         setLoadingSubscription(true);
+        // Get Clerk session token
+        const token = await getToken();
+        
         const { data, error } = await supabase.functions.invoke('check-subscription', {
-          body: { userEmail: user.primaryEmailAddress.emailAddress },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (error) throw error;
@@ -84,18 +90,23 @@ const Subscription = () => {
   };
 
   const handleSubscribe = async () => {
-    if (!selectedPlan || !user?.primaryEmailAddress?.emailAddress) {
+    if (!selectedPlan || !user) {
       toast.error('Please select a plan');
       return;
     }
     
     setIsLoading(true);
     try {
+      // Get Clerk session token
+      const token = await getToken();
+      
       const plan = plans[selectedPlan];
       const { data, error } = await supabase.functions.invoke('create-checkout', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: {
           priceId: plan.priceId,
-          userEmail: user.primaryEmailAddress.emailAddress,
         },
       });
 
@@ -116,11 +127,16 @@ const Subscription = () => {
   };
 
   const handleManageSubscription = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) return;
+    if (!user) return;
     
     try {
+      // Get Clerk session token
+      const token = await getToken();
+      
       const { data, error } = await supabase.functions.invoke('customer-portal', {
-        body: { userEmail: user.primaryEmailAddress.emailAddress },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (error) throw error;

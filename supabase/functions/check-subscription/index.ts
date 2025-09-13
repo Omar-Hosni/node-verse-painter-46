@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { verifyToken } from "https://esm.sh/@clerk/backend@1.9.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,13 +21,20 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body
-    const { userEmail } = await req.json();
-    logStep("Request parsed", { userEmail });
+    // Verify Clerk session
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+    
+    const token = authHeader.replace("Bearer ", "");
+    const clerkSecretKey = Deno.env.get("CLERK_SECRET_KEY");
+    if (!clerkSecretKey) throw new Error("CLERK_SECRET_KEY is not configured");
 
-    if (!userEmail) {
-      throw new Error("Missing required field: userEmail");
-    }
+    const payload = await verifyToken(token, { secretKey: clerkSecretKey });
+    if (!payload || !payload.sub) throw new Error("Invalid session token");
+    
+    // Get user email from Clerk
+    const userEmail = payload.email || `${payload.sub}@clerk.user`;
+    logStep("User authenticated", { userId: payload.sub, userEmail });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
