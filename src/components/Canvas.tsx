@@ -74,12 +74,12 @@ const nodeTypes: NodeTypes = {
   previewNode: PreviewNode,
   'normal-node': NormalNode,
   'preview-realtime-node': PreviewNode,
-  'frame-node': FrameNode,
-  'text-node': TextNode,
-  'image-node': ImageNode,
-  'rectangle-node': RectangleNode,
-  'circle-node': CircleNode,
-  'star-node': StarNode
+  'frame-node': FrameNode as any,
+  'text-node': TextNode as any,
+  'image-node': ImageNode as any,
+  'rectangle-node': RectangleNode as any,
+  'circle-node': CircleNode as any,
+  'star-node': StarNode as any
 };
 
 const edgeTypes: EdgeTypes = {
