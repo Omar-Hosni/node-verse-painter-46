@@ -265,9 +265,17 @@ const Dashboard = () => {
         {/* Buttons Container */}
         <div className="w-[265px] flex gap-3 items-center justify-end">
           <SecondaryButton
-            onClick={() => { }}
+            onClick={() => navigate('/subscription')}
           >
-            Invite
+            Subscription
+          </SecondaryButton>
+          <SecondaryButton
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate('/auth');
+            }}
+          >
+            Logout
           </SecondaryButton>
           <PrimaryButton
             onClick={() => setShowNewProjectDialog(true)}

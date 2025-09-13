@@ -676,9 +676,9 @@ export const useCanvasStore = createWithEqualityFn<CanvasState>((set, get) => ({
     const currentCredits = get().credits;
     const success = await useCredits(currentCredits);
 
-    // If successful, update local credits state
-    if (success && currentCredits !== null) {
-      set({ credits: currentCredits - 5 });
+    // If successful, refresh credits from database to get updated value
+    if (success) {
+      await get().fetchUserCredits();
     }
 
     return success;
