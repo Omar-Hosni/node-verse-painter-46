@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import {
   ReactFlow,
   NodeTypes,

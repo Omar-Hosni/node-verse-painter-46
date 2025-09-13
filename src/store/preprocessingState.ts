@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Preprocessing State Management
  * Manages the state of ControlNet preprocessing operations

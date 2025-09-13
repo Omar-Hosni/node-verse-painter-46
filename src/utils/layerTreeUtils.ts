@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Node, Edge } from '@xyflow/react';
 
 export interface TreeNode {

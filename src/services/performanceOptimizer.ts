@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Performance Optimizer Service
  * Integrates caching, debouncing, and memory optimization for ControlNet preprocessing

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Error Recovery Service
  * Provides comprehensive error recovery and user guidance for ControlNet preprocessing

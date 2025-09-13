@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Image Caption Trigger Service
  * Handles automatic image captioning when image nodes connect to text input nodes

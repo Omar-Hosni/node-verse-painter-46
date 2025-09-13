@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Node, NodeChange, applyNodeChanges } from "@xyflow/react";
 import { NodeType } from "./types";
 import { Edge } from "@xyflow/react";

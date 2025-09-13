@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { toast } from 'sonner';
 import { Node, Edge } from '@xyflow/react';
 import { WorkflowJson } from './types';

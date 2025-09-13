@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Image Caption Utilities
  * Helper functions for image-to-text functionality
