@@ -6,10 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper logging function for enhanced debugging
+// Helper logging function for debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
+  console.log(`[CUSTOMER-PORTAL] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -21,11 +21,11 @@ serve(async (req) => {
     logStep("Function started");
 
     // Parse request body
-    const { priceId, userEmail } = await req.json();
-    logStep("Request parsed", { priceId, userEmail });
+    const { userEmail } = await req.json();
+    logStep("Request parsed", { userEmail });
 
-    if (!priceId || !userEmail) {
-      throw new Error("Missing required fields: priceId and userEmail");
+    if (!userEmail) {
+      throw new Error("Missing required field: userEmail");
     }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -33,47 +33,30 @@ serve(async (req) => {
     logStep("Stripe key verified");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
-    // Check if customer exists
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
-    } else {
-      logStep("No existing customer found");
+    
+    if (customers.data.length === 0) {
+      throw new Error("No Stripe customer found for this user");
     }
+    
+    const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    logStep("Creating checkout session", { origin, priceId });
-
-    const session = await stripe.checkout.sessions.create({
+    const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : userEmail,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: `${origin}/dashboard?success=true`,
-      cancel_url: `${origin}/subscription?canceled=true`,
-      client_reference_id: userEmail,
-      metadata: {
-        user_email: userEmail,
-      },
+      return_url: `${origin}/subscription`,
     });
+    
+    logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
-
-    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
+    return new Response(JSON.stringify({ url: portalSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
+    logStep("ERROR in customer-portal", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

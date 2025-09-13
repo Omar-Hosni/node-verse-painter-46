@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CreditCard, CheckCircle, Loader2 } from 'lucide-react';
-import { CREDIT_PACKAGES, createCheckoutSession, getStripe } from '@/services/stripeService';
 import { useCanvasStore } from '@/store/useCanvasStore';
+import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 
 interface PaymentModalProps {
@@ -11,47 +12,60 @@ interface PaymentModalProps {
   onClose: () => void;
 }
 
+// Credit packages for top-up
+const CREDIT_PACKAGES = {
+  topup: [
+    { id: 'topup-5', name: '$5 - 250 Credits', price: 500, credits: 250 }, // price in cents
+    { id: 'topup-10', name: '$10 - 500 Credits', price: 1000, credits: 500 },
+    { id: 'topup-25', name: '$25 - 1,500 Credits', price: 2500, credits: 1500 },
+  ]
+};
+
 export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const credits = useCanvasStore(state => state.credits);
-  const fetchUserCredits = useCanvasStore(state => state.fetchUserCredits);
+  const { user } = useUser();
 
   const handlePayment = async () => {
-    if (!selectedPackage) {
+    if (!selectedPackage || !user?.primaryEmailAddress?.emailAddress) {
       toast.error('Please select a package');
+      return;
+    }
+
+    const pkg = CREDIT_PACKAGES.topup.find(p => p.id === selectedPackage);
+    if (!pkg) {
+      toast.error('Package not found');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Get Stripe instance
-      const stripe = await getStripe();
-      if (!stripe) {
-        throw new Error('Failed to initialize Stripe');
-      }
-
-      // Create a checkout session
-      const session = await createCheckoutSession(selectedPackage);
-
-      // Redirect to Stripe checkout
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id,
+      // Call the create-credit-checkout edge function
+      const { data, error } = await supabase.functions.invoke('create-credit-checkout', {
+        body: {
+          packageType: 'topup',
+          userEmail: user.primaryEmailAddress.emailAddress,
+          credits: pkg.credits,
+          amount: pkg.price,
+        },
       });
 
-      if (result.error) {
-        throw new Error(result.error.message);
+      if (error) throw error;
+
+      // Redirect to Stripe checkout
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        onClose();
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error: any) {
       console.error('Payment error:', error);
       toast.error(error.message || 'Payment failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
-  };
-
-  const getPackageById = (id: string) => {
-    const allPackages = [...CREDIT_PACKAGES.topup, ...CREDIT_PACKAGES.subscription];
-    return allPackages.find(pkg => pkg.id === id);
   };
 
   return (
@@ -98,33 +112,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) =
             </div>
           </div>
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Subscription Plans</h3>
-            <div className="space-y-3">
-              {CREDIT_PACKAGES.subscription.map((pkg) => (
-                <div 
-                  key={pkg.id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                    selectedPackage === pkg.id 
-                      ? 'border-blue-500 bg-blue-500/10' 
-                      : 'border-[#333] hover:border-[#444]'
-                  }`}
-                  onClick={() => setSelectedPackage(pkg.id)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{pkg.name}</div>
-                      <div className="text-sm text-gray-400">{pkg.credits} credits</div>
-                    </div>
-                    {selectedPackage === pkg.id && (
-                      <CheckCircle className="text-blue-500" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
           <Button 
             className="w-full bg-blue-600 hover:bg-blue-700"
             onClick={handlePayment}
@@ -136,7 +123,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) =
                 Processing...
               </>
             ) : (
-              `Pay $${((getPackageById(selectedPackage!)?.price || 0) / 100).toFixed(2)}`
+              selectedPackage && `Pay $${((CREDIT_PACKAGES.topup.find(p => p.id === selectedPackage)?.price || 0) / 100).toFixed(2)}`
             )}
           </Button>
         </div>

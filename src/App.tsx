@@ -5,48 +5,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Editor from "./pages/Editor";
 import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
-import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for existing auth session
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setLoading(false);
-    };
-
-    checkSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen bg-[#121212] text-white">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-    </div>;
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -58,13 +27,62 @@ const App = () => {
             <Routes>
               <Route 
                 path="/" 
-                element={session ? <Navigate to="/dashboard" /> : <Navigate to="/auth" />} 
+                element={
+                  <>
+                    <SignedIn>
+                      <Navigate to="/dashboard" />
+                    </SignedIn>
+                    <SignedOut>
+                      <Navigate to="/auth" />
+                    </SignedOut>
+                  </>
+                } 
               />
-              <Route path="/auth" element={session ? <Navigate to="/dashboard" /> : <Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/editor" element={<Editor />} />
-              <Route path="/editor/:projectId" element={<Editor />} />
-              <Route path="/subscription" element={<Subscription />} />
+              <Route 
+                path="/auth" 
+                element={
+                  <>
+                    <SignedIn>
+                      <Navigate to="/dashboard" />
+                    </SignedIn>
+                    <SignedOut>
+                      <Auth />
+                    </SignedOut>
+                  </>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <SignedIn>
+                    <Dashboard />
+                  </SignedIn>
+                } 
+              />
+              <Route 
+                path="/editor" 
+                element={
+                  <SignedIn>
+                    <Editor />
+                  </SignedIn>
+                } 
+              />
+              <Route 
+                path="/editor/:projectId" 
+                element={
+                  <SignedIn>
+                    <Editor />
+                  </SignedIn>
+                } 
+              />
+              <Route 
+                path="/subscription" 
+                element={
+                  <SignedIn>
+                    <Subscription />
+                  </SignedIn>
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

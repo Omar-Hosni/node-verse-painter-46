@@ -9,7 +9,7 @@ const corsHeaders = {
 // Helper logging function for enhanced debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
+  console.log(`[CREATE-CREDIT-CHECKOUT] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -21,11 +21,11 @@ serve(async (req) => {
     logStep("Function started");
 
     // Parse request body
-    const { priceId, userEmail } = await req.json();
-    logStep("Request parsed", { priceId, userEmail });
+    const { packageType, userEmail, credits, amount } = await req.json();
+    logStep("Request parsed", { packageType, userEmail, credits, amount });
 
-    if (!priceId || !userEmail) {
-      throw new Error("Missing required fields: priceId and userEmail");
+    if (!packageType || !userEmail || !credits || !amount) {
+      throw new Error("Missing required fields: packageType, userEmail, credits, amount");
     }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -45,23 +45,32 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    logStep("Creating checkout session", { origin, priceId });
+    logStep("Creating checkout session", { origin, packageType, credits, amount });
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${credits} Credits`,
+              description: `Top-up package: ${credits} credits`,
+            },
+            unit_amount: amount, // amount in cents
+          },
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${origin}/dashboard?success=true`,
-      cancel_url: `${origin}/subscription?canceled=true`,
+      mode: "payment",
+      success_url: `${origin}/dashboard?payment_success=true&credits=${credits}`,
+      cancel_url: `${origin}/dashboard?payment_canceled=true`,
       client_reference_id: userEmail,
       metadata: {
         user_email: userEmail,
+        credits: credits.toString(),
+        package_type: packageType,
       },
     });
 
@@ -73,7 +82,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
+    logStep("ERROR in create-credit-checkout", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
