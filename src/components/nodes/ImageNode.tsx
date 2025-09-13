@@ -1,6 +1,7 @@
 import { memo, useState, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
+import { useWorkflowStore } from '@/store/workflowStore';
 import { X } from 'lucide-react';
 
 interface ImageNodeData {
@@ -61,6 +62,9 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     nodes: state.nodes,
     setSelectedNode: state.setSelectedNode
   }));
+
+  // Add the ref to track if we've entered inpainting mode once
+  const enteredInpaintOnceRef = useRef(false);
 
   // Ratio options and shape map for outpaint mode
   const ratioOptions = ['1:1', '2:3', '3:2', '9:16', '16:9'];
@@ -243,7 +247,13 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       if (hasInpaintingConnection && !userClosedInpainting) {
         console.log('DEBUG ImageNode: Node selected with in-painting connection, entering painting mode');
         setToolbarMode('inpainting');
-        setSelectedTool('hand'); // Only set when node is first selected
+        
+        // Only set the tool once when we FIRST enter inpainting mode for a selection session
+        if (!enteredInpaintOnceRef.current) {
+          enteredInpaintOnceRef.current = true;
+          // Keep current tool or uncomment next line to default to brush ONCE:
+          // setSelectedTool('brush');
+        }
       } else if (hasOutpaintingConnection && !userClosedOutpainting) {
         console.log('DEBUG ImageNode: Node selected with out-painting connection, entering outpainting mode');
         setToolbarMode('outpainting');
@@ -263,6 +273,9 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       }
       setUserClosedInpainting(false); // Reset so it can open again next time
       setUserClosedOutpainting(false); // Reset so it can open again next time
+      
+      // Reset the "first entry" flag when deselecting
+      enteredInpaintOnceRef.current = false;
     }
   }, [selected, edges, nodes, id, userClosedInpainting, userClosedOutpainting, forceOutpainted]); // Depend on connections too
 
@@ -441,9 +454,106 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     };
   };
 
+  // ---- add inside ImageNode component (below getDrawingData or nearby) ----
+  const makeBWMaskDataUrl = async (): Promise<string | null> => {
+    try {
+      if (!drawingData || !imageNaturalDimensions.width || !imageNaturalDimensions.height) return null;
+
+      const overlay = drawingData;
+      const dims = data?.right_sidebar?.drawingDimensions;
+      if (!overlay) return null;
+
+      // create mask at the seed image's natural resolution
+      const mask = document.createElement('canvas');
+      mask.width = imageNaturalDimensions.width;
+      mask.height = imageNaturalDimensions.height;
+      const mctx = mask.getContext('2d');
+      if (!mctx) return null;
+
+      await new Promise<void>((resolve, reject) => {
+        const src = new Image();
+        src.onload = () => {
+          // IMPORTANT: keep transparent background before thresholding
+          mctx.clearRect(0, 0, mask.width, mask.height);
+
+          // scale the overlay from display size -> natural size
+          mctx.drawImage(src, 0, 0, dims.width, dims.height, 0, 0, mask.width, mask.height);
+
+          // binarize by alpha of overlay
+          const img = mctx.getImageData(0, 0, mask.width, mask.height);
+          const d = img.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const a = d[i + 3];
+            const on = a > 8 ? 255 : 0;
+            d[i] = d[i + 1] = d[i + 2] = on; // black or white
+            d[i + 3] = 255;                  // make opaque
+          }
+          mctx.putImageData(img, 0, 0);
+          resolve();
+        };
+        src.onerror = reject;
+        src.src = overlay;
+      });
+
+      return mask.toDataURL('image/png');
+    } catch (err) {
+      console.warn('makeBWMaskDataUrl failed', err);
+      return null;
+    }
+  };
+
+  // Add a handler that you can call from your "✓ / Apply mask" button in the inpainting toolbar
+  const { runwareService } = useWorkflowStore();
+  const { nodes: canvasNodes, edges: canvasEdges, updateNodeData: updateCanvasNode } = useCanvasStore();
+
+  const persistMaskToInpaintTargets = async () => {
+    try {
+      // ensure strokes saved
+      saveDrawingData();
+
+      const maskDataUrl = await makeBWMaskDataUrl();
+      if (!maskDataUrl) return;
+
+      const svc = runwareService ?? (useWorkflowStore.getState() as any).runwareService;
+      if (!svc) return;
+
+      const maskUrl = await svc.uploadMaskDataUrl(maskDataUrl);
+      // walk downstream and set mask on inpaint/outpaint
+      // (works for direct edge or via connectors)
+      // update: maskImage=url (for executor), maskPreviewUrl=data URL (for UI)
+      
+      // BFS to all downstream nodes until we hit inpaint/outpaint nodes
+      const q = [id];
+      const visited = new Set<string>(q);
+      while (q.length) {
+        const cur = q.shift()!;
+        const outgoing = canvasEdges.filter(e => e.source === cur);
+        for (const e of outgoing) {
+          const n = canvasNodes.find(nn => nn.id === e.target);
+          if (!n || visited.has(n.id)) continue;
+          visited.add(n.id);
+
+          const t = ((n.data?.type || n.type || '') + '').toLowerCase();
+          if (t.includes('inpaint') || t.includes('outpaint')) {
+            updateCanvasNode(n.id, {
+              maskImage: maskUrl,
+              maskPreviewUrl: maskDataUrl,
+              data: { ...n.data, maskImage: maskUrl, maskPreviewUrl: maskDataUrl }
+            });
+          } else if (t.includes('connector')) {
+            q.push(n.id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('persistMaskToInpaintTargets failed', err);
+    }
+  };
+
   // Update dimensions when data changes from properties panel
   useEffect(() => {
     const newWidth = (data as ImageNodeData).width || 200;
+
     const newHeight = (data as ImageNodeData).height || 200;
 
     setVisualWidth(newWidth);
@@ -1511,8 +1621,10 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
 
               {/* Close button */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   console.log('DEBUG: Close button clicked, exiting painting mode');
+                  // Save the mask before closing
+                  await persistMaskToInpaintTargets();
                   setUserClosedInpainting(true);
                   setToolbarMode('default');
                 }}

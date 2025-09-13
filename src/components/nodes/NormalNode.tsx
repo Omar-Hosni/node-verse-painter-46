@@ -214,11 +214,9 @@ const NormalNode: React.FC<NormalNodeProps> = React.memo(({ data, selected }) =>
           transition: 'opacity 10ms ease-out',
           transitionDelay: isHovered ? '5ms' : '0ms'
         }}
-        viewBox="0 0 25 25"
-        >
+      >
           <circle cx="12.5" cy="12.5" r="12.5" fill="#007AFF" />
         </svg>
-      )}
       <svg
         style={{
           position: 'absolute',

@@ -37,8 +37,9 @@ export const MaskEditor: React.FC<MaskEditorProps> = ({
       canvas.width = img.width;
       canvas.height = img.height;
       
-      // Draw the image as background
-      ctx.drawImage(img, 0, 0);
+      // Fill with transparent background for mask drawing
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Set up drawing context for mask
       ctx.globalCompositeOperation = 'source-over';
@@ -97,22 +98,69 @@ export const MaskEditor: React.FC<MaskEditorProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Redraw the original image
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-    };
-    img.src = imageUrl;
-  }, [imageUrl, imageLoaded]);
+    // Clear the canvas with transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, [imageLoaded]);
 
   const handleComplete = useCallback(() => {
     if (!canvasRef.current || !imageLoaded) return;
     
     const canvas = canvasRef.current;
-    const maskDataUrl = canvas.toDataURL('image/png');
-    onMaskComplete(maskDataUrl);
+    
+    // Create a new canvas for the pure black/white mask
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = canvas.width;
+    maskCanvas.height = canvas.height;
+    const maskCtx = maskCanvas.getContext('2d');
+    
+    if (maskCtx) {
+      // Fill with black background
+      maskCtx.fillStyle = '#000000';
+      maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+      
+      // Get image data from the original canvas
+      const imageData = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height);
+      
+      if (imageData) {
+        // Create a new image data for the mask
+        const maskImageData = maskCtx.createImageData(canvas.width, canvas.height);
+        
+        // Process each pixel to create a pure black/white mask
+        for (let i = 0; i < imageData.data.length; i += 4) {
+          const r = imageData.data[i];
+          const g = imageData.data[i + 1];
+          const b = imageData.data[i + 2];
+          const a = imageData.data[i + 3];
+          
+          // Check if this pixel is part of the mask (not the original image)
+          // We'll use a simple threshold - if the pixel is significantly different from black,
+          // it's part of the mask
+          const isMaskPixel = (r > 30 || g > 30 || b > 30 || a > 30);
+          
+          if (isMaskPixel) {
+            // White for mask areas
+            maskImageData.data[i] = 255;     // R
+            maskImageData.data[i + 1] = 255; // G
+            maskImageData.data[i + 2] = 255; // B
+            maskImageData.data[i + 3] = 255; // A
+          } else {
+            // Black for non-mask areas
+            maskImageData.data[i] = 0;       // R
+            maskImageData.data[i + 1] = 0;   // G
+            maskImageData.data[i + 2] = 0;   // B
+            maskImageData.data[i + 3] = 255; // A
+          }
+        }
+        
+        // Put the processed image data back to the mask canvas
+        maskCtx.putImageData(maskImageData, 0, 0);
+      }
+      
+      const maskDataUrl = maskCanvas.toDataURL('image/png');
+      onMaskComplete(maskDataUrl);
+    }
   }, [onMaskComplete, imageLoaded]);
 
   if (!isOpen) return null;
@@ -181,15 +229,22 @@ export const MaskEditor: React.FC<MaskEditorProps> = ({
           </Button>
         </div>
 
-        {/* Canvas */}
-        <div className="mb-4 flex justify-center">
+        {/* Canvas with background image */}
+        <div className="mb-4 flex justify-center relative">
+          {/* Background image */}
+          <img 
+            src={imageUrl} 
+            alt="Original" 
+            className="absolute inset-0 w-full h-full object-contain border border-[#333333] rounded"
+            style={{ imageRendering: 'pixelated' }}
+          />
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            className="border border-[#333333] rounded cursor-crosshair max-w-full max-h-[60vh]"
+            className="relative border border-[#333333] rounded cursor-crosshair max-w-full max-h-[60vh] bg-transparent"
             style={{ 
               cursor: tool === 'brush' ? 'crosshair' : 'grab',
               imageRendering: 'pixelated'

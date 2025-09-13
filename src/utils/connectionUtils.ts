@@ -308,16 +308,16 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
   // Conditional image delivery rules
   const conditionalImageDeliveryTypes = ['re-imagine', 'inpainting', 'outpainting'];
   if (conditionalImageDeliveryTypes.some(type => sourceType?.includes(type))) {
-    const sourceHasEngineInput = edges.some(edge => {
+    const sourceHasInputImage = edges.some(edge => {
       if (edge.target === sourceNode.id) {
         const inputNode = nodes.find(n => n.id === edge.source);
-        return inputNode?.data?.functionality === 'engine';
+        return inputNode?.data?.functionality === 'input' && inputNode?.data?.type.includes('image') ;
       }
       return false;
     });
     
-    if (!sourceHasEngineInput) {
-      toast.error(`${sourceType} node must have engine input before being used as image delivery`);
+    if (!sourceHasInputImage) {
+      toast.error(`${sourceType} node must have image input before being used as image delivery`);
       return false;
     }
   }

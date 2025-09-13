@@ -424,6 +424,10 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
     "image-to-image-re-imagine": {
       creativity: 50,
     },
+    "image-to-image-inpainting": {
+      inpaintPrompt: "",
+      maskImage: "",
+    },
     "input-text": {
       prompt: "",
       negative: "",

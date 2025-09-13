@@ -148,6 +148,7 @@ const LockButton = React.memo(
 
     return (
       <button
+
         onClick={() => {
           if (!isShiftPressed) {
             onToggle(!isLocked);
@@ -555,6 +556,7 @@ const ToggleButton = React.memo(
     >
       {options.map((option) => (
         <button
+          data-lov-id={option.value}
           key={option.value}
           onClick={() => onChange(option.value)}
           className={`flex-1 h-full text-sm transition-all flex items-center justify-center rounded-full ${
@@ -1485,6 +1487,7 @@ const GearPicker = React.memo(
                         >
                           {sampleImages.map((_, index) => (
                             <button
+                              data-lov-id={index}
                               key={index}
                               onClick={() => setCurrentImageIndex(index)}
                               style={{
@@ -2121,6 +2124,7 @@ const ColorPicker = React.memo(
             >
               {colorSwatches.map((color, index) => (
                 <button
+                  data-lov-id={index}
                   key={index}
                   onClick={() => onChange(color)}
                   className="flex-1 h-7 rounded-lg border-2 border-transparent hover:border-white/40 transition-colors"
@@ -3558,6 +3562,140 @@ export const RightSidebar = () => {
     );
   };
 
+  const renderExportSection = () =>{
+
+    return(
+      <>
+        {/* Export Section */}
+            <PropertySection title="Export">
+              {/* Render toggle */}
+              <PropertyRow label="Render">
+                <ToggleButton
+                  options={[
+                    { label: "Image", value: "image" },
+                    { label: "Container", value: "container" },
+                  ]}
+                  value={
+                    selectedNode.data?.right_sidebar?.exportRender || "image"
+                  }
+                  onChange={(value) =>
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...selectedNode.data?.right_sidebar,
+                        exportRender: value,
+                      },
+                    })
+                  }
+                />
+              </PropertyRow>
+
+              {/* Format dropdown */}
+              <PropertyRow label="Format">
+                <CustomSelect
+                  options={[
+                    { label: "PNG", value: "png" },
+                    { label: "JPEG", value: "jpeg" },
+                    { label: "WEBP", value: "webp" },
+                  ]}
+                  value={
+                    selectedNode.data?.right_sidebar?.exportFormat || "png"
+                  }
+                  onChange={(value) =>
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...selectedNode.data?.right_sidebar,
+                        exportFormat: value,
+                      },
+                    })
+                  }
+                />
+              </PropertyRow>
+
+              {/* Ratio dropdown */}
+              <PropertyRow label="Ratio">
+                <CustomSelect
+                  options={[
+                    { label: "1X", value: "1x" },
+                    { label: "2X", value: "2x" },
+                    { label: "4X", value: "4x" },
+                    { label: "8X", value: "8x" },
+                  ]}
+                  value={selectedNode.data?.right_sidebar?.exportRatio || "1x"}
+                  onChange={(value) =>
+                    updateNodeData(selectedNode.id, {
+                      right_sidebar: {
+                        ...selectedNode.data?.right_sidebar,
+                        exportRatio: value,
+                      },
+                    })
+                  }
+                />
+              </PropertyRow>
+
+              {/* Export button */}
+              <div className="w-full mt-2.5">
+                <PrimaryButton
+                  onClick={async () => {
+                    try {
+                      // Get the image URL from the selected node's data
+                      const imageUrl = selectedNode.data?.imageUrl || 
+                                      selectedNode.data?.image || 
+                                      selectedNode.data?.generatedImage ||
+                                      selectedNode.data?.right_sidebar?.imageUrl;
+                      
+                      if (!imageUrl) {
+                        toast.error("No image found to export");
+                        return;
+                      }
+                      
+                      // Get export settings
+                      const format = selectedNode.data?.right_sidebar?.exportFormat || "png";
+                      const ratio = selectedNode.data?.right_sidebar?.exportRatio || "1x";
+                      
+                      // Create filename with appropriate extension
+                      const extension = format === "jpeg" ? "jpg" : format;
+                      const filename = `export-${Date.now()}.${extension}`;
+                      
+                      // Fetch the image
+                      const response = await fetch(imageUrl);
+                      if (!response.ok) {
+                        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+                      }
+                      
+                      // Convert to blob
+                      const blob = await response.blob();
+                      
+                      // Create object URL
+                      const objectUrl = URL.createObjectURL(blob);
+                      
+                      // Create download link
+                      const link = document.createElement('a');
+                      link.href = objectUrl;
+                      link.download = filename;
+                      
+                      // Trigger download
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      
+                      // Clean up object URL
+                      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+                      
+                      toast.success(`Image exported as ${format.toUpperCase()}`);
+                    } catch (error) {
+                      console.error("Export failed:", error);
+                      toast.error(`Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+                    }
+                  }}
+                >
+                  Export
+                </PrimaryButton>
+              </div>
+            </PropertySection>
+      </>
+    )
+  }
+
   // Utility to check if a property exists
   const hasProperty = (property: string) => {
     return (
@@ -4315,92 +4453,7 @@ export const RightSidebar = () => {
               </PropertyRow>
             </PropertySection>
 
-            {/* Export Section */}
-            <PropertySection title="Export">
-              {/* Render toggle */}
-              <PropertyRow label="Render">
-                <ToggleButton
-                  options={[
-                    { label: "Image", value: "image" },
-                    { label: "Container", value: "container" },
-                  ]}
-                  value={
-                    selectedNode.data?.right_sidebar?.exportRender || "image"
-                  }
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      right_sidebar: {
-                        ...selectedNode.data?.right_sidebar,
-                        exportRender: value,
-                      },
-                    })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Format dropdown */}
-              <PropertyRow label="Format">
-                <CustomSelect
-                  options={[
-                    { label: "PNG", value: "png" },
-                    { label: "JPEG", value: "jpeg" },
-                    { label: "WEBP", value: "webp" },
-                  ]}
-                  value={
-                    selectedNode.data?.right_sidebar?.exportFormat || "png"
-                  }
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      right_sidebar: {
-                        ...selectedNode.data?.right_sidebar,
-                        exportFormat: value,
-                      },
-                    })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Ratio dropdown */}
-              <PropertyRow label="Ratio">
-                <CustomSelect
-                  options={[
-                    { label: "1X", value: "1x" },
-                    { label: "2X", value: "2x" },
-                    { label: "4X", value: "4x" },
-                    { label: "8X", value: "8x" },
-                  ]}
-                  value={selectedNode.data?.right_sidebar?.exportRatio || "1x"}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      right_sidebar: {
-                        ...selectedNode.data?.right_sidebar,
-                        exportRatio: value,
-                      },
-                    })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Export button */}
-              <div className="w-full mt-2.5">
-                <PrimaryButton
-                  onClick={() => {
-                    // TODO: Implement export functionality
-                    console.log("Export clicked", {
-                      render:
-                        selectedNode.data?.right_sidebar?.exportRender ||
-                        "image",
-                      format:
-                        selectedNode.data?.right_sidebar?.exportFormat || "png",
-                      ratio:
-                        selectedNode.data?.right_sidebar?.exportRatio || "1x",
-                    });
-                  }}
-                >
-                  Export
-                </PrimaryButton>
-              </div>
-            </PropertySection>
+            {renderExportSection()}
           </>
         );
       }
@@ -5643,69 +5696,7 @@ export const RightSidebar = () => {
               </PropertySection>
             )}
 
-            {/* Export Section */}
-            <PropertySection title="Export">
-              {/* Render toggle */}
-              <PropertyRow label="Render">
-                <ToggleButton
-                  options={[
-                    { label: "Image", value: "image" },
-                    { label: "Container", value: "container" },
-                  ]}
-                  value={
-                    selectedNode.data?.right_sidebar?.exportRender || "image"
-                  }
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      right_sidebar: {
-                        ...selectedNode.data?.right_sidebar,
-                        exportRender: value,
-                      },
-                    })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Format dropdown */}
-              <PropertyRow label="Format">
-                <CustomSelect
-                  options={[
-                    { label: "PNG", value: "png" },
-                    { label: "JPEG", value: "jpeg" },
-                    { label: "WEBP", value: "webp" },
-                  ]}
-                  value={
-                    selectedNode.data?.right_sidebar?.exportFormat || "png"
-                  }
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      right_sidebar: {
-                        ...selectedNode.data?.right_sidebar,
-                        exportFormat: value,
-                      },
-                    })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Export button */}
-              <div className="w-full mt-2.5">
-                <PrimaryButton
-                  onClick={() => {
-                    // TODO: Implement export functionality
-                    console.log("Export clicked", {
-                      render:
-                        selectedNode.data?.right_sidebar?.exportRender ||
-                        "image",
-                      format:
-                        selectedNode.data?.right_sidebar?.exportFormat || "png",
-                    });
-                  }}
-                >
-                  Export
-                </PrimaryButton>
-              </div>
-            </PropertySection>
+            {renderExportSection()}
           </>
         );
       }
@@ -10372,52 +10363,7 @@ export const RightSidebar = () => {
               </PropertyRow>
             </PropertySection>
 
-            {/* Export Section */}
-            <PropertySection title="Export">
-              {/* Render toggle */}
-              <PropertyRow label="Render">
-                <ToggleButton
-                  options={[
-                    { label: "Image", value: "image" },
-                    { label: "Container", value: "container" },
-                  ]}
-                  value={selectedNode.data?.exportRender || "image"}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, { exportRender: value })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Format dropdown */}
-              <PropertyRow label="Format">
-                <CustomSelect
-                  options={[
-                    { label: "PNG", value: "png" },
-                    { label: "JPEG", value: "jpeg" },
-                    { label: "WEBP", value: "webp" },
-                  ]}
-                  value={selectedNode.data?.exportFormat || "png"}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, { exportFormat: value })
-                  }
-                />
-              </PropertyRow>
-
-              {/* Export button */}
-              <div className="w-full mt-2.5">
-                <PrimaryButton
-                  onClick={() => {
-                    // TODO: Implement export functionality
-                    console.log("Export clicked", {
-                      render: selectedNode.data?.exportRender || "image",
-                      format: selectedNode.data?.exportFormat || "png",
-                    });
-                  }}
-                >
-                  Export
-                </PrimaryButton>
-              </div>
-            </PropertySection>
+            {renderExportSection()}
           </>
         );
       }

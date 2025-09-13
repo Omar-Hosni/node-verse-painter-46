@@ -2383,6 +2383,98 @@ export class WorkflowExecutor {
     }
   }
 
+  private getNearestImageLayerUrl(start: Node): string | null {
+    const nodes = useWorkflowStore.getState().nodes;
+    const edges = useWorkflowStore.getState().edges;
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const seen = new Set<string>();
+    const stack = [start.id];
+
+    while (stack.length) {
+      const cur = stack.pop()!;
+      if (seen.has(cur)) continue;
+      seen.add(cur);
+
+      // walk incoming edges only (upstream)
+      const incoming = edges.filter(e => e.target === cur);
+      for (const e of incoming) {
+        const src = nodeById.get(e.source);
+        if (!src) continue;
+
+        const t = ((src.data?.type || src.type || '') + '').toLowerCase();
+        const isImageLayer = t.includes('image-layer') || t.includes('image-node');
+
+        if (isImageLayer) {
+          const url =
+            src.data?.right_sidebar?.imageUrl ||
+            src.data?.imageUrl ||
+            src.data?.runwareImageUrl ||
+            src.data?.image;
+          if (typeof url === 'string' && url) return url;
+        }
+        stack.push(src.id);
+      }
+    }
+    return null;
+  }
+
+  private async processInpaint(node: Node, inputImage: string): Promise<string | null> {
+    const { maskImage } = node.data;
+    if (typeof maskImage !== 'string') throw new Error('Inpaint node missing mask image');
+
+    // force seed to ORIGINAL image-layer if available
+    const originalSeed = this.getNearestImageLayerUrl(node) || inputImage;
+
+    const allEdges = useWorkflowStore.getState().edges;
+    const allNodes = useWorkflowStore.getState().nodes;
+
+    // upstream of the current node
+    const incoming = allEdges.filter((e) => e.target === node.id);
+    const upstream = incoming
+      .map((e) => allNodes.find((n) => n.id === e.source))
+      .filter(Boolean) as Node[];
+
+    // get positive prompt from the upstream text node or node data as fallback
+    const textNode = upstream.find(n => {
+      const nodeType = (n.type || '').toLowerCase();
+      const dataType = (((n.data as any)?.type) || '').toLowerCase();
+      return nodeType.includes('text') || dataType.includes('text');
+    });
+    const nodeData: any = node.data || {};
+    const prompt =
+      (textNode?.data as any)?.right_sidebar?.prompt ??
+      nodeData.positivePrompt ??
+      nodeData.prompt ??
+      '__BLANK__';
+          
+    const result = await this.runwareService.inpaintImage({
+      positivePrompt: prompt,
+      seedImage: originalSeed,
+      maskImage
+    });
+    return result.imageURL;
+  }
+
+  private async processOutpaint(node: Node, inputImage: string): Promise<string | null> {
+    const originalSeed = this.getNearestImageLayerUrl(node) || inputImage;
+    const { outpaintDirection, outpaintAmount } = node.data;
+
+    const direction =
+      typeof outpaintDirection === 'string' &&
+      ['up', 'down', 'left', 'right', 'all'].includes(outpaintDirection)
+        ? (outpaintDirection as 'up' | 'down' | 'left' | 'right' | 'all')
+        : 'all';
+    const amount = typeof outpaintAmount === 'number' ? outpaintAmount : 50;
+
+    const result = await this.runwareService.outpaintImage({
+      positivePrompt: 'Extend the image naturally',
+      inputImage: originalSeed,
+      outpaintDirection: direction,
+      outpaintAmount: amount
+    });
+    return result.imageURL;
+  }
+
   // Process remove background tool with caching
   private async processRemoveBackground(
     node: Node,
@@ -2434,54 +2526,6 @@ export class WorkflowExecutor {
     return result.imageURL;
   }
 
-  // Process inpaint tool
-  private async processInpaint(
-    node: Node,
-    inputImage: string
-  ): Promise<string | null> {
-    const { maskImage, inpaintPrompt } = node.data;
-
-    if (typeof maskImage !== "string") {
-      throw new Error("Inpaint node missing mask image");
-    }
-
-    const prompt =
-      typeof inpaintPrompt === "string"
-        ? inpaintPrompt
-        : "Inpaint the masked area";
-    const result = await this.runwareService.inpaintImage({
-      positivePrompt: prompt,
-      seedImage: inputImage,
-      maskImage,
-    });
-    return result.imageURL;
-  }
-
-  // Process outpaint tool
-  private async processOutpaint(
-    node: Node,
-    inputImage: string
-  ): Promise<string | null> {
-    const { outpaintDirection, outpaintAmount } = node.data;
-
-    const direction =
-      typeof outpaintDirection === "string" &&
-      ["up", "down", "left", "right", "all"].includes(outpaintDirection)
-        ? (outpaintDirection as "up" | "down" | "left" | "right" | "all")
-        : "all";
-    const amount = typeof outpaintAmount === "number" ? outpaintAmount : 50;
-
-    const result = await this.runwareService.outpaintImage({
-      positivePrompt: "Extend the image naturally",
-      seedImage: inputImage,
-      outpaint: {
-        direction,
-        amount,
-      },
-    });
-    return result.imageURL;
-  }
-
   private async processEngine(
     node: Node,
     _inputs: Record<string, string>
@@ -2506,8 +2550,66 @@ export class WorkflowExecutor {
       }))
     );
 
+    // find upstream inpaint/outpaint nodes
+    const inpaintNode = upstream.find(n => {
+      const t = ((n.data as any)?.type || n.type || '').toLowerCase();
+      return t.includes('inpaint') || (n.data as any)?.maskImage;
+    });
+
+    const outpaintNode = upstream.find(n => {
+      const t = ((n.data as any)?.type || n.type || '').toLowerCase();
+      return t.includes('outpaint');
+    });
+
+    // Find a reasonable seed image from upstream image-like nodes
+    const seedCandidate = upstream.find(n => this.isImageInputNode(n));
+    const upstreamSeedImage =
+      (seedCandidate && (this.processedImages.get(seedCandidate.id) ||
+       this.extractImageUrlFromNode(seedCandidate))) || null;
+
+    // get positive prompt from the upstream text node or engine data as fallback
+    const textNode = upstream.find(n => {
+      const nodeType = (n.type || '').toLowerCase();
+      const dataType = (((n.data as any)?.type) || '').toLowerCase();
+      return nodeType.includes('text') || dataType.includes('text');
+    });
+    const engineData: any = node.data || {};
+    const positivePrompt =
+      (textNode?.data as any)?.right_sidebar?.prompt ??
+      engineData.positivePrompt ??
+      engineData.prompt ??
+      '__BLANK__';
+
+    if (inpaintNode && upstreamSeedImage) {
+      const maskImage = (inpaintNode.data as any).maskImage;
+      if (typeof maskImage === 'string' && maskImage) {
+        const originalSeed = this.getNearestImageLayerUrl(inpaintNode) || upstreamSeedImage;
+        const result = await this.runwareService.inpaintImage({
+          positivePrompt,
+          seedImage: originalSeed,
+          maskImage
+        });
+        return result.imageURL; // EARLY RETURN
+      }
+    }
+
+    if (outpaintNode && upstreamSeedImage) {
+      const { outpaintDirection, outpaintAmount } = (outpaintNode.data as any);
+      const direction = outpaintDirection || 'all';
+      const amount = typeof outpaintAmount === 'number' ? outpaintAmount : 50;
+
+      const originalSeed = this.getNearestImageLayerUrl(outpaintNode) || upstreamSeedImage;
+      const result = await this.runwareService.outpaintImage({
+        positivePrompt: 'Extend the image naturally',
+        inputImage: originalSeed,             // <- see #2
+        outpaintDirection: direction,         // <- see #2
+        outpaintAmount: amount                // <- see #2
+      });
+      return result.imageURL; // EARLY RETURN
+    }
+
     // --- PROMPTS (from Text Prompt node data, or engine data) ---
-    const textNode = upstream.find((n) => {
+    const textNode2 = upstream.find((n) => {
       const nodeType = n.type || "";
       const dataType = (n.data as any)?.type || "";
       return (
@@ -2516,7 +2618,7 @@ export class WorkflowExecutor {
       );
     });
 
-    const tData: any = textNode?.data || {};
+    const tData: any = textNode2?.data || {};
     const pos =
       tData.positive ??
       tData.right_sidebar.prompt ??
@@ -2899,7 +3001,7 @@ export class WorkflowExecutor {
       params.lora = nodeParams.loraAIRs;
     }
 
-    // Use appropriate Flux Kontext method
+    // Use appropriate Flux Kontext method based on version
     const result = await this.runwareService.generateFluxKontext(params);
     return result.imageURL;
   }
@@ -3468,7 +3570,7 @@ export class WorkflowExecutor {
         case "removebg":
           console.log("🗑️ Removing background from image");
           result = await this.runwareService.removeBackground({
-            image: inputImage,
+            inputImage: inputImage, // was image:
           });
           break;
 
@@ -3478,7 +3580,7 @@ export class WorkflowExecutor {
             toolParams?.scaleFactor || 2
           );
           result = await this.runwareService.upscaleImage({
-            image: inputImage,
+            inputImage: inputImage, // was image:
             upscaleFactor: (toolParams?.scaleFactor &&
             [2, 3, 4].includes(toolParams.scaleFactor)
               ? toolParams.scaleFactor
@@ -3492,9 +3594,9 @@ export class WorkflowExecutor {
           }
           console.log("🎨 Inpainting image with prompt:", toolParams.prompt);
           result = await this.runwareService.inpaintImage({
-            positivePrompt: toolParams.prompt,
+            positivePrompt: toolParams.prompt!,
             seedImage: inputImage,
-            maskImage: toolParams.maskImage,
+            maskImage: toolParams.maskImage!,
           });
           break;
 
@@ -3505,11 +3607,9 @@ export class WorkflowExecutor {
           });
           result = await this.runwareService.outpaintImage({
             positivePrompt: "Extend the image naturally",
-            seedImage: inputImage,
-            outpaint: {
-              direction: toolParams?.direction || "all",
-              amount: toolParams?.amount || 50,
-            },
+            inputImage: inputImage,                     // was seedImage
+            outpaintDirection: toolParams?.direction || "all",
+            outpaintAmount: toolParams?.amount || 50,
           });
           break;
 

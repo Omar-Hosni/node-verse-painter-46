@@ -673,11 +673,12 @@ export const useCanvasStore = createWithEqualityFn<CanvasState>((set, get) => ({
   },
 
   useCreditsForGeneration: async () => {
-    const success = await useCredits(get().credits);
+    const currentCredits = get().credits;
+    const success = await useCredits(currentCredits);
 
     // If successful, update local credits state
-    if (success && get().credits !== null) {
-      set({ credits: get().credits! - 1 });
+    if (success && currentCredits !== null) {
+      set({ credits: currentCredits - 5 });
     }
 
     return success;

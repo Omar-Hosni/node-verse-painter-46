@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Node, Edge } from '@xyflow/react';
 import { toast } from 'sonner';
 import { UserSubscription, UserCredits, Json } from './types';
+import { addUserCredits, getUserCredits } from '@/services/stripeService';
 
 // Save a project to the database
 export const saveProject = async (
@@ -156,8 +157,14 @@ export const fetchUserCredits = async (): Promise<number | null> => {
       return null;
     }
 
-    // Simulate credits fetch for now
-    return 100; // Default credits
+    // Special case for admin user with unlimited credits
+    if (user.email === 'omarhosny.barcelona@gmail.com') {
+      return 999999; // Effectively unlimited
+    }
+
+    // Get credits from the database
+    const credits = await getUserCredits(user.id);
+    return credits;
   } catch (error) {
     console.error('Error fetching credits:', error);
     return null;
@@ -185,13 +192,43 @@ export const fetchUserSubscription = async (): Promise<UserSubscription | null> 
 
 // Use credits for generation
 export const useCreditsForGeneration = async (currentCredits: number | null): Promise<boolean> => {
-  // If no credits or less than 1, return false
-  if (!currentCredits || currentCredits < 1) {
-    toast.error('Not enough credits for generation');
+  // If no credits or less than 5, return false (5 credits needed for 1 generation)
+  if (!currentCredits || currentCredits < 5) {
+    toast.error('Not enough credits for generation (5 credits required)');
     return false;
   }
 
-  // In a real implementation, we would update the user's credits in the database here
-  // For now, we'll just return true to indicate success
-  return true;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('User not authenticated');
+      return false;
+    }
+
+    // Special case for admin user - no credits deducted
+    if (user.email === 'omarhosny.barcelona@gmail.com') {
+      return true;
+    }
+
+    // Deduct 5 credits for generation
+    const newCredits = currentCredits - 5;
+    
+    // Update user credits in database
+    const { error } = await supabase
+      .from('user_credits')
+      .update({ credits: newCredits, last_updated: new Date().toISOString() })
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error updating credits:', error);
+      toast.error('Failed to deduct credits');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error using credits:', error);
+    toast.error('Failed to process credits');
+    return false;
+  }
 };

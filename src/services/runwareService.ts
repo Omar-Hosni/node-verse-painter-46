@@ -763,7 +763,7 @@ export class RunwareService {
       const message = [{
         taskType: "imageInference",
         taskUUID,
-        model: params.model || "runware:100@1",
+        model: params.model || "runware:101@1",
         outputFormat: params.outputFormat || "JPEG",
         width: params.width || 1024,
         height: params.height || 1024,
@@ -1043,6 +1043,31 @@ export class RunwareService {
     };
     
     return preprocessorMap[controlNetType] || null;
+  }
+
+  // ---- add inside class RunwareService ----
+
+  private dataUrlToFile(dataUrl: string, filename = 'mask.png'): File {
+
+    const [header, data] = dataUrl.split(',');
+
+    const mime = /data:(.*?);/.exec(header)?.[1] || 'image/png';
+
+    const binStr = atob(data);
+
+    const len = binStr.length;
+
+    const u8 = new Uint8Array(len);
+
+    for (let i = 0; i < len; i++) u8[i] = binStr.charCodeAt(i);
+
+    return new File([u8], filename, { type: mime });
+
+  }
+
+  async uploadMaskDataUrl(maskDataUrl: string): Promise<string> {
+    const file = this.dataUrlToFile(maskDataUrl, `mask-${Date.now()}.png`);
+    return await this.uploadImageForURL(file);
   }
 
   disconnect() {
