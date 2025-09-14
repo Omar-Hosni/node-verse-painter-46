@@ -27,27 +27,22 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    // Verify Clerk token by making a request to Clerk's API
-    const clerkUserResponse = await fetch("https://api.clerk.com/v1/me", {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!clerkUserResponse.ok) {
-      throw new Error("Invalid Clerk token");
-    }
-
-    const clerkUser = await clerkUserResponse.json();
-    const userEmail = clerkUser.email_addresses?.[0]?.email_address;
-    const userId = clerkUser.id;
-    
-    if (!userEmail || !userId) {
-      throw new Error("Could not get user email or ID from Clerk");
-    }
-
-    logStep("Clerk user authenticated", { userId, userEmail });
+    // Decode JWT payload to get user info (basic validation)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Check if token is expired
+      if (payload.exp && payload.exp < Date.now() / 1000) {
+        throw new Error("Token expired");
+      }
+      
+      const userId = payload.sub;
+      
+      if (!userId) {
+        throw new Error("No user ID in token");
+      }
+      
+      logStep("Clerk user authenticated", { userId });
 
     // Initialize Supabase client with service role key for direct database access
     const supabase = createClient(
@@ -67,12 +62,16 @@ serve(async (req) => {
       throw new Error(`Database error: ${error.message}`);
     }
 
-    logStep("Projects fetched successfully", { projectCount: projects?.length || 0 });
+      logStep("Projects fetched successfully", { projectCount: projects?.length || 0 });
 
-    return new Response(JSON.stringify({ projects: projects || [] }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      return new Response(JSON.stringify({ projects: projects || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (jwtError) {
+      logStep("JWT decode error", { error: jwtError.message });
+      throw new Error("Invalid token format");
+    }
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

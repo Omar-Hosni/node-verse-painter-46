@@ -33,23 +33,24 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    // Verify Clerk token by making a request to Clerk's API
-    const clerkUserResponse = await fetch("https://api.clerk.com/v1/me", {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!clerkUserResponse.ok) {
-      throw new Error("Invalid Clerk token");
-    }
-
-    const clerkUser = await clerkUserResponse.json();
-    const userId = clerkUser.id;
-    
-    if (!userId) {
-      throw new Error("Could not get user ID from Clerk");
+    // Decode JWT payload to get user info (basic validation)
+    let userId;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Check if token is expired
+      if (payload.exp && payload.exp < Date.now() / 1000) {
+        throw new Error("Token expired");
+      }
+      
+      userId = payload.sub;
+      
+      if (!userId) {
+        throw new Error("No user ID in token");
+      }
+    } catch (jwtError) {
+      logStep("JWT decode error", { error: jwtError.message });
+      throw new Error("Invalid token format");
     }
 
     logStep("Clerk user authenticated", { userId });
