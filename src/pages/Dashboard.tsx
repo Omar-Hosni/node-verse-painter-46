@@ -35,17 +35,41 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const clerkAuth = useClerkIntegration();
 
-  // Dashboard preview images
-  const dashboardImages = [
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1894.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1895.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1896.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1897.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1898.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1899.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1900.png',
-    '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1901.png',
-  ];
+  // Generate project thumbnail URL
+  const getProjectThumbnail = (project: Project, index: number) => {
+    // Try to use project-specific thumbnail if available in the future
+    // For now, generate a unique gradient-based thumbnail
+    const gradients = [
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+      'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+      'linear-gradient(135deg, #ff8a80 0%, #ea80fc 100%)',
+    ];
+    
+    return `data:image/svg+xml,${encodeURIComponent(`
+      <svg width="400" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .gradient${index} { background: ${gradients[index % gradients.length]}; }
+            .text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: white; text-anchor: middle; }
+          </style>
+        </defs>
+        <rect width="400" height="280" fill="url(#grad${index})"/>
+        <defs>
+          <linearGradient id="grad${index}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${gradients[index % gradients.length].match(/#[0-9a-f]{6}/gi)?.[0] || '#667eea'};stop-opacity:1" />
+            <stop offset="100%" style="stop-color:${gradients[index % gradients.length].match(/#[0-9a-f]{6}/gi)?.[1] || '#764ba2'};stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <text x="200" y="130" class="text" font-size="18" font-weight="600">${project.name.substring(0, 20)}</text>
+        <text x="200" y="155" class="text" font-size="12" opacity="0.8">Created ${new Date(project.created_at).toLocaleDateString()}</text>
+      </svg>
+    `)}`;
+  };
 
   const navigationItems = [
     { name: 'Home', icon: Home },
@@ -375,16 +399,9 @@ const Dashboard = () => {
                       style={{ aspectRatio: '1 / 0.7' }}
                     >
                       <img
-                        src={dashboardImages[index % dashboardImages.length]}
+                        src={getProjectThumbnail(project, index)}
                         alt={`Preview for ${project.name}`}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.log('Image failed to load:', dashboardImages[index % dashboardImages.length]);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully:', dashboardImages[index % dashboardImages.length]);
-                        }}
                       />
                       {/* Hover overlay with gradient and details */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -432,15 +449,22 @@ const Dashboard = () => {
         <div className="flex items-center mb-8 pl-3 pt-3">
           {/* Avatar Image */}
           <img
-            src="/src/components/ui/avatar image example.png"
+            src={clerkAuth.user?.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(clerkAuth.user?.firstName || clerkAuth.userEmail || 'User')}&background=007AFF&color=fff&size=128`}
             alt="User Avatar"
             className="w-[30px] h-[30px] rounded-full object-cover flex-shrink-0"
+            onError={(e) => {
+              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(clerkAuth.userEmail || 'User')}&background=007AFF&color=fff&size=128`;
+            }}
           />
 
           {/* User Info */}
           <div className="ml-3 flex flex-col">
-            <span className="text-white text-sm font-Medium leading-none">Mostafa mohamed</span>
-            <span className="text-white/50 text-sm font-medium leading-none mt-0.5">Free account </span>
+            <span className="text-white text-sm font-Medium leading-none">
+              {clerkAuth.user?.firstName && clerkAuth.user?.lastName 
+                ? `${clerkAuth.user.firstName} ${clerkAuth.user.lastName}`
+                : clerkAuth.userEmail?.split('@')[0] || 'User'}
+            </span>
+            <span className="text-white/50 text-sm font-medium leading-none mt-0.5">Free account</span>
           </div>
         </div>
 
