@@ -81,7 +81,7 @@ export const addUserCredits = async (userId: string, creditsToAdd: number) => {
       // Update existing record
       const { error: updateError } = await supabase
         .from('user_credits')
-        .update({ credits: newCredits, last_updated: new Date().toISOString() })
+        .update({ credits: newCredits, updated_at: new Date().toISOString() })
         .eq('user_id', userId);
       
       if (updateError) {
@@ -93,8 +93,9 @@ export const addUserCredits = async (userId: string, creditsToAdd: number) => {
         .from('user_credits')
         .insert({
           user_id: userId,
+          email: userId, // Using userId as email for Clerk users
           credits: creditsToAdd,
-          last_updated: new Date().toISOString()
+          updated_at: new Date().toISOString()
         });
       
       if (insertError) {

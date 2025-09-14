@@ -76,14 +76,24 @@ const Dashboard = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (!clerkAuth.getToken) {
+        throw new Error('Authentication not ready');
+      }
+
+      const token = await clerkAuth.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const { data, error } = await supabase.functions.invoke('get-user-projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (error) throw error;
 
-      setProjects(data || []);
+      setProjects(data?.projects || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error('Failed to fetch projects');
@@ -98,22 +108,26 @@ const Dashboard = () => {
       return;
     }
 
-    if (!clerkAuth.userId) {
-      toast.error('You must be logged in to create a project');
+    if (!clerkAuth.getToken) {
+      toast.error('Authentication not ready');
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .insert({
-          user_id: clerkAuth.userId,
+      const token = await clerkAuth.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-user-project', {
+        body: {
           name: newProjectName.trim(),
-          description: newProjectDescription.trim() || null,
-          canvas_data: { nodes: [], edges: [] }
-        })
-        .select()
-        .single();
+          description: newProjectDescription.trim() || null
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (error) throw error;
 
@@ -123,7 +137,7 @@ const Dashboard = () => {
       setNewProjectDescription('');
 
       // Navigate to editor with new project
-      navigate(`/editor/${data.id}`);
+      navigate(`/editor/${data.project.id}`);
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error('Failed to create project');
@@ -136,10 +150,21 @@ const Dashboard = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
+      if (!clerkAuth.getToken) {
+        throw new Error('Authentication not ready');
+      }
+
+      const token = await clerkAuth.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const { error } = await supabase.functions.invoke('delete-user-project', {
+        body: { projectId: id },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (error) throw error;
 
