@@ -109,45 +109,69 @@ export interface CollaborativeFabricObject {
   };
 }
 
-// Workflow execution types
+export interface EdgeData {
+  tag?: 'object' | 'scene';
+  [key: string]: any;
+}
+
 export interface NodeData {
-  // Common properties
-  id: string;
-  type: string;
+  [key: string]: any; // Index signature for React Flow compatibility
   
-  // Image Input Node
-  imageFile?: File;
+  label?: string;
+  
+  // Base properties
+  type?: string;
+  display_name?: string;
+  icon?: string;
+  
+  // Image properties
   imageUrl?: string;
-  imageType?: 'object' | 'scene' | 'fuse';
+  image?: string;
+  runwareImageUrl?: string;
+  generatedImage?: string;
+  isUploading?: boolean;
+  imageFile?: string;
+  processedImageUrl?: string;
+  src?: string;
+  url?: string;
   
-  // Text Input Node
-  prompt?: string;
+  // Text properties
+  text?: string;
+  fontSize?: number;
+  fontWeight?: number;
   
-  // ControlNet Node
-  preprocessor?: string;
-  preprocessedImage?: PreprocessedImageData;
-  isPreprocessing?: boolean;
-  hasPreprocessedImage?: boolean;
+  // Style properties
+  color?: string;
+  backgroundColor?: string;
+  borderColor?: string;
   
-  // Engine Node
-  model?: string;
+  // Position and size
   width?: number;
   height?: number;
-  steps?: number;
-  cfgScale?: number;
+  
+  // ControlNet and preprocessing properties
+  preprocessedImage?: string | { imageURL?: string };
+  controlType?: string;
+  isPreprocessing?: boolean;
+  hasPreprocessedImage?: boolean;
+  preprocessor?: string;
+  
+  // Pinning and interaction
+  pinned?: boolean;
+  isPinned?: boolean;
+  draggable?: boolean;
+  
+  // Engine properties
+  prompt?: string;
+  negativePrompt?: string;
   strength?: number;
-  loras?: Array<{model: string; weight: number}>;
-  
-  // Gear Node
-  loraModel?: string;
-  weight?: number;
-  
-  // Rerendering Node
-  rerenderingType?: 'reimagine' | 'reference' | 'rescene' | 'reangle' | 'remix';
-  referenceType?: string;
-  degrees?: number;
-  direction?: string;
+  guidanceScale?: number;
+  steps?: number;
+  seed?: number;
   creativity?: number;
+  model?: string;
+  cfgScale?: number;
+  loras?: Array<{model: string; weight: number}>;
   
   // Tool Node
   toolType?: 'removebg' | 'upscale' | 'inpaint' | 'outpaint';
@@ -157,16 +181,43 @@ export interface NodeData {
   outpaintDirection?: 'up' | 'down' | 'left' | 'right' | 'all';
   outpaintAmount?: number;
   
-  // Output Node
-  generatedImage?: string;
+  // Image type classification
+  imageType?: 'object' | 'scene' | 'fuse';
   
-  // Right sidebar data
+  // Rerendering properties
+  rerenderingType?: 'reimagine' | 'reference' | 'rescene' | 'reangle' | 'remix';
+  referenceType?: string;
+  degrees?: number;
+  direction?: string;
+  
+  // Gear properties
+  loraModel?: string;
+  weight?: number;
+  
+  // Right sidebar data - expanded to include all used properties
   right_sidebar?: {
     creativity?: number;
     referenceType?: string;
     degrees?: number;
     direction?: string;
     pin?: boolean;
+    imageUrl?: string;
+    image?: string;
+    image_input?: string;
+    preprocessedImage?: string;
+    type?: string;
+    source?: string;
+    image_url?: string;
+    accident?: string;
+    quality?: string;
+    ratio?: string;
+    size?: { width?: number; height?: number };
+    power?: number;
+    tags?: string[];
+    exportRender?: string;
+    exportFormat?: string;
+    exportRatio?: string;
+    hugMode?: boolean;
   };
 }
 
@@ -176,6 +227,7 @@ export interface NodeOption {
   label: string;
   description: string;
   icon: any;
+  node_desc_image_url?: string;
 }
 
 export interface CanvasState {
@@ -239,8 +291,8 @@ export interface CanvasState {
   sendWorkflowToAPI: () => Promise<any>;
   
   // Tool management
-  activeTool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame';
-  setActiveTool: (tool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame') => void;
+  activeTool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame' | 'hand';
+  setActiveTool: (tool: 'select' | 'rectangle' | 'circle' | 'star' | 'frame' | 'hand') => void;
 
   // New properties for drawing collaboration
   fabricObjects: CollaborativeFabricObject[];

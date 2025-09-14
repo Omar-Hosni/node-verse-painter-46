@@ -13,6 +13,7 @@ import {
 
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+import { NodeData, EdgeData } from '@/store/types';
 import { RectangleTool } from './tools/RectangleTool';
 import { CircleTool } from './tools/CircleTool';
 import { StarTool } from './tools/StarTool';
@@ -649,18 +650,19 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
           const currentNodes = reactFlowInstance.getNodes();
           const updatedNodes = currentNodes.map(node => {
             if (node.id === nodeId) {
+              const nodeData = node.data as NodeData;
               return {
                 ...node,
                 data: {
-                  ...node.data,
+                  ...nodeData,
                   imageUrl: uploadedUrl, // Use Runware URL
                   runwareImageUrl: uploadedUrl, // Store Runware URL separately
                   isUploading: false,
                   right_sidebar: {
-                    ...((node.data as any)?.right_sidebar || {}),
+                    ...(nodeData.right_sidebar || {}),
                     imageUrl: uploadedUrl // Update right sidebar as well
                   }
-                }
+                } as NodeData
               };
             }
             return node;
@@ -769,7 +771,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
         sourceNodeId: clickedEdge.source,
         targetNodeId: clickedEdge.target,
         position: position,
-        currentTag: (clickedEdge.data as any)?.tag || 'object'
+        currentTag: (clickedEdge.data as EdgeData)?.tag || 'object'
       });
     }
   }, [reactFlowInstance]);
@@ -788,7 +790,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
   }, [handleTagClick]);
 
   const isSelectTool = activeTool === 'select';
-  const isHandTool = false; // Remove hand tool check for now
+  const isHandTool = activeTool === 'hand';
 
   console.log(nodes)
   return (
@@ -851,7 +853,13 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
               // Use setTimeout to ensure the edge is added before processing
               setTimeout(async () => {
                 try {
-                  // await connectionHandler.handleNewConnection({...connectionEvent, connectionType: 'new'}, currentNodes);
+                  // await connectionHandler.handleNewConnection({
+                  //   source: connection.source || '',
+                  //   target: connection.target || '',
+                  //   sourceHandle: connection.sourceHandle || '',
+                  //   targetHandle: connection.targetHandle || '',
+                  //   connectionType: 'new'
+                  // }, currentNodes);
                 } catch (error) {
                   console.error('Error handling connection:', error);
                 }
@@ -876,20 +884,22 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
               const targetNode = currentNodes.find((n) => n.id === connection.target);
 
               if (targetNode && imageInputValue !== null) {
-                const updatedNodes = currentNodes.map((node) =>
-                  node.id === targetNode.id
-                    ? {
+                const updatedNodes = currentNodes.map((node) => {
+                  if (node.id === targetNode.id) {
+                    const nodeData = node.data as NodeData;
+                    return {
                       ...node,
                       data: {
-                        ...node.data,
+                        ...nodeData,
                         right_sidebar: {
-                          ...((node.data as any)?.right_sidebar || {}),
+                          ...(nodeData.right_sidebar || {}),
                           image_input: imageInputValue,
                         },
-                      },
-                    }
-                    : node
-                );
+                      } as NodeData,
+                    };
+                  }
+                  return node;
+                });
                 reactFlowInstance.setNodes(updatedNodes);
               }
             }

@@ -8,6 +8,7 @@ import SvgIcon from './SvgIcon';
 import { useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+import { NodeData } from '@/store/types';
 import { toast } from 'sonner';
 import { getHighestOrder } from '@/store/nodeActions';
 
@@ -199,9 +200,10 @@ export const EditorHeader = ({
           // include it but don't traverse beyond it
           if (isPreviewBoundary(nextId)) {
             const node = nodeMap.get(nextId);
-            const hasPersistedImage = (node?.data as any)?.imageUrl || 
-                                    (node?.data as any)?.generatedImage || 
-                                    (node?.data as any)?.right_sidebar?.imageUrl;
+            const nodeData = node?.data as NodeData;
+            const hasPersistedImage = nodeData?.imageUrl || 
+                                    nodeData?.generatedImage || 
+                                    nodeData?.right_sidebar?.imageUrl;
             
             visited.add(nextId);
             segmentNodes.add(nextId);
