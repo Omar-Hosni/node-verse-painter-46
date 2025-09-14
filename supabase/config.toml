@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.get-user-projects]
+verify_jwt = false
+
+[functions.create-user-project]
+verify_jwt = false
+
+[functions.delete-user-project]
+verify_jwt = false
