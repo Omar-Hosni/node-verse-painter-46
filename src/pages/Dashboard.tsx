@@ -379,40 +379,84 @@ const Dashboard = () => {
               <h3 className="text-lg font-medium text-white mb-4">Templates</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
                 {/* Template placeholders */}
-                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                  <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <FileText className="h-6 w-6 text-blue-400" />
+                <div className="relative group cursor-pointer">
+                  <div
+                    className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                    style={{ aspectRatio: '1 / 0.7' }}
+                  >
+                    <div className="flex-1 flex flex-col items-center justify-center p-6">
+                      <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-3">
+                        <FileText className="h-6 w-6 text-blue-400" />
+                      </div>
+                      <h4 className="text-white font-medium mb-2 text-center">Portrait Generator</h4>
+                      <p className="text-gray-400 text-xs text-center">AI-powered portrait generation</p>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                        <span className="text-gray-300 text-xs">Coming Soon</span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="text-white font-medium mb-2">Portrait Generator</h4>
-                  <p className="text-gray-400 text-sm mb-4">AI-powered portrait generation workflow</p>
-                  <Button variant="outline" size="sm">Coming Soon</Button>
                 </div>
                 
-                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                  <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <FileText className="h-6 w-6 text-purple-400" />
+                <div className="relative group cursor-pointer">
+                  <div
+                    className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                    style={{ aspectRatio: '1 / 0.7' }}
+                  >
+                    <div className="flex-1 flex flex-col items-center justify-center p-6">
+                      <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-3">
+                        <FileText className="h-6 w-6 text-purple-400" />
+                      </div>
+                      <h4 className="text-white font-medium mb-2 text-center">Style Transfer</h4>
+                      <p className="text-gray-400 text-xs text-center">Transform with artistic styles</p>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                        <span className="text-gray-300 text-xs">Coming Soon</span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="text-white font-medium mb-2">Style Transfer</h4>
-                  <p className="text-gray-400 text-sm mb-4">Transform images with artistic styles</p>
-                  <Button variant="outline" size="sm">Coming Soon</Button>
                 </div>
                 
-                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                  <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <FileText className="h-6 w-6 text-green-400" />
+                <div className="relative group cursor-pointer">
+                  <div
+                    className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                    style={{ aspectRatio: '1 / 0.7' }}
+                  >
+                    <div className="flex-1 flex flex-col items-center justify-center p-6">
+                      <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-3">
+                        <FileText className="h-6 w-6 text-green-400" />
+                      </div>
+                      <h4 className="text-white font-medium mb-2 text-center">Background Remove</h4>
+                      <p className="text-gray-400 text-xs text-center">Automatic background removal</p>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                        <span className="text-gray-300 text-xs">Coming Soon</span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="text-white font-medium mb-2">Background Remove</h4>
-                  <p className="text-gray-400 text-sm mb-4">Automatic background removal</p>
-                  <Button variant="outline" size="sm">Coming Soon</Button>
                 </div>
                 
-                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                  <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <FileText className="h-6 w-6 text-orange-400" />
+                <div className="relative group cursor-pointer">
+                  <div
+                    className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                    style={{ aspectRatio: '1 / 0.7' }}
+                  >
+                    <div className="flex-1 flex flex-col items-center justify-center p-6">
+                      <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mb-3">
+                        <FileText className="h-6 w-6 text-orange-400" />
+                      </div>
+                      <h4 className="text-white font-medium mb-2 text-center">Upscaling</h4>
+                      <p className="text-gray-400 text-xs text-center">Enhance image resolution</p>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                        <span className="text-gray-300 text-xs">Coming Soon</span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="text-white font-medium mb-2">Upscaling</h4>
-                  <p className="text-gray-400 text-sm mb-4">Enhance image resolution and quality</p>
-                  <Button variant="outline" size="sm">Coming Soon</Button>
                 </div>
               </div>
             </div>
@@ -450,59 +494,125 @@ const Dashboard = () => {
         return (
           <div className="pl-4 pr-[22px]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
-              {/* Template cards - same as in Home */}
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-blue-400" />
+              {/* Template cards */}
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Portrait Generator</h4>
+                    <p className="text-gray-400 text-xs text-center">AI-powered portrait generation</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Portrait Generator</h4>
-                <p className="text-gray-400 text-sm mb-4">AI-powered portrait generation workflow</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-purple-400" />
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-purple-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Style Transfer</h4>
+                    <p className="text-gray-400 text-xs text-center">Transform with artistic styles</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Style Transfer</h4>
-                <p className="text-gray-400 text-sm mb-4">Transform images with artistic styles</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-green-400" />
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-green-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Background Remove</h4>
+                    <p className="text-gray-400 text-xs text-center">Automatic background removal</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Background Remove</h4>
-                <p className="text-gray-400 text-sm mb-4">Automatic background removal</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-orange-400" />
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-orange-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Upscaling</h4>
+                    <p className="text-gray-400 text-xs text-center">Enhance image resolution</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Upscaling</h4>
-                <p className="text-gray-400 text-sm mb-4">Enhance image resolution and quality</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-red-400" />
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-red-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Object Relighting</h4>
+                    <p className="text-gray-400 text-xs text-center">Relight objects in images</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Object Relighting</h4>
-                <p className="text-gray-400 text-sm mb-4">Relight objects in your images</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
               
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
-                <div className="w-12 h-12 bg-yellow-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
-                  <FileText className="h-6 w-6 text-yellow-400" />
+              <div className="relative group cursor-pointer">
+                <div
+                  className="relative rounded-lg overflow-hidden bg-[#1A1A1A] flex flex-col"
+                  style={{ aspectRatio: '1 / 0.7' }}
+                >
+                  <div className="flex-1 flex flex-col items-center justify-center p-6">
+                    <div className="w-12 h-12 bg-yellow-600/20 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-yellow-400" />
+                    </div>
+                    <h4 className="text-white font-medium mb-2 text-center">Inpainting</h4>
+                    <p className="text-gray-400 text-xs text-center">Remove or replace parts of images</p>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center">
+                      <span className="text-gray-300 text-xs">Coming Soon</span>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-white font-medium mb-2">Inpainting</h4>
-                <p className="text-gray-400 text-sm mb-4">Remove or replace parts of images</p>
-                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
             </div>
           </div>
