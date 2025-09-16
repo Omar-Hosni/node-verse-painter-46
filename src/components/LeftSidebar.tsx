@@ -88,7 +88,8 @@ export const LeftSidebar = ({
       Output: true,
       Components: true,
       Renders: false,
-      Uploaded: false,
+      Uploaded: true,
+      Generated: true,
     }
   );
 
@@ -364,55 +365,140 @@ export const LeftSidebar = ({
 
           {/* Assets Tab - Images and Components */}
           {activeTab === "Assets" && (
-            <div className="space-y-6">
-              {assetCategories.map((category) => (
-                <div key={category.name}>
-                  <Collapsible
-                    open={openCategories[category.name]}
-                    onOpenChange={() => toggleCategory(category.name)}
-                  >
-                    <CollapsibleTrigger className="flex items-center w-full text-left mb-2">
-                      <div className="flex items-center gap-2 text-gray-300">
-                        <span className="text-blue-400">
-                          {openCategories[category.name] ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </span>
-                        <category.icon className="h-4 w-4" />
-                        <span className="font-medium">{category.name}</span>
-                      </div>
-                    </CollapsibleTrigger>
+            <div className="space-y-6 mt-2">
+              {/* Uploaded Images Section */}
+              <div>
+                <Collapsible
+                  open={openCategories["Uploaded"]}
+                  onOpenChange={() => toggleCategory("Uploaded")}
+                >
+                  <CollapsibleTrigger className="flex items-center w-full text-left mb-3">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <span className="text-blue-400">
+                        {openCategories["Uploaded"] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </span>
+                      <FileImage className="h-4 w-4" />
+                      <span className="font-medium">Uploaded Images</span>
+                    </div>
+                  </CollapsibleTrigger>
 
-                    <CollapsibleContent className="pl-6 space-y-2">
-                      {category.items.map((item, index) => (
-                        <div key={index}>
-                          {item.type === "component" ? (
-                            <div className="flex items-center p-2 hover:bg-gray-700 rounded-md">
-                              <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
-                              <span className="text-sm text-gray-300">
-                                {item.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="mb-2">
-                              {item.image && (
-                                <div className="relative group">
-                                  <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
+                  <CollapsibleContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Placeholder for uploaded images - will be populated from store/API */}
+                      <div className="aspect-square bg-[#1a1a1a] border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center text-gray-500 text-xs cursor-pointer hover:border-gray-500 transition-colors">
+                        <div className="text-center">
+                          <PlusCircle className="h-6 w-6 mx-auto mb-1" />
+                          <span>Upload</span>
                         </div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+
+              {/* Generated Images Section */}
+              <div>
+                <Collapsible
+                  open={openCategories["Generated"]}
+                  onOpenChange={() => toggleCategory("Generated")}
+                >
+                  <CollapsibleTrigger className="flex items-center w-full text-left mb-3">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <span className="text-blue-400">
+                        {openCategories["Generated"] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </span>
+                      <Shuffle className="h-4 w-4" />
+                      <span className="font-medium">Generated Images</span>
+                    </div>
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Placeholder for generated images - will be populated from store/API */}
+                      <div className="aspect-square bg-[#1a1a1a] border border-gray-700 rounded-lg flex items-center justify-center text-gray-500 text-xs">
+                        <span>No images yet</span>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+
+              {/* Components Section */}
+              {assetCategories.map((category) => (
+                category.name === "Components" && (
+                  <div key={category.name}>
+                    <Collapsible
+                      open={openCategories[category.name]}
+                      onOpenChange={() => toggleCategory(category.name)}
+                    >
+                      <CollapsibleTrigger className="flex items-center w-full text-left mb-3">
+                        <div className="flex items-center gap-2 text-gray-300">
+                          <span className="text-blue-400">
+                            {openCategories[category.name] ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </span>
+                          <category.icon className="h-4 w-4" />
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                      </CollapsibleTrigger>
+
+                      <CollapsibleContent className="pl-2 space-y-2">
+                        {category.items.map((item, index) => (
+                          <div key={index}>
+                            {item.type === "component" ? (
+                              <div 
+                                className="flex items-center p-2 hover:bg-gray-700 rounded-md cursor-pointer transition-colors"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('application/component', JSON.stringify(item));
+                                }}
+                              >
+                                <div className="w-4 h-4 bg-purple-500 rounded-sm mr-2"></div>
+                                <span className="text-sm text-gray-300">
+                                  {item.name}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="mb-2">
+                                {item.image && (
+                                  <div 
+                                    className="relative group cursor-pointer"
+                                    draggable
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData('application/image', JSON.stringify(item));
+                                    }}
+                                  >
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="w-full h-20 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                                      <span className="text-white text-xs opacity-0 group-hover:opacity-100">
+                                        Drag to canvas
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                )
               ))}
             </div>
           )}

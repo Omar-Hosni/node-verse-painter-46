@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
-import { Plus, Trash2, Edit, Clock, Home, History, FolderOpen, Users, Briefcase, FileText, Search } from 'lucide-react';
+import { Plus, Trash2, Edit, Clock, Home, History, FolderOpen, Users, Briefcase, FileText, Search, Image as ImageIcon } from 'lucide-react';
 import SimpleLoadingScreen from '@/components/SimpleLoadingScreen';
 import { toast } from 'sonner';
 import { useClerkIntegration } from '@/hooks/useClerkIntegration';
@@ -31,50 +31,37 @@ const Dashboard = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [activeTab, setActiveTab] = useState('My Files');
+  const [activeTab, setActiveTab] = useState('Home');
   const navigate = useNavigate();
   const clerkAuth = useClerkIntegration();
 
-  // Generate project thumbnail URL
+  // Generate project thumbnail URL from dashboard images
   const getProjectThumbnail = (project: Project, index: number) => {
-    // Try to use project-specific thumbnail if available in the future
-    // For now, generate a unique gradient-based thumbnail
-    const gradients = [
-      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-      'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-      'linear-gradient(135deg, #ff8a80 0%, #ea80fc 100%)',
+    const dashboardImages = [
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1894.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1895.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1896.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1897.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1898.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1899.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1900.png',
+      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1901.png',
     ];
     
-    return `data:image/svg+xml,${encodeURIComponent(`
-      <svg width="400" height="280" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <style>
-            .gradient${index} { background: ${gradients[index % gradients.length]}; }
-            .text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: white; text-anchor: middle; }
-          </style>
-        </defs>
-        <rect width="400" height="280" fill="url(#grad${index})"/>
-        <defs>
-          <linearGradient id="grad${index}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:${gradients[index % gradients.length].match(/#[0-9a-f]{6}/gi)?.[0] || '#667eea'};stop-opacity:1" />
-            <stop offset="100%" style="stop-color:${gradients[index % gradients.length].match(/#[0-9a-f]{6}/gi)?.[1] || '#764ba2'};stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <text x="200" y="130" class="text" font-size="18" font-weight="600">${project.name.substring(0, 20)}</text>
-        <text x="200" y="155" class="text" font-size="12" opacity="0.8">Created ${new Date(project.created_at).toLocaleDateString()}</text>
-      </svg>
-    `)}`;
+    // Use project id hash for consistent random selection
+    const hash = project.id.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    const imageIndex = Math.abs(hash) % dashboardImages.length;
+    return dashboardImages[imageIndex];
   };
 
   const navigationItems = [
     { name: 'Home', icon: Home },
-    { name: 'Recent', icon: History },
-    { name: 'My Files', icon: FolderOpen },
+    { name: 'Files', icon: FolderOpen },
+    { name: 'Assets', icon: ImageIcon },
     { name: 'Templates', icon: FileText },
     { name: 'Community', icon: Users },
     { name: 'Nover Folio', icon: Briefcase },
@@ -332,14 +319,75 @@ const Dashboard = () => {
     switch (activeTab) {
       case 'Home':
         return (
-          <div className="pl-4 pr-[22px]">
-            <p className="text-gray-400">This is the home page content.</p>
+          <div className="pl-4 pr-[22px] space-y-8">
+            {/* Recent Files Section */}
+            <div>
+              <h3 className="text-lg font-medium text-white mb-4">Recent Files</h3>
+              {projects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
+                  {projects.slice(0, 4).map((project, index) => (
+                    <div
+                      key={project.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => navigate(`/editor/${project.id}`)}
+                    >
+                      <div
+                        className="relative rounded-lg overflow-hidden bg-[#1A1A1A]"
+                        style={{ aspectRatio: '1 / 0.7' }}
+                      >
+                        <img
+                          src={getProjectThumbnail(project, index)}
+                          alt={`Preview for ${project.name}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="font-medium text-white truncate text-sm">
+                              {project.name}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400">No recent files</p>
+              )}
+            </div>
+
+            {/* Quick Access Sections */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6">
+                <h4 className="text-white font-medium mb-2">Assets</h4>
+                <p className="text-gray-400 text-sm mb-4">Manage your uploaded and generated images</p>
+                <Button
+                  onClick={() => setActiveTab('Assets')}
+                  variant="outline"
+                  size="sm"
+                >
+                  View Assets
+                </Button>
+              </div>
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6">
+                <h4 className="text-white font-medium mb-2">Templates</h4>
+                <p className="text-gray-400 text-sm mb-4">Browse pre-built workflows</p>
+                <Button
+                  onClick={() => setActiveTab('Templates')}
+                  variant="outline"
+                  size="sm"
+                >
+                  Browse Templates
+                </Button>
+              </div>
+            </div>
           </div>
         );
-      case 'Recent':
+        
+      case 'Assets':
         return (
           <div className="pl-4 pr-[22px]">
-            <p className="text-gray-400">Your recently accessed projects will appear here.</p>
+            <p className="text-gray-400">Your uploaded and generated images will appear here.</p>
           </div>
         );
       case 'Templates':
@@ -360,7 +408,7 @@ const Dashboard = () => {
             <p className="text-gray-400">Your portfolio showcase - coming soon!</p>
           </div>
         );
-      case 'My Files':
+      case 'Files':
       default:
         return (
           <div className="pl-4 pr-[22px]">
