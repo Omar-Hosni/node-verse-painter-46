@@ -98,7 +98,7 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/fallback.svg';
+                  target.src = '/fallback-image.jpg';
                 }}
               />
               

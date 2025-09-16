@@ -416,7 +416,7 @@ export const LeftSidebar = ({
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = '/fallback.svg';
+                                target.src = '/fallback-image.jpg';
                               }}
                             />
                           </div>
@@ -483,7 +483,7 @@ export const LeftSidebar = ({
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = '/fallback.svg';
+                                target.src = '/fallback-image.jpg';
                               }}
                             />
                           </div>
