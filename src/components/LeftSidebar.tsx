@@ -32,6 +32,7 @@ import { insertCategories, assetCategories } from "./nodes/data/left_sidebar";
 import { LayerPanel } from "./LayerPanel";
 import SvgIcon from "./SvgIcon";
 import { TextInput } from "./PropertyComponents";
+import { useAssetQueries } from '@/hooks/useAssetQueries';
 
 // ToggleButton component - same as RightSidebar
 const ToggleButton = React.memo(
@@ -77,6 +78,7 @@ export const LeftSidebar = ({
   const addNode = useCanvasStore((state) => state.addNode);
   const reactFlowInstance = useReactFlow();
   const { getNodes } = useReactFlow();
+  const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
@@ -388,13 +390,46 @@ export const LeftSidebar = ({
 
                   <CollapsibleContent className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      {/* Placeholder for uploaded images - will be populated from store/API */}
-                      <div className="aspect-square bg-[#1a1a1a] border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center text-gray-500 text-xs cursor-pointer hover:border-gray-500 transition-colors">
-                        <div className="text-center">
-                          <PlusCircle className="h-6 w-6 mx-auto mb-1" />
-                          <span>Upload</span>
+                      {assetsLoading ? (
+                        // Loading placeholders
+                        [...Array(4)].map((_, i) => (
+                          <div key={i} className="aspect-square bg-[#1a1a1a] rounded-lg animate-pulse" />
+                        ))
+                      ) : uploadedImages.length > 0 ? (
+                        // Actual uploaded images
+                        uploadedImages.slice(0, 6).map((image) => (
+                          <div
+                            key={image.id}
+                            className="aspect-square rounded-lg overflow-hidden cursor-grab hover:scale-105 transition-transform bg-[#1a1a1a]"
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('application/reactflow', JSON.stringify({
+                                type: 'image-node',
+                                imageUrl: image.url
+                              }));
+                            }}
+                            title={`From ${image.projectName || 'Unknown project'}`}
+                          >
+                            <img
+                              src={image.url}
+                              alt="Uploaded asset"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/fallback.svg';
+                              }}
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        // Upload placeholder
+                        <div className="aspect-square bg-[#1a1a1a] border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center text-gray-500 text-xs cursor-pointer hover:border-gray-500 transition-colors">
+                          <div className="text-center">
+                            <PlusCircle className="h-6 w-6 mx-auto mb-1" />
+                            <span>Upload</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -422,10 +457,43 @@ export const LeftSidebar = ({
 
                   <CollapsibleContent className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      {/* Placeholder for generated images - will be populated from store/API */}
-                      <div className="aspect-square bg-[#1a1a1a] border border-gray-700 rounded-lg flex items-center justify-center text-gray-500 text-xs">
-                        <span>No images yet</span>
-                      </div>
+                      {assetsLoading ? (
+                        // Loading placeholders
+                        [...Array(4)].map((_, i) => (
+                          <div key={i} className="aspect-square bg-[#1a1a1a] rounded-lg animate-pulse" />
+                        ))
+                      ) : generatedImages.length > 0 ? (
+                        // Actual generated images
+                        generatedImages.slice(0, 6).map((image) => (
+                          <div
+                            key={image.id}
+                            className="aspect-square rounded-lg overflow-hidden cursor-grab hover:scale-105 transition-transform bg-[#1a1a1a]"
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('application/reactflow', JSON.stringify({
+                                type: 'image-node',
+                                imageUrl: image.url
+                              }));
+                            }}
+                            title={`Generated from ${image.projectName || 'Unknown project'}`}
+                          >
+                            <img
+                              src={image.url}
+                              alt="Generated asset"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/fallback.svg';
+                              }}
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        // No images placeholder
+                        <div className="aspect-square bg-[#1a1a1a] border border-gray-700 rounded-lg flex items-center justify-center text-gray-500 text-xs">
+                          <span>No images yet</span>
+                        </div>
+                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>

@@ -12,6 +12,8 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit, Clock, Home, History, FolderOpen, Users, Briefcase, FileText, Search, Image as ImageIcon } from 'lucide-react';
+import { useAssetQueries } from '@/hooks/useAssetQueries';
+import { AssetGrid } from '@/components/AssetGrid';
 import SimpleLoadingScreen from '@/components/SimpleLoadingScreen';
 import { toast } from 'sonner';
 import { useClerkIntegration } from '@/hooks/useClerkIntegration';
@@ -34,6 +36,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Home');
   const navigate = useNavigate();
   const clerkAuth = useClerkIntegration();
+  const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries();
 
   // Generate project thumbnail URL from dashboard images
   const getProjectThumbnail = (project: Project, index: number) => {
@@ -356,29 +359,61 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Quick Access Sections */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6">
-                <h4 className="text-white font-medium mb-2">Assets</h4>
-                <p className="text-gray-400 text-sm mb-4">Manage your uploaded and generated images</p>
-                <Button
-                  onClick={() => setActiveTab('Assets')}
-                  variant="outline"
-                  size="sm"
-                >
-                  View Assets
-                </Button>
-              </div>
-              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6">
-                <h4 className="text-white font-medium mb-2">Templates</h4>
-                <p className="text-gray-400 text-sm mb-4">Browse pre-built workflows</p>
-                <Button
-                  onClick={() => setActiveTab('Templates')}
-                  variant="outline"
-                  size="sm"
-                >
-                  Browse Templates
-                </Button>
+            {/* Assets Section */}
+            <div>
+              <AssetGrid
+                images={[...uploadedImages.slice(0, 4), ...generatedImages.slice(0, 4)].slice(0, 4)}
+                title="Recent Assets"
+                loading={assetsLoading}
+                showProjectInfo={true}
+                onImageClick={(image) => {
+                  if (image.projectId) {
+                    navigate(`/editor/${image.projectId}`);
+                  }
+                }}
+              />
+            </div>
+
+            {/* Templates Section */}
+            <div>
+              <h3 className="text-lg font-medium text-white mb-4">Templates</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
+                {/* Template placeholders */}
+                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                  <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <FileText className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Portrait Generator</h4>
+                  <p className="text-gray-400 text-sm mb-4">AI-powered portrait generation workflow</p>
+                  <Button variant="outline" size="sm">Coming Soon</Button>
+                </div>
+                
+                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                  <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <FileText className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Style Transfer</h4>
+                  <p className="text-gray-400 text-sm mb-4">Transform images with artistic styles</p>
+                  <Button variant="outline" size="sm">Coming Soon</Button>
+                </div>
+                
+                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                  <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <FileText className="h-6 w-6 text-green-400" />
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Background Remove</h4>
+                  <p className="text-gray-400 text-sm mb-4">Automatic background removal</p>
+                  <Button variant="outline" size="sm">Coming Soon</Button>
+                </div>
+                
+                <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                  <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <FileText className="h-6 w-6 text-orange-400" />
+                  </div>
+                  <h4 className="text-white font-medium mb-2">Upscaling</h4>
+                  <p className="text-gray-400 text-sm mb-4">Enhance image resolution and quality</p>
+                  <Button variant="outline" size="sm">Coming Soon</Button>
+                </div>
               </div>
             </div>
           </div>
@@ -386,14 +421,90 @@ const Dashboard = () => {
         
       case 'Assets':
         return (
-          <div className="pl-4 pr-[22px]">
-            <p className="text-gray-400">Your uploaded and generated images will appear here.</p>
+          <div className="pl-4 pr-[22px] space-y-8">
+            <AssetGrid
+              images={uploadedImages}
+              title="Uploaded Images"
+              loading={assetsLoading}
+              showProjectInfo={true}
+              onImageClick={(image) => {
+                if (image.projectId) {
+                  navigate(`/editor/${image.projectId}`);
+                }
+              }}
+            />
+            <AssetGrid
+              images={generatedImages}
+              title="Generated Images"
+              loading={assetsLoading}
+              showProjectInfo={true}
+              onImageClick={(image) => {
+                if (image.projectId) {
+                  navigate(`/editor/${image.projectId}`);
+                }
+              }}
+            />
           </div>
         );
       case 'Templates':
         return (
           <div className="pl-4 pr-[22px]">
-            <p className="text-gray-400">Browse and use project templates.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
+              {/* Template cards - same as in Home */}
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-blue-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Portrait Generator</h4>
+                <p className="text-gray-400 text-sm mb-4">AI-powered portrait generation workflow</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+              
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-purple-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Style Transfer</h4>
+                <p className="text-gray-400 text-sm mb-4">Transform images with artistic styles</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+              
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-green-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Background Remove</h4>
+                <p className="text-gray-400 text-sm mb-4">Automatic background removal</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+              
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-orange-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Upscaling</h4>
+                <p className="text-gray-400 text-sm mb-4">Enhance image resolution and quality</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+              
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-red-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Object Relighting</h4>
+                <p className="text-gray-400 text-sm mb-4">Relight objects in your images</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+              
+              <div className="bg-[#1A1A1A] rounded-lg border border-[#333] p-6 text-center">
+                <div className="w-12 h-12 bg-yellow-600/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <FileText className="h-6 w-6 text-yellow-400" />
+                </div>
+                <h4 className="text-white font-medium mb-2">Inpainting</h4>
+                <p className="text-gray-400 text-sm mb-4">Remove or replace parts of images</p>
+                <Button variant="outline" size="sm">Coming Soon</Button>
+              </div>
+            </div>
           </div>
         );
       case 'Community':
