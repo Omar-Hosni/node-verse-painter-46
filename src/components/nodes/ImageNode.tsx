@@ -1484,7 +1484,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   marginRight: '6px'
                 }}
               >
-                <Check size={14} />
+                <Check size={16} />
               </button>
             </div>
           ) : (
@@ -1644,7 +1644,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   marginRight: '6px'
                 }}
               >
-                <Check size={14} />
+                <Check size={16} />
               </button>
             </div>
           )}
