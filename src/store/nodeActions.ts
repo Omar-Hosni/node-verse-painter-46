@@ -422,6 +422,63 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
         },
       ],
     },
+    "image-to-image-object-relight": {
+      export_version: false,
+      editing: true,
+      lights: [
+        {
+          id: 1,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          angle: 0,
+          locationX: 248,
+          locationY: 258,
+        },
+        {
+          id: 2,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 240,
+          locationY: 255,
+        },
+        {
+          id: 3,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 255,
+          locationY: 265,
+        },
+        {
+          id: 4,
+          selected: false,
+          size: 100,
+          width: 100,
+          power: 100,
+          color: "#ffffff",
+
+          add: false,
+          angle: 0,
+          locationX: 270,
+          locationY: 240,
+        },
+      ],
+    },
     "image-to-image-re-imagine": {
       creativity: 50,
     },
