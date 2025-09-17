@@ -10617,6 +10617,83 @@ export const RightSidebar = () => {
           </>
         );
 
+      case "image-to-image-re-scene":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-object-relight": {
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {/* Section: Object Relight - Rive preview component similar to lights */}
+            <PropertySection title="Object Relight">
+              <RiveInput key={selectedNode?.id} nodeType="lights" />
+            </PropertySection>
+            {renderNodeDesignInput()}
+          </>
+        );
+      }
+
+      case "image-to-image-re-mix":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-remove-bg":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-upscale":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-inpainting":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-outpainting":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "image-to-image-merger":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
+      case "connector":
+        return (
+          <>
+            {renderNodePositionInputs()}
+            {renderNodeDesignInput()}
+          </>
+        );
+
       default:
         return (
           <p className="text-sm text-gray-500">
