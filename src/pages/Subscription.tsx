@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const Subscription = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'test' | 'basic' | 'premium' | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const navigate = useNavigate();
@@ -19,6 +19,24 @@ const Subscription = () => {
 
   // Stripe products mapping
   const plans = {
+    test: {
+      name: 'Test Plan',
+      monthlyPrice: 2,
+      priceId: 'price_1S8MgoRXXdJaLGyuwK3xxzxW',
+      productId: 'prod_T4VijoKEKcIRbX',
+      credits: 1000,
+      features: [
+        '1,000 credits monthly',
+        'AI image generation',
+        'Basic templates',
+        'Email support',
+      ],
+      missingFeatures: [
+        'Priority support',
+        'Advanced features',
+        'API access',
+      ]
+    },
     basic: {
       name: 'Basic Plan',
       monthlyPrice: 10,
@@ -85,7 +103,7 @@ const Subscription = () => {
     checkSubscription();
   }, [user]);
 
-  const handlePlanSelect = (plan: 'basic' | 'premium') => {
+  const handlePlanSelect = (plan: 'test' | 'basic' | 'premium') => {
     setSelectedPlan(plan);
   };
 
@@ -204,7 +222,8 @@ const Subscription = () => {
           {(Object.keys(plans) as Array<keyof typeof plans>).map((planKey) => {
             const plan = plans[planKey];
             const isCurrentPlan = currentSubscription?.subscribed && 
-              ((planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
+              ((planKey === 'test' && currentSubscription.planName === 'Test Plan') ||
+               (planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
                (planKey === 'premium' && currentSubscription.planName === 'Premium Plan'));
             
             return (
