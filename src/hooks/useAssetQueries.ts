@@ -77,27 +77,24 @@ export const useAssetQueries = (projectId?: string) => {
             });
           }
 
-          // Check for generated/preprocessed images (various formats)
-          let preprocessedUrl = null;
-          
-          // Check preprocessedImage as string
-          if (typeof nodeData?.preprocessedImage === 'string' && nodeData.preprocessedImage) {
-            preprocessedUrl = nodeData.preprocessedImage;
-          }
-          // Check preprocessedImage as object
-          else if (nodeData?.preprocessedImage && typeof nodeData.preprocessedImage === 'object') {
-            const obj = nodeData.preprocessedImage as any;
-            preprocessedUrl = obj.guideImageURL || obj.imageURL;
-          }
-          // Check right_sidebar preprocessedImage
-          else if (nodeData?.right_sidebar?.preprocessedImage) {
-            preprocessedUrl = nodeData.right_sidebar.preprocessedImage;
-          }
-
-          if (preprocessedUrl) {
+          // Check for generated images from PreviewNode (PRIMARY SOURCE)
+          if (nodeData?.generatedImage) {
             generated.push({
               id: `${project.id}-${node.id}-generated`,
-              url: preprocessedUrl,
+              url: nodeData.generatedImage,
+              type: 'generated',
+              projectName: project.name,
+              projectId: project.id,
+              nodeId: node.id,
+              createdAt: project.updated_at,
+            });
+          }
+
+          // Check for generatedImageUrl as well
+          if (nodeData?.generatedImageUrl && nodeData.generatedImageUrl !== nodeData?.generatedImage) {
+            generated.push({
+              id: `${project.id}-${node.id}-generated-url`,
+              url: nodeData.generatedImageUrl,
               type: 'generated',
               projectName: project.name,
               projectId: project.id,
@@ -110,7 +107,9 @@ export const useAssetQueries = (projectId?: string) => {
           // (This will only work for the current project if workflow store is active)
           if (projectId === project.id) {
             const processedImage = getProcessedImage(node.id);
-            if (processedImage) {
+            if (processedImage && 
+                processedImage !== nodeData?.generatedImage && 
+                processedImage !== nodeData?.generatedImageUrl) {
               generated.push({
                 id: `${project.id}-${node.id}-workflow`,
                 url: processedImage,

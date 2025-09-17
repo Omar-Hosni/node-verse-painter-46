@@ -95,15 +95,31 @@ const Dashboard = () => {
         throw new Error('No authentication token available');
       }
 
-      const { data, error } = await supabase.functions.invoke('get-user-projects', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Add retry logic for network errors
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-user-projects', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-      if (error) throw error;
+          if (error) throw error;
 
-      setProjects(data?.projects || []);
+          setProjects(data?.projects || []);
+          return; // Success, exit retry loop
+        } catch (networkError: any) {
+          retryCount++;
+          if (retryCount >= maxRetries || !networkError.message?.includes('NetworkError')) {
+            throw networkError;
+          }
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error('Failed to fetch projects');

@@ -583,14 +583,25 @@ export const useCanvasStore = createWithEqualityFn<CanvasState>((set, get) => ({
     // Get serializable state that includes preprocessed data
     const { nodes, edges } = get();
     
-    // Ensure preprocessed data is preserved in the saved state
+    // Ensure preprocessed data and generated images are preserved in the saved state
     const serializableNodes = nodes.map(node => {
+      const preserveNode = {
+        ...node,
+        data: {
+          ...node.data,
+          // Preserve generated images from PreviewNodes
+          ...(node.data?.generatedImage && { generatedImage: node.data.generatedImage }),
+          ...(node.data?.generatedImageUrl && { generatedImageUrl: node.data.generatedImageUrl }),
+        }
+      };
+
+      // Additional processing for control-net and special nodes
       if ((node.type?.includes('control-net') || node.type === 'seed-image-lights') && 
           node.data?.preprocessedImage) {
         return {
-          ...node,
+          ...preserveNode,
           data: {
-            ...node.data,
+            ...preserveNode.data,
             // Ensure preprocessed data is preserved
             preprocessedImage: node.data.preprocessedImage,
             hasPreprocessedImage: !!node.data.preprocessedImage,
@@ -604,7 +615,8 @@ export const useCanvasStore = createWithEqualityFn<CanvasState>((set, get) => ({
           },
         };
       }
-      return node;
+      
+      return preserveNode;
     });
     
     return await saveProjectToDb(name, description, serializableNodes, edges);
