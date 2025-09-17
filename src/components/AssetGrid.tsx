@@ -1,5 +1,6 @@
 import React from 'react';
-import { Clock, Download } from 'lucide-react';
+import { Clock, Download, DownloadCloud } from 'lucide-react';
+import { downloadAllAssets } from '@/utils/downloadUtils';
 
 interface AssetImage {
   id: string;
@@ -80,7 +81,19 @@ export const AssetGrid: React.FC<AssetGridProps> = ({
 
   return (
     <div>
-      <h3 className="text-lg font-medium text-white mb-4">{title}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium text-white">{title}</h3>
+        {images.length > 0 && (
+          <button
+            onClick={() => downloadAllAssets(images, title.toLowerCase().replace(/\s+/g, '-'))}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1A1A] hover:bg-[#333] text-gray-300 hover:text-white text-sm rounded-lg transition-colors"
+            title="Download all assets"
+          >
+            <DownloadCloud className="h-4 w-4" />
+            Download All
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
         {images.map((image) => (
           <div

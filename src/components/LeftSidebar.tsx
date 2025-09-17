@@ -17,6 +17,7 @@ import {
   Shuffle,
   Search,
   PlusCircle,
+  DownloadCloud,
 } from "lucide-react";
 
 import {
@@ -33,6 +34,7 @@ import { LayerPanel } from "./LayerPanel";
 import SvgIcon from "./SvgIcon";
 import { TextInput } from "./PropertyComponents";
 import { useAssetQueries } from '@/hooks/useAssetQueries';
+import { downloadAllAssets } from '@/utils/downloadUtils';
 
 // ToggleButton component - same as RightSidebar
 const ToggleButton = React.memo(
@@ -368,6 +370,19 @@ export const LeftSidebar = ({
           {/* Assets Tab - Images and Components */}
           {activeTab === "Assets" && (
             <div className="space-y-6 mt-2">
+              {/* Download All Assets Button */}
+              {(uploadedImages.length > 0 || generatedImages.length > 0) && (
+                <div className="pb-2">
+                  <button
+                    onClick={() => downloadAllAssets([...uploadedImages, ...generatedImages], 'all-assets')}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#1A1A1A] hover:bg-[#333] text-gray-300 hover:text-white text-sm rounded-lg transition-colors"
+                    title="Download all assets"
+                  >
+                    <DownloadCloud className="h-4 w-4" />
+                    Download All Assets
+                  </button>
+                </div>
+              )}
               {/* Uploaded Images Section */}
               <div>
                 <Collapsible
