@@ -9534,7 +9534,7 @@ export const RightSidebar = () => {
         );
       }
 
-      case "image-to-image-re-imagine":
+      case "image-to-image-reimagine":
         return (
           <>
             {/* Section 1: Position */}
