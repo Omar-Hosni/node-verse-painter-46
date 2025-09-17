@@ -9702,7 +9702,7 @@ export const RightSidebar = () => {
           </>
         );
 
-        case "image-to-image-re-scene":
+        case "image-to-image-rescene":
         return (
           <>
             {renderNodePositionInputs()}
@@ -9755,7 +9755,7 @@ export const RightSidebar = () => {
           </>
         );
 
-      case "image-to-image-outpainting":
+      case "image-to-image-remove-outpainting":
         return (
           <>
             {renderNodePositionInputs()}
