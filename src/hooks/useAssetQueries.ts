@@ -12,7 +12,7 @@ interface AssetImage {
   createdAt: string;
 }
 
-export const useAssetQueries = () => {
+export const useAssetQueries = (projectId?: string) => {
   const [uploadedImages, setUploadedImages] = useState<AssetImage[]>([]);
   const [generatedImages, setGeneratedImages] = useState<AssetImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,11 +91,17 @@ export const useAssetQueries = () => {
       });
 
       // Remove duplicates and sort by creation date
-      const uniqueUploaded = Array.from(new Map(uploaded.map(img => [img.url, img])).values())
+      let uniqueUploaded = Array.from(new Map(uploaded.map(img => [img.url, img])).values())
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-      const uniqueGenerated = Array.from(new Map(generated.map(img => [img.url, img])).values())
+      let uniqueGenerated = Array.from(new Map(generated.map(img => [img.url, img])).values())
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      // Filter by project ID if provided (for editor context)
+      if (projectId) {
+        uniqueUploaded = uniqueUploaded.filter(img => img.projectId === projectId);
+        uniqueGenerated = uniqueGenerated.filter(img => img.projectId === projectId);
+      }
 
       setUploadedImages(uniqueUploaded);
       setGeneratedImages(uniqueGenerated);

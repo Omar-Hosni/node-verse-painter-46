@@ -40,8 +40,10 @@ const Dashboard = () => {
 
   // Get project thumbnail - returns most recent generated image or null for empty project
   const getProjectThumbnail = (project: Project) => {
-    // Find generated images for this project
-    const projectImages = generatedImages.filter(img => img.projectId === project.id);
+    // Find generated images for this project - compare as strings since IDs may be different types
+    const projectImages = generatedImages.filter(img => 
+      img.projectId && img.projectId.toString() === project.id.toString()
+    );
     
     if (projectImages.length > 0) {
       // Return the most recent generated image

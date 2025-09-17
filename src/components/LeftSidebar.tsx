@@ -72,15 +72,17 @@ export const LeftSidebar = ({
   activeTab,
   setActiveTab,
   setSelectedInsertNode,
+  projectId,
 }: {
   activeTab: "Outline" | "Insert" | "Assets";
   setActiveTab: (tab: "Outline" | "Insert" | "Assets") => void;
   setSelectedInsertNode: (insertNode) => void;
+  projectId?: string;
 }) => {
   const addNode = useCanvasStore((state) => state.addNode);
   const reactFlowInstance = useReactFlow();
   const { getNodes } = useReactFlow();
-  const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries();
+  const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries(projectId);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(

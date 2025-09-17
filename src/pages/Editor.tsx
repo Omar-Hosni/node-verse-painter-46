@@ -332,7 +332,7 @@ const Editor = () => {
         projectId={projectId}
       />
       <div className="flex flex-1 relative">
-        <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} setSelectedInsertNode={setSelectedInsertNode}/>
+        <LeftSidebar activeTab={activeTab} setActiveTab={setActiveTab} setSelectedInsertNode={setSelectedInsertNode} projectId={projectId} />
 
         <div className="flex-1 relative" id="canvas-area">
           <Canvas onCanvasClick={() => setSelectedInsertNode(null)} />
