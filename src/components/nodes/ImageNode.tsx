@@ -3,7 +3,7 @@ import { memo, useState, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { X } from 'lucide-react';
+import { X, check } from 'lucide-react';
 
 interface ImageNodeData {
   displayName?: string;
@@ -1484,7 +1484,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   marginRight: '6px'
                 }}
               >
-                <X size={14} />
+                <check size={14} />
               </button>
             </div>
           ) : (
@@ -1644,7 +1644,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   marginRight: '6px'
                 }}
               >
-                <X size={14} />
+                <check size={14} />
               </button>
             </div>
           )}
