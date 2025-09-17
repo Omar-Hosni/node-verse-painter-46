@@ -8468,7 +8468,7 @@ export const RightSidebar = () => {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center">
                     <div
-                      className="flex-1 flex gap-1.5 justify-center items-center"
+                      className="flex-1 flex gap-1.5 justify-center items-center saturation-0"
                       style={{ minHeight: "235px" }}
                     >
                       {selectedNode.data?.isPreprocessing ? (
