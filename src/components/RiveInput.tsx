@@ -651,7 +651,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
           <div className="w-[235px] h-[235px] overflow-hidden relative" style={{ borderRadius: '19px', border: '1.5px solid #1d1d1d' }}>
             {/* Always render Rive component - RightSidebar handles preprocessed images */}
             <RiveComponent
-              className="w-full h-full block"
+              className="w-full h-full block saturate-0"
               canvas={canvasRef.current}
               style={{ borderRadius: '16px' }}
             />
