@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useClerkIntegration } from '@/hooks/useClerkIntegration';
+import { useWorkflowStore } from '@/store/workflowStore';
 
 interface AssetImage {
   id: string;
@@ -17,6 +18,7 @@ export const useAssetQueries = (projectId?: string) => {
   const [generatedImages, setGeneratedImages] = useState<AssetImage[]>([]);
   const [loading, setLoading] = useState(true);
   const clerkAuth = useClerkIntegration();
+  const { getProcessedImage, getAllProcessedImages } = useWorkflowStore();
 
   const fetchAssets = async () => {
     if (!clerkAuth.isSignedIn || !clerkAuth.getToken) {
@@ -62,11 +64,40 @@ export const useAssetQueries = (projectId?: string) => {
             });
           }
 
-          // Check for generated/preprocessed images
-          if (nodeData?.preprocessedImage) {
+          // Check for uploaded images in right_sidebar
+          if (nodeData?.right_sidebar?.imageUrl && !nodeData?.right_sidebar?.preprocessedImage) {
+            uploaded.push({
+              id: `${project.id}-${node.id}-right-sidebar-uploaded`,
+              url: nodeData.right_sidebar.imageUrl,
+              type: 'uploaded',
+              projectName: project.name,
+              projectId: project.id,
+              nodeId: node.id,
+              createdAt: project.updated_at,
+            });
+          }
+
+          // Check for generated/preprocessed images (various formats)
+          let preprocessedUrl = null;
+          
+          // Check preprocessedImage as string
+          if (typeof nodeData?.preprocessedImage === 'string' && nodeData.preprocessedImage) {
+            preprocessedUrl = nodeData.preprocessedImage;
+          }
+          // Check preprocessedImage as object
+          else if (nodeData?.preprocessedImage && typeof nodeData.preprocessedImage === 'object') {
+            const obj = nodeData.preprocessedImage as any;
+            preprocessedUrl = obj.guideImageURL || obj.imageURL;
+          }
+          // Check right_sidebar preprocessedImage
+          else if (nodeData?.right_sidebar?.preprocessedImage) {
+            preprocessedUrl = nodeData.right_sidebar.preprocessedImage;
+          }
+
+          if (preprocessedUrl) {
             generated.push({
               id: `${project.id}-${node.id}-generated`,
-              url: nodeData.preprocessedImage,
+              url: preprocessedUrl,
               type: 'generated',
               projectName: project.name,
               projectId: project.id,
@@ -75,17 +106,21 @@ export const useAssetQueries = (projectId?: string) => {
             });
           }
 
-          // Check for preview node outputs (generated images)
-          if (node.type === 'preview-node' && nodeData?.generatedImageUrl) {
-            generated.push({
-              id: `${project.id}-${node.id}-preview`,
-              url: nodeData.generatedImageUrl,
-              type: 'generated',
-              projectName: project.name,
-              projectId: project.id,
-              nodeId: node.id,
-              createdAt: project.updated_at,
-            });
+          // Check for workflow-generated images from processedImages store
+          // (This will only work for the current project if workflow store is active)
+          if (projectId === project.id) {
+            const processedImage = getProcessedImage(node.id);
+            if (processedImage) {
+              generated.push({
+                id: `${project.id}-${node.id}-workflow`,
+                url: processedImage,
+                type: 'generated',
+                projectName: project.name,
+                projectId: project.id,
+                nodeId: node.id,
+                createdAt: project.updated_at,
+              });
+            }
           }
         });
       });
