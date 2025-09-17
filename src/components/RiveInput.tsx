@@ -347,7 +347,7 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
   useEffect(() => {
     if (!rive || !rive.viewModelInstance) return;
 
-    const newLights = right_sidebar.lights.map((light, idx) => {
+    const newLights = right_sidebar?.lights.map((light, idx) => {
       const g = lights[idx].lightGetters;
 
       if (!g.selected) {
