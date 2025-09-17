@@ -38,27 +38,21 @@ const Dashboard = () => {
   const clerkAuth = useClerkIntegration();
   const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries();
 
-  // Generate project thumbnail URL from dashboard images
-  const getProjectThumbnail = (project: Project, index: number) => {
-    const dashboardImages = [
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1894.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1895.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1896.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1897.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1898.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1899.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1900.png',
-      '/Dashboard images (temporary till we make each file produce its own preview image)/Rectangle 1901.png',
-    ];
+  // Get project thumbnail - returns most recent generated image or null for empty project
+  const getProjectThumbnail = (project: Project) => {
+    // Find generated images for this project
+    const projectImages = generatedImages.filter(img => img.projectId === project.id);
     
-    // Use project id hash for consistent random selection
-    const hash = project.id.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
+    if (projectImages.length > 0) {
+      // Return the most recent generated image
+      const sortedImages = projectImages.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      return sortedImages[0].url;
+    }
     
-    const imageIndex = Math.abs(hash) % dashboardImages.length;
-    return dashboardImages[imageIndex];
+    // Return null for empty project (will show default styling)
+    return null;
   };
 
   const navigationItems = [
@@ -338,11 +332,26 @@ const Dashboard = () => {
                         className="relative rounded-lg overflow-hidden bg-[#1A1A1A]"
                         style={{ aspectRatio: '1 / 0.7' }}
                       >
-                        <img
-                          src={getProjectThumbnail(project, index)}
-                          alt={`Preview for ${project.name}`}
-                          className="w-full h-full object-cover"
-                        />
+                        {getProjectThumbnail(project) ? (
+                          <img
+                            src={getProjectThumbnail(project)}
+                            alt={`Preview for ${project.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                            {/* App logo - using same styling as PreviewNode */}
+                            <img
+                              src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png"
+                              alt="App Logo"
+                              className="h-5 w-auto opacity-40"
+                            />
+                            <span className="text-sm text-[#9e9e9e] opacity-50">
+                              Empty Project
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h3 className="font-medium text-white truncate text-sm">
@@ -667,11 +676,26 @@ const Dashboard = () => {
                       className="relative rounded-lg overflow-hidden bg-[#1A1A1A]"
                       style={{ aspectRatio: '1 / 0.7' }}
                     >
-                      <img
-                        src={getProjectThumbnail(project, index)}
-                        alt={`Preview for ${project.name}`}
-                        className="w-full h-full object-cover"
-                      />
+                      {getProjectThumbnail(project) ? (
+                        <img
+                          src={getProjectThumbnail(project)}
+                          alt={`Preview for ${project.name}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                          {/* App logo - using same styling as PreviewNode */}
+                          <img
+                            src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png"
+                            alt="App Logo"
+                            className="h-5 w-auto opacity-40"
+                          />
+                          <span className="text-sm text-[#9e9e9e] opacity-50">
+                            Empty Project
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {/* Hover overlay with gradient and details */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         {/* Project details at bottom */}
