@@ -8468,7 +8468,7 @@ export const RightSidebar = () => {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center">
                     <div
-                      className="flex-1 flex gap-1.5 justify-center items-center saturation-0"
+                      className="flex-1 flex gap-1.5 justify-center items-center"
                       style={{ minHeight: "235px" }}
                     >
                       {selectedNode.data?.isPreprocessing ? (
@@ -8519,7 +8519,7 @@ export const RightSidebar = () => {
                           alt="Preprocessed Pose"
                           width={235}
                           height={235}
-                          className="rounded-2xl z-50"
+                          className="rounded-2xl z-50 saturation-0"
                           modeValue={
                             selectedNode.data?.right_sidebar?.type || "source"
                           }
