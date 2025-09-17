@@ -671,7 +671,7 @@ const ImagePreviewWithMode = React.memo(
     <div className={`${className}`}>
       {/* Image preview */}
       <div
-        className="relative rounded-2xl overflow-hidden group"
+        className="relative rounded-2xl overflow-hidden group saturation-0"
         style={{
           width: `${width}px`,
           height: `${height}px`,
@@ -8519,7 +8519,7 @@ export const RightSidebar = () => {
                           alt="Preprocessed Pose"
                           width={235}
                           height={235}
-                          className="rounded-2xl z-50 saturation-0"
+                          className="rounded-2xl z-50"
                           modeValue={
                             selectedNode.data?.right_sidebar?.type || "source"
                           }
