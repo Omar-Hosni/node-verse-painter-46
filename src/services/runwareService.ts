@@ -73,6 +73,23 @@ export interface FluxKontextParams {
   }>;
 }
 
+export interface QwenEditParams {
+  positivePrompt: string;
+  referenceImage: string;
+  model?: string;
+  numberResults?: number;
+  outputFormat?: string;
+  CFGScale?: number;
+  width?: number;
+  height?: number;
+  steps?: number;
+  sizeRatio?: string;
+  lora?: Array<{
+    model: string;
+    weight: number;
+  }>;
+}
+
 export interface ImageToImageParams {
   positivePrompt: string;
   inputImage?: string;
@@ -621,6 +638,60 @@ export class RunwareService {
       this.ws!.send(JSON.stringify(message));
     });
   }
+
+  async generateQwenEdit(params: QwenEditParams): Promise<GeneratedImage> {
+    await this.connectionPromise;
+
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.isAuthenticated) {
+      this.connectionPromise = this.connect();
+      await this.connectionPromise;
+    }
+
+    const taskUUID = crypto.randomUUID();
+    
+    return new Promise((resolve, reject) => {
+      const message: any = [{
+        taskType: "imageInference",
+        taskUUID,
+        model: params.model || "runware:108@20",
+        numberResults: params.numberResults || 1,
+        outputFormat: params.outputFormat || "JPEG",
+        steps: params.steps || 28,
+        CFGScale: params.CFGScale || 2.5,
+        scheduler: "Default",
+        includeCost: true,
+        outputType: ["dataURI", "URL"],
+        positivePrompt: params.positivePrompt,
+        referenceImages: params.referenceImages,
+        outputQuality: 85,
+        advancedFeatures: {
+          guidanceEndStepPercentage: 75
+        }
+      }];
+
+      // Only add LoRA if it exists and has valid models
+      if (params.lora && params.lora.length > 0) {
+        const validLoras = params.lora.filter(lora => lora.model && lora.model.trim() !== '');
+        if (validLoras.length > 0) {
+          message[0].lora = validLoras;
+        }
+      }
+
+      console.log("Sending Flux Kontext generation message:", message);
+
+      this.messageCallbacks.set(taskUUID, (data) => {
+        if (data.error) {
+          reject(new Error(data.errorMessage));
+        } else {
+          resolve(data);
+        }
+      });
+
+      this.ws!.send(JSON.stringify(message));
+    });
+  }
+
+
 
   // Image caption - generates descriptive text from images
   async generateImageCaption(params: ImageCaptionParams): Promise<ImageCaptionResponse> {

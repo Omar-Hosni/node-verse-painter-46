@@ -2858,6 +2858,7 @@ export class WorkflowExecutor {
       width,
       height,
       numberResults: 1,
+      outputQuality: 95,
       outputFormat: "WEBP",
       outputType: ["URL"],
     };

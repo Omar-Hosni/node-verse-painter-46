@@ -95,7 +95,6 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
     addNode(nodeType, position, order);
     setSelectedInsertNode(null); // Close panel after insert
   };
-
   return (
     <div 
       ref={panelRef}
@@ -104,21 +103,24 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
     >
 
       {/* Fixed height image preview with background */}
-      <div 
+      <div
         className="w-full bg-[#151515]"
         style={{
-          height: '185px',
-          backgroundImage: selectedInsertNode.node_desc_image_url 
-            ? `url(/nodes/data/icons/description/${selectedInsertNode.node_desc_image_url}.png)` 
-            : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          marginBottom: '20px',
-          boxShadow: '0 0 0 6px #151515',
-          borderRadius: '16px'
+          height: 185,
+          backgroundImage: selectedInsertNode.node_desc_image_url
+            ? `url("/nodes/data/icons/description/${selectedInsertNode.node_desc_image_url}.png")`
+            : selectedInsertNode?.image_url
+            ? `url("${encodeURI(String(selectedInsertNode.image_url))}")`
+            : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          marginBottom: 20,
+          boxShadow: "0 0 0 6px #151515",
+          borderRadius: 16,
         }}
       />
+
 
       {/* Section 1: Node Title Section */}
       <div style={{ marginBottom: '28px' }}>

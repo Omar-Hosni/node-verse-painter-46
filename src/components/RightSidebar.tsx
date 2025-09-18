@@ -38,9 +38,10 @@ import { IoMdArrowDropdown, IoMdArrowDropright } from "react-icons/io";
 import { FaPlus } from "react-icons/fa6";
 
 import EmojiPicker from "emoji-picker-react";
-import RiveInput from "./RiveInput";
-import { HexColorPicker, RgbaColorPicker } from "react-colorful";
+import RiveInputPose from "./RiveInputPose";
+import RiveInputLights from "./RiveInputLights";
 
+import { HexColorPicker, RgbaColorPicker } from "react-colorful";
 import { detectWorkflows } from "@/utils/connectionUtils";
 
 // Helper function for permissive URL checking
@@ -2883,6 +2884,8 @@ export const RightSidebar = () => {
       });
     };
 
+    
+
     return (
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -3105,40 +3108,45 @@ export const RightSidebar = () => {
     );
   };
 
-  const renderTextArea = (
-      label: string,
-      property: string,
-      placeholder: string = ""
-    ) => {
-      if (!selectedNode?.data) return null;
 
-      // Safely cast the value to string
-      const sidebar = selectedNode.data.right_sidebar || {};
-      const value = sidebar[property];
-      const textValue = typeof value === "string" ? value : "";
-      
-      const updateProperty = selectedNode.data.right_sidebar?.prompt
-      return (  
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            {label}
-          </label>
-          <textarea
-            value={textValue}
-            placeholder={placeholder}
-            onChange={(e) =>
-              updateNodeData(selectedNode.id, {
-                right_sidebar: {
-                  ...sidebar,
-                  [property]: e.target.value,  // <-- write to right_sidebar[property]
-                },
-              })
-            }
-            className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"
-          />
-        </div>
-      );
-    };
+  const renderTextArea = (
+    label: string,
+    property: string,
+    placeholder: string = ""
+  ) => {
+    if (!selectedNode?.data) return null;
+
+    const sidebar = selectedNode.data.right_sidebar || {};
+    const value = sidebar[property];
+    const textValue = typeof value === "string" ? value : "";
+
+    return (
+      <div className="mb-3">
+        <label className="block text-xs text-[#9e9e9e] mb-1.5">{label}</label>
+        <textarea
+          value={textValue}
+          placeholder={placeholder}
+          onChange={(e) =>
+            updateNodeData(selectedNode.id, {
+              right_sidebar: { ...sidebar, [property]: e.target.value },
+            })
+          }
+          className="
+          w-full
+            bg-[#1a1a1a]
+            text-[13px] text-white/90 placeholder:text-white/40
+            leading-5
+            rounded-[12px]
+            px-3.5 py-3
+            min-h-[110px]
+            border-0 outline-none focus:ring-0
+            resize-none
+            shadow-inner
+          "
+        />
+      </div>
+    );
+  };
 
   const renderNodePositionInputs = () => {
     if (!selectedNode?.position) return null;
@@ -3327,6 +3335,34 @@ export const RightSidebar = () => {
       </PropertySection>
     );
   };
+
+  const angleOptions = ["front", "back", "right", "left", "top", "bottom"] as const;
+  type Angle = (typeof angleOptions)[number];
+
+  const AngleSelector = React.memo(function AngleSelector({
+    value,
+    onChange,
+  }: {
+    value: Angle;
+    onChange: (v: Angle) => void;
+  }) {
+    return (
+      <div className="flex bg-[#1a1a1a] rounded-full w-full h-full p-0.5 border border-[#1d1d1d]">
+        {angleOptions.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            className={`flex-1 h-full rounded-full px-3 text-xs capitalize transition-all
+              ${value === opt ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"}`}
+            title={opt}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    );
+  });
+
 
   const renderEngineInput = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
@@ -8546,7 +8582,7 @@ export const RightSidebar = () => {
                 </div>
               ) : (
                 // Show Rive component when no input connection
-                <RiveInput key={selectedNode?.id} nodeType="pose" />
+                <RiveInputPose key={selectedNode?.id}/>
               )}
 
               {selectedNode.data?.right_sidebar?.type === "source" && (
@@ -9152,7 +9188,7 @@ export const RightSidebar = () => {
                   />
                 </div>
               </PropertyRow>
-              <RiveInput key={selectedNode?.id} nodeType="lights" />
+              <RiveInputLights key={selectedNode?.id}/>
             </PropertySection>
 
             {/* Section 3: Node */}
@@ -9618,49 +9654,31 @@ export const RightSidebar = () => {
         );
 
       case "image-to-image-reangle":
+        // Derive current selection from booleans in right_sidebar (default: 'front')
+        const { right_sidebar = {} } = selectedNode.data || {};
+        const selectedAngle: Angle =
+          (angleOptions.find((k) => right_sidebar?.[k]) as Angle) || "front";
+
+        const handleSelectAngle = (next: Angle) => {
+          // set the chosen angle true, all others false
+          const flags = angleOptions.reduce((acc, k) => {
+            acc[k] = k === next;
+            return acc;
+          }, {} as Record<Angle, boolean>);
+
+          updateNodeData(selectedNode.id, {
+            right_sidebar: {
+              ...right_sidebar,
+              ...flags,
+            },
+          });
+        };
+
         return (
           <>
-            {/* Section 1: Position */}
+            {/* Section 1: Position (unchanged) */}
             <PropertySection title="Position" isFirst={true}>
-              {/* Position alignment icons */}
-              <div className="flex justify-between items-center bg-[#1a1a1a] rounded-full border border-[#1d1d1d] px-1.5">
-                {[
-                  "left",
-                  "center-h",
-                  "right",
-                  "top",
-                  "center-v",
-                  "bottom",
-                  "between-h",
-                  "between-v",
-                ].map((p) => {
-                  // Disable between-h and between-v for now (distribute functionality)
-                  const isDisabled = p === "between-h" || p === "between-v";
-                  const isEnabled = !isDisabled; // Always enabled for basic alignment
-
-                  return (
-                    <span
-                      key={p}
-                      className={`inline-flex p-2 rounded-full transition ${
-                        isEnabled
-                          ? "hover:bg-[#333333] cursor-pointer"
-                          : "cursor-not-allowed"
-                      }`}
-                      onClick={() => isEnabled && handleAlignment(p)}
-                    >
-                      <SvgIcon
-                        name={`positions/${p}`}
-                        className="w-5 h-5"
-                        style={{
-                          color: "#007AFF",
-                          opacity: isEnabled ? 1 : 0.4,
-                        }}
-                      />
-                    </span>
-                  );
-                })}
-              </div>
-
+              {/* ... your alignment row ... */}
               <PropertyRow label="Location">
                 <PositionInput
                   value={selectedNode.position?.x || 0}
@@ -9689,18 +9707,22 @@ export const RightSidebar = () => {
                     { label: "Yes", value: "true" },
                   ]}
                   value={selectedNode.data?.pin ? "true" : "false"}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, { pin: value === "true" })
-                  }
+                  onChange={(value) => updateNodeData(selectedNode.id, { pin: value === "true" })}
                 />
               </PropertyRow>
             </PropertySection>
-            {renderNumericInput("Angle X", "angle.x", -180, 180, 1)}
-            {renderNumericInput("Angle Y", "angle.y", -180, 180, 1)}
-            {renderNumericInput("Angle Z", "angle.z", -180, 180, 1)}
+
+            {/* New: Perspective selector (replaces Angle X/Y/Z) */}
+            <PropertySection title="Perspective">
+              <PropertyRow label="View">
+                <AngleSelector value={selectedAngle} onChange={handleSelectAngle} />
+              </PropertyRow>
+            </PropertySection>
+
             {renderNodeDesignInput()}
           </>
         );
+
 
         case "image-to-image-rescene":
         return (
@@ -9716,7 +9738,7 @@ export const RightSidebar = () => {
             {renderNodePositionInputs()}
             {/* Section: Object Relight - Rive preview component similar to lights */}
             <PropertySection title="Object Relight">
-              <RiveInput key={selectedNode?.id} nodeType="lights" />
+              <RiveInputLights key={selectedNode?.id}/>
             </PropertySection>
             {renderNodeDesignInput()}
           </>
@@ -9857,27 +9879,34 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
             </PropertySection>
-            {renderTextArea("Prompt", "prompt", "Enter your prompt here...")}
-            {renderTextArea(
-              "Negative Prompt",
-              "negative",
-              "Enter negative prompt here..."
-            )}
-            <div className="mb-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedNode.data.enhance || false}
-                  onChange={(e) =>
+
+            <PropertySection title="Text Prompt">
+              {renderTextArea("Prompt", "prompt", "Enter your prompt here...")}
+              {renderTextArea(
+                "Negative Prompt",
+                "negative",
+                "Enter negative prompt here..."
+              )}
+             <PropertyRow label="Enhance">
+                <ToggleButton
+                  options={[
+                    { label: "No", value: "false" },
+                    { label: "Yes", value: "true" },
+                  ]}
+                  value={(selectedNode.data?.right_sidebar?.enhance ? "true" : "false")}
+                  onChange={(v) =>
                     updateNodeData(selectedNode.id, {
-                      enhance: e.target.checked,
+                      right_sidebar: {
+                        ...(selectedNode.data?.right_sidebar || {}),
+                        enhance: v === "true",
+                      },
                     })
                   }
-                  className="rounded"
                 />
-                <span className="text-sm text-gray-300">Enhance</span>
-              </label>
-            </div>
+              </PropertyRow>
+            </PropertySection>
+
+
             {renderNodeDesignInput()}
           </>
         );
@@ -10447,6 +10476,11 @@ export const RightSidebar = () => {
       }
 
       case "engine-real":
+      case "engine-style":
+      case "engine-draw":
+      case "engine-chic":
+      case "engine-ads":
+      case "engine-home":
         return (
           <>
             {/* Section 1: Position */}

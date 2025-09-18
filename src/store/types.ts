@@ -45,6 +45,11 @@ export type NodeType =
   | 'connector'
   // Engine types
   | 'engine-real'
+  | 'engine-style'
+  | 'engine-draw'
+  | 'engine-chic'
+  | 'engine-ads'
+  | 'engine-home'
   // Gear types
   | 'gear-anime'
   | 'gear-killua'

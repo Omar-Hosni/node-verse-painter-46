@@ -272,10 +272,15 @@ export const getDisplayNameFromType = (nodeType: string): string => {
     "image-to-image-3d-maker": "3D Maker",
     "input-text": "Text Prompt",
     "image-to-image-merger": "Merger",
-    connector: "Router",
+    "connector": "Router",
     "preview-image": "Image Output",
     "preview-realtime": "Real-Time Preview",
     "engine-real": "Nover Real",
+    "engine-style": "Nover Style",
+    "engine-draw": "Nover Draw",
+    "engine-chic": "Nover Chic",
+    "engine-ads": "Nover Ads",
+    "engine-home": "Nover Home",
     "gear-anime": "Anime",
     "gear-killua": "Killua",
     "text-tool": "Text Tool",
@@ -482,6 +487,14 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
     "image-to-image-re-imagine": {
       creativity: 50,
     },
+    "image-to-image-reangle": {
+      front: true,
+      back: false,
+      right: false,
+      left: false,
+      top: false,
+      bottom: false
+    },
     "image-to-image-inpainting": {
       inpaintPrompt: "",
       maskImage: "",
@@ -500,7 +513,41 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
     "engine-real": {
       image_url: "",
       model: "khialmaster:978314@1413433",
-      lora: "khialmaster:1551668@1755780"
+      loras: ["khialmaster:1551668@1755780", "civitai:686704@768584"],
+      steps: 16,
+      cfgScale: 2.5,
+      scheduler: "DPM++ 2M"
+    },
+    "engine-style": {
+      image_url: "",
+      model: "civitai:778691@1205317",
+      loras: ["nover:2@1", "civitai:686704@768584"],
+      steps: 16,
+      cfgScale: 2.5,
+    },
+    "engine-draw": {
+      image_url: "",
+      model: "nover:1@3",
+      loras: ["civitai:686704@768584"],
+      steps: 10,
+      cfgScale: 2.5,
+      scheduler: "Euler"
+    },
+    "engine-chic": {
+      image_url: "",
+      model: "nover:1@4",
+      loras: [{model:"nover:4@1", weight:0.9}, {model:"nover:4@2", weight:0.8}, {model:"civitai:686704@768584", weight:1}],
+      steps: 16,
+      cfgScale: 2.5,
+      scheduler: "Euler"
+    },
+    "engine-ads": {
+      image_url: "",
+      model: "nover:1@5",
+      loras: ["civitai:686704@768584"],
+      steps: 16,
+      cfgScale: 3.5,
+      scheduler: "Euler"
     },
     "text-tool": {
       pin: false,
@@ -528,11 +575,17 @@ const getImageUrlForEngineOrGear = (nodeType: string): string => {
   const defaults: Record<string, string> = {
     "engine-real":
       "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/99ccccd1-35b1-4090-ade2-83e2a2bf14ab/anim=false,width=450/5P_00006_.jpeg",
-    "gear-anime":
-      "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/8125d41b-c2fc-4141-8a43-a2b8f0c3058d/anim=false,width=450/pixai-1888583114545024969-0.jpeg",
-    "gear-killua":
-      "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0de4dbcd-eb1c-478c-9709-1694b25e94f9/anim=false,width=450/00960-497516903.jpeg",
-  };
+    "engine-style":
+      "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/16267bcd-6ec4-4395-939a-dd1c14c060fc/width=800,original=false/C-0806200522-HQ__1.jpeg",
+    "engine-draw":
+      "https://framerusercontent.com/images/VPeR2lzmnJZnKCMC0gSeXNjo.webp?width=768&height=1024",
+    "engine-chic":
+      "https://framerusercontent.com/images/npFSgBlEWFP7XRsJ4zu8e5eLaM.webp?scale-down-to=1024&width=1024&height=1536",
+    "engine-ads":
+      "https://framerusercontent.com/images/Sy0oVd6AdS3lpBXH2TxoNCVmKxc.webp?width=764&height=1019",
+    "engine-home":
+      "https://framerusercontent.com/images/VSsF7Tbkqygnd5KWF13fXlH3qY.webp?width=764&height=1019"
+    };
 
   return defaults[nodeType] || "";
 };

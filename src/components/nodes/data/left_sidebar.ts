@@ -21,6 +21,7 @@ type NodeOption = {
   functionality?: string;
   model?: string;
   lora?: string;
+  loras?: string[];
   image_url?: string;
   data?: any;
   node_desc_image_url?: string;
@@ -259,7 +260,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "text",
         description:
           "The Text Prompt Node lets you enter descriptive text that guides the engine’s imagination and controls the direction of the generated image.",
-        node_desc_image_url: "text prompt",
+        node_desc_image_url: "text-prompt",
         status: "stable",
       },
       {
@@ -268,6 +269,7 @@ export const insertCategories: NodeCategory[] = [
         type: "image-to-image-merger",
         label: "Merger",
         icon: "merger",
+        node_desc_image_url: "re-mix",
         description: "Merge multiple images with weights",
         status: "stable",
       },
@@ -290,7 +292,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "text",
         description:
           "The Text Tool Node allows you to add and style text with full typography controls, similar to Figma's text tool.",
-        node_desc_image_url: "text-tool",
+        node_desc_image_url: "text-prompt",
         status: "stable",
       },
     ],
@@ -335,8 +337,8 @@ export const insertCategories: NodeCategory[] = [
         design: "normal-node",
         functionality: "engine",
         type: "engine-real",
-        model: "runware:101@1",
-        lora: "civitai:796382@1026423",
+        model: "khialmaster:978314@1413433",
+        loras: ["khialmaster:1551668@1755780", "civitai:686704@768584"],
         image_url:
           "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/99ccccd1-35b1-4090-ade2-83e2a2bf14ab/anim=false,width=450/5P_00006_.jpeg",
         data: {
@@ -344,7 +346,87 @@ export const insertCategories: NodeCategory[] = [
         },
         label: "Nover Real",
         icon: "realtime",
-        description: "Combination of Fluxmania Model and Defluxion LoRa",
+        description: "Ultra-realistic visuals with lifelike detail for portraits, environments and scenes alike.",
+        status: "stable",
+      },
+      {
+        design: "normal-node",
+        functionality: "engine",
+        type: "engine-style",
+        model: "civitai:778691@1205317",
+        loras: ["nover:2@1", "civitai:686704@768584"],
+        image_url:
+          "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/16267bcd-6ec4-4395-939a-dd1c14c060fc/width=800,original=false/C-0806200522-HQ__1.jpeg",
+        data: {
+          functionality: "engine",
+        },
+        label: "Nover Style",
+        icon: "realtime",
+        description: "Stylized and thematic imagery bringing strong moods, lighting and creative atmospheres together.",
+        status: "stable",
+      },
+      {
+        design: "normal-node",
+        functionality: "engine",
+        type: "engine-draw",
+        model: "nover:1@3",
+        loras: ["civitai:686704@768584"],
+        image_url:
+          "https://framerusercontent.com/images/VPeR2lzmnJZnKCMC0gSeXNjo.webp?width=768&height=1024",
+        data: {
+          functionality: "engine",
+        },
+        label: "Nover Draw",
+        icon: "realtime",
+        description: "Illustrations in 2D, 3D, icons and graphic assets for apps, games, branding, and e-commerce",
+        status: "stable",
+      },
+      {
+        design: "normal-node",
+        functionality: "engine",
+        type: "engine-chic",
+        model: "nover:1@4",
+        loras: ["civitai:686704@768584"],
+        image_url:
+          "https://framerusercontent.com/images/npFSgBlEWFP7XRsJ4zu8e5eLaM.webp?scale-down-to=1024&width=1024&height=1536",
+        data: {
+          functionality: "engine",
+        },
+        label: "Nover Chic",
+        icon: "realtime",
+        description: "High-fashion visuals showcasing designer outfits, textures, and pro apparel presentations.",
+        status: "stable",
+      },
+      {
+        design: "normal-node",
+        functionality: "engine",
+        type: "engine-ads",
+        model: "nover:1@5",
+        loras: ["civitai:686704@768584"],
+        image_url:
+          "https://framerusercontent.com/images/Sy0oVd6AdS3lpBXH2TxoNCVmKxc.webp?width=764&height=1019",
+        data: {
+          functionality: "engine",
+        },
+        label: "Nover Ads",
+        icon: "realtime",
+        description: "Polished product visuals optimized for campaigns, marketing assets, and e-commerce presentations.",
+        status: "stable",
+      },
+      {
+        design: "normal-node",
+        functionality: "engine",
+        type: "engine-home",
+        model: "nover:1@6",
+        loras: ["civitai:686704@768584"],
+        image_url:
+          "https://framerusercontent.com/images/VSsF7Tbkqygnd5KWF13fXlH3qY.webp?width=764&height=1019",
+        data: {
+          functionality: "engine",
+        },
+        label: "Nover Home",
+        icon: "realtime",
+        description: "Interior design and décor visuals showing rooms, layouts, materials and architectural concepts.",
         status: "stable",
       },
     ],
@@ -357,7 +439,7 @@ export const insertCategories: NodeCategory[] = [
         design: "normal-node",
         functionality: "lora",
         type: "gear-anime",
-        lora: "civitai:534506@1882710",
+        lora: ["khialmaster:1551668@1755780", "civitai:686704@768584"],
         image_url:
           "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/8125d41b-c2fc-4141-8a43-a2b8f0c3058d/anim=false,width=450/pixai-1888583114545024969-0.jpeg",
         data: {
