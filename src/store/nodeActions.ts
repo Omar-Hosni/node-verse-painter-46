@@ -499,8 +499,8 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
     },
     "engine-real": {
       image_url: "",
-      model: "runware:101@1",
-      lora: "civitai:796382@1026423"
+      model: "khialmaster:978314@1413433",
+      lora: "khialmaster:1551668@1755780"
     },
     "text-tool": {
       pin: false,
