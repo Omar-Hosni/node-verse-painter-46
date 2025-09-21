@@ -45,6 +45,7 @@ import { HexColorPicker, RgbaColorPicker } from "react-colorful";
 import { detectWorkflows } from "@/utils/connectionUtils";
 import RiveInputImageCorners from "./RiveInputImageCorners";
 import RiveInputEngineRatio from "./RiveInputEngineRatio";
+import { insertCategories } from "./nodes/data/left_sidebar";
 
 // Helper function for permissive URL checking
 const isUrlLike = (s?: string) =>
@@ -1009,6 +1010,10 @@ const EnginePicker = React.memo(
     const [showPicker, setShowPicker] = React.useState(false);
     const pickerRef = React.useRef<HTMLDivElement>(null);
 
+    // Get actual engine options from left sidebar data
+    const engineOptions = insertCategories
+      .find(category => category.name === "Engines")?.options || [];
+
     // Handle click outside to close picker - exact same as ImagePicker
     React.useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -1029,9 +1034,9 @@ const EnginePicker = React.memo(
       };
     }, [showPicker]);
 
-    const handleEngineSelect = (engineId: string) => {
-      // TODO: Handle engine selection with actual engine data
-      onChange(engineId);
+    const handleEngineSelect = (engineType: string) => {
+      const selectedEngine = engineOptions.find(e => e.type === engineType);
+      onChange(selectedEngine?.image_url || engineType);
       setShowPicker(false);
     };
 
@@ -1107,25 +1112,41 @@ const EnginePicker = React.memo(
 
               {/* Engine Grid with actual options */}
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: "runware:100@1", name: "Runware v1.0", icon: "🚀" },
-                  { id: "runware:101@1", name: "Runware v1.1", icon: "⚡" },
-                  { id: "stable-diffusion", name: "Stable Diffusion", icon: "🎨" },
-                  { id: "dall-e-3", name: "DALL-E 3", icon: "🤖" },
-                  { id: "midjourney", name: "Midjourney", icon: "🌊" },
-                  { id: "flux-dev", name: "Flux Dev", icon: "⚙️" },
-                ].map((engine) => (
+                {engineOptions.map((engine) => (
                   <div
-                    key={engine.id}
-                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-4 py-4 flex items-center justify-center cursor-pointer flex-col min-h-[90px]"
+                    key={engine.type}
+                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[90px] group"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleEngineSelect(engine.id);
+                      handleEngineSelect(engine.type);
                     }}
                   >
-                    <div className="text-2xl mb-2">{engine.icon}</div>
+                    {/* Engine preview image */}
+                    {engine.image_url && (
+                      <div className="w-full h-16 mb-2 rounded-lg overflow-hidden bg-[#1a1a1a]">
+                        <img
+                          src={engine.image_url}
+                          alt={engine.label}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Engine icon fallback */}
+                    {!engine.image_url && (
+                      <div className="w-full h-16 mb-2 flex items-center justify-center">
+                        <SvgIcon 
+                          name={engine.icon} 
+                          className="w-8 h-8 text-[#9e9e9e]" 
+                        />
+                      </div>
+                    )}
+                    
                     <span className="text-xs text-[#9e9e9e] text-center leading-tight">
-                      {engine.name}
+                      {engine.label}
                     </span>
                   </div>
                 ))}
@@ -1154,6 +1175,10 @@ const GearPicker = React.memo(
     const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
     const pickerRef = React.useRef<HTMLDivElement>(null);
 
+    // Get actual gear options from left sidebar data  
+    const gearOptions = insertCategories
+      .find(category => category.name === "Gears")?.options || [];
+
     // Handle click outside to close picker - exact same as EnginePicker
     React.useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -1177,9 +1202,10 @@ const GearPicker = React.memo(
       };
     }, [showPicker]);
 
-    const handleGearSelect = (gearId: string) => {
-      setSelectedGear(gearId);
-      setShowDetails(true);
+    const handleGearSelect = (gearType: string) => {
+      const selectedGear = gearOptions.find(g => g.type === gearType);
+      onChange(selectedGear?.image_url || gearType);
+      setShowPicker(false);
     };
 
     const handleBackToList = () => {
@@ -1327,58 +1353,55 @@ const GearPicker = React.memo(
                     style={{ maxHeight: "450px" }}
                   >
                     <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: "controlnet-pose", name: "Pose Detection", icon: "🤸", category: "pose" },
-                        { id: "controlnet-depth", name: "Depth Map", icon: "🏔️", category: "depth" },
-                        { id: "controlnet-canny", name: "Edge Detection", icon: "🔲", category: "edge" },
-                        { id: "controlnet-openpose", name: "OpenPose", icon: "👤", category: "pose" },
-                        { id: "controlnet-normal", name: "Normal Map", icon: "🌐", category: "normal" },
-                        { id: "controlnet-scribble", name: "Scribble", icon: "✏️", category: "sketch" },
-                        { id: "face-detector", name: "Face Detection", icon: "😊", category: "face" },
-                        { id: "hand-detector", name: "Hand Detection", icon: "✋", category: "hand" },
-                        { id: "segmentation", name: "Segmentation", icon: "🎯", category: "segment" },
-                        { id: "inpainting", name: "Inpainting", icon: "🖌️", category: "edit" },
-                        { id: "outpainting", name: "Outpainting", icon: "🖼️", category: "expand" },
-                        { id: "upscaler", name: "Upscaler", icon: "⬆️", category: "enhance" },
-                      ].filter(gear => 
+                      {gearOptions.filter(gear => 
                         searchTerm === "" || 
-                        gear.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        gear.category.toLowerCase().includes(searchTerm.toLowerCase())
+                        gear.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        gear.description.toLowerCase().includes(searchTerm.toLowerCase())
                       ).map((gear) => (
                         <div
-                          key={gear.id}
-                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 flex items-center justify-center cursor-pointer flex-col min-h-[70px]"
+                          key={gear.type}
+                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[70px] group"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleGearSelect(gear.id);
+                            handleGearSelect(gear.type);
                           }}
                         >
-                          <div className="text-lg mb-1">{gear.icon}</div>
+                          {/* Gear preview image */}
+                          {gear.image_url && (
+                            <div className="w-full h-12 mb-1 rounded-lg overflow-hidden bg-[#1a1a1a]">
+                              <img
+                                src={gear.image_url}
+                                alt={gear.label}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Gear icon fallback */}
+                          {!gear.image_url && (
+                            <div className="w-full h-12 mb-1 flex items-center justify-center">
+                              <SvgIcon 
+                                name={gear.icon} 
+                                className="w-6 h-6 text-[#9e9e9e]" 
+                              />
+                            </div>
+                          )}
+                          
                           <span className="text-xs text-[#9e9e9e] text-center leading-tight">
-                            {gear.name}
+                            {gear.label}
                           </span>
                         </div>
                       ))}
                     </div>
 
                     {/* No results message */}
-                    {[
-                      { id: "controlnet-pose", name: "Pose Detection", icon: "🤸", category: "pose" },
-                      { id: "controlnet-depth", name: "Depth Map", icon: "🏔️", category: "depth" },
-                      { id: "controlnet-canny", name: "Edge Detection", icon: "🔲", category: "edge" },
-                      { id: "controlnet-openpose", name: "OpenPose", icon: "👤", category: "pose" },
-                      { id: "controlnet-normal", name: "Normal Map", icon: "🌐", category: "normal" },
-                      { id: "controlnet-scribble", name: "Scribble", icon: "✏️", category: "sketch" },
-                      { id: "face-detector", name: "Face Detection", icon: "😊", category: "face" },
-                      { id: "hand-detector", name: "Hand Detection", icon: "✋", category: "hand" },
-                      { id: "segmentation", name: "Segmentation", icon: "🎯", category: "segment" },
-                      { id: "inpainting", name: "Inpainting", icon: "🖌️", category: "edit" },
-                      { id: "outpainting", name: "Outpainting", icon: "🖼️", category: "expand" },
-                      { id: "upscaler", name: "Upscaler", icon: "⬆️", category: "enhance" },
-                    ].filter(gear => 
+                    {gearOptions.filter(gear => 
                       searchTerm === "" || 
-                      gear.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      gear.category.toLowerCase().includes(searchTerm.toLowerCase())
+                      gear.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      gear.description.toLowerCase().includes(searchTerm.toLowerCase())
                     ).length === 0 && (
                       <div className="text-center text-[#9e9e9e] py-8">
                         No gears found matching "{searchTerm}"
@@ -1388,227 +1411,6 @@ const GearPicker = React.memo(
                 </div>
               </div>
 
-              {/* Gear Details Content Box */}
-              <div
-                className="flex-shrink-0 transition-opacity duration-300"
-                style={{ width: "233px", opacity: showDetails ? "100%" : "0%" }}
-              >
-                <div
-                  className="w-full m-0 px-0"
-                  style={{
-                    paddingTop: "0px",
-                    paddingBottom: "0px",
-                    paddingRight: "4px",
-                    paddingLeft: "4px",
-                    gap: "10px",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {/* Back button with left triangle */}
-                  <button
-                    onClick={handleBackToList}
-                    className="text-sm font-bold text-white text-left hover:text-[#007AFF] transition-colors flex items-center gap-2"
-                  >
-                    {/* Left-pointing triangle */}
-                    <svg width="5" height="8" viewBox="0 0 5 8" fill="none">
-                      <polygon points="4,1 4,7 1,4" fill="currentColor" />
-                    </svg>
-                    Back
-                  </button>
-
-                  {/* Vertical stack with gap: 0 and divider on top */}
-                  <div
-                    className="border-t border-[#1d1d1d]"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {/* Image carousel with navigation */}
-                    <div className="relative" style={{ marginBottom: "20px" }}>
-                      <div
-                        className="w-full bg-[#151515] relative overflow-hidden"
-                        style={{
-                          height: "185px",
-                          boxShadow: "0 0 0 6px #151515",
-                          borderRadius: "16px",
-                        }}
-                      >
-                        {/* Preloaded images container */}
-                        <div
-                          className="flex transition-transform duration-300 ease-in-out"
-                          style={{
-                            width: `${sampleImages.length * 100}%`,
-                            height: "100%",
-                            transform: `translateX(-${
-                              currentImageIndex * (100 / sampleImages.length)
-                            }%)`,
-                          }}
-                        >
-                          {sampleImages.map((imageSrc, index) => (
-                            <div
-                              key={index}
-                              className="w-full h-full flex-shrink-0"
-                              style={{
-                                width: `${100 / sampleImages.length}%`,
-                              }}
-                            >
-                              <img
-                                src={imageSrc}
-                                alt={`Gear preview ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                style={{ borderRadius: "16px" }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Left arrow - fixed positioning */}
-                        <button
-                          onClick={handlePrevImage}
-                          style={{
-                            position: "absolute",
-                            left: "8px",
-                            top: "82.5px", // (185px - 20px) / 2 = 82.5px for perfect centering
-                            width: "20px",
-                            height: "20px",
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(13, 13, 13, 0.4)",
-                            backdropFilter: "blur(5px)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "0",
-                            margin: "0",
-                            outline: "none",
-                            boxSizing: "border-box",
-                          }}
-                        >
-                          <svg
-                            width="5"
-                            height="8"
-                            viewBox="0 0 5 8"
-                            fill="none"
-                          >
-                            <polygon points="4,1 4,7 1,4" fill="white" />
-                          </svg>
-                        </button>
-
-                        {/* Right arrow - fixed positioning */}
-                        <button
-                          onClick={handleNextImage}
-                          style={{
-                            position: "absolute",
-                            right: "8px",
-                            top: "82.5px", // (185px - 20px) / 2 = 82.5px for perfect centering
-                            width: "20px",
-                            height: "20px",
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(13, 13, 13, 0.4)",
-                            backdropFilter: "blur(5px)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "0",
-                            margin: "0",
-                            outline: "none",
-                            boxSizing: "border-box",
-                          }}
-                        >
-                          <svg
-                            width="5"
-                            height="8"
-                            viewBox="0 0 5 8"
-                            fill="none"
-                          >
-                            <polygon points="1,1 1,7 4,4" fill="white" />
-                          </svg>
-                        </button>
-
-                        {/* Dots indicator - inside the image */}
-                        <div
-                          className="absolute bottom-2 left-1/2 flex gap-1"
-                          style={{ transform: "translateX(-50%)" }}
-                        >
-                          {sampleImages.map((_, index) => (
-                            <button
-                              data-lov-id={index}
-                              key={index}
-                              onClick={() => setCurrentImageIndex(index)}
-                              style={{
-                                width: "4px",
-                                height: "4px",
-                                borderRadius: "50%",
-                                backgroundColor:
-                                  index === currentImageIndex
-                                    ? "white"
-                                    : "rgba(255, 255, 255, 0.4)",
-                                transition: "opacity 0.2s ease",
-                              }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.opacity = "0.8")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.opacity = "1")
-                              }
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 1: Node Title Section */}
-                    <div style={{ marginBottom: "28px" }}>
-                      {/* Gear name with section title style */}
-                      <h4
-                        className="text-white text-sm font-semibold"
-                        style={{ marginBottom: "0px" }}
-                      >
-                        {selectedGear
-                          ? allGears.find((g) => g.id === selectedGear)?.name ||
-                            "Unknown Gear"
-                          : "Gear Details"}
-                      </h4>
-                      {/* Gear section title with property label style */}
-                      <p className="text-sm text-[#9e9e9e]">Gears</p>
-                    </div>
-
-                    {/* Section 2: Description Section */}
-                    <div style={{ marginBottom: "28px" }}>
-                      <p className="text-sm text-[#9e9e9e] leading-snug">
-                        This is a placeholder description for the selected gear.
-                        In the future, this will contain detailed information
-                        about the gear's functionality and usage.
-                      </p>
-                    </div>
-
-                    {/* Section 3: Action Section */}
-                    <div>
-                      <PrimaryButton
-                        onClick={() => {
-                          if (selectedGear) {
-                            onChange(selectedGear);
-                            setShowPicker(false);
-                            setShowDetails(false);
-                            setSelectedGear(null);
-                          }
-                        }}
-                        icon={FaPlus}
-                        className="!w-auto"
-                      >
-                        Select
-                      </PrimaryButton>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -1616,6 +1418,12 @@ const GearPicker = React.memo(
     );
   }
 );
+
+// Helper for removing brackets in node text - same style as UI
+const removeBrackets = (text: string) => text.replace(/\[.*?\]/g, "");
+
+// Helper function for section styling
+const sectionPadding = "py-4 border-b border-[#1d1d1d] last:border-b-0";
 
 // Stroke settings overlay component
 const StrokeOverlay = React.memo(
@@ -3562,6 +3370,11 @@ export const RightSidebar = () => {
             label="H"
           />
         </PropertyRow>
+
+        {/* RiveInputEngineRatio for engine nodes */}
+        <div className="mt-2.5">
+          <RiveInputEngineRatio />
+        </div>
       </PropertySection>
     );
   };
