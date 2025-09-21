@@ -9672,6 +9672,24 @@ export const RightSidebar = () => {
           <>
             {renderNodePositionInputs()}
             {renderNodeDesignInput()}
+            
+            {/* Mask Image Display */}
+            {selectedNode.data?.maskImage && (
+              <PropertySection title="Mask Image">
+                <div className="flex justify-center">
+                  <div className="w-[200px] h-[120px] bg-[#151515] rounded-lg overflow-hidden border border-[#1d1d1d]">
+                    <img
+                      src={selectedNode.data.maskImage}
+                      alt="Mask Image"
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              </PropertySection>
+            )}
           </>
         );
 
@@ -9680,6 +9698,24 @@ export const RightSidebar = () => {
           <>
             {renderNodePositionInputs()}
             {renderNodeDesignInput()}
+            
+            {/* Mask Image Display */}
+            {selectedNode.data?.maskImage && (
+              <PropertySection title="Mask Image">
+                <div className="flex justify-center">
+                  <div className="w-[200px] h-[120px] bg-[#151515] rounded-lg overflow-hidden border border-[#1d1d1d]">
+                    <img
+                      src={selectedNode.data.maskImage}
+                      alt="Mask Image"
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              </PropertySection>
+            )}
           </>
         );
 
