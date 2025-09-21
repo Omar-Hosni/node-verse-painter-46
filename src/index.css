@@ -412,3 +412,14 @@ body {
   align-items: flex-start !important;
   overflow: visible; /* ensure any internal visuals are not clipped */
 }
+
+/* Specialized layout fix for the Engine ratio property row so it fully contains the Rive preview */
+.engine-ratio-row {
+  align-items: flex-start !important;
+}
+.engine-ratio-content {
+  height: auto !important;
+  min-height: 147px; /* matches Rive preview size */
+  align-items: flex-start !important;
+  overflow: visible; /* ensure any internal visuals are not clipped */
+}
