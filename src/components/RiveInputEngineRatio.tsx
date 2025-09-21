@@ -202,16 +202,23 @@ const RiveInputEngineRation: React.FC = () => {
   };
 
   return (
-    <PropertyRow label="Engine ratio" rowClassName="engine-ratio-row items-start" contentClassName="engine-ratio-content items-start min-h-[147px] h-auto">
-      <div className="flex items-start justify-center w-full h-auto min-h-[147px]">
-        <div
-          className="w-[147px] h-[147px] overflow-hidden relative flex-shrink-0"
-          style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
-        >
-          <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
+    <div className="mb-[108.5px]">
+      <PropertyRow>
+        <div className="text-white">
+          {/* Rive preview */}
+          <div className="flex items-center">
+            <div className="flex-1 flex gap-1.5 justify-center items-center" >
+              <div
+                className="w-[147px] h-[147px] overflow-hidden relative"
+                style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
+              >
+                <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
     </PropertyRow>
+  </div>
   );
 };
 
