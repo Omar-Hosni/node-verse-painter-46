@@ -1110,12 +1110,12 @@ const EnginePicker = React.memo(
               {/* Title */}
               <h3 className="text-sm font-bold text-white">Engines</h3>
 
-              {/* Engine Grid with actual options - only images, no names */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* Engine Grid with actual options */}
+              <div className="grid grid-cols-2 gap-2">
                 {engineOptions.map((engine) => (
                   <div
                     key={engine.type}
-                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-lg cursor-pointer group transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25"
+                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[90px] group"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEngineSelect(engine.type);
@@ -1123,7 +1123,7 @@ const EnginePicker = React.memo(
                   >
                     {/* Engine preview image */}
                     {engine.image_url && (
-                      <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#1a1a1a]">
+                      <div className="w-full h-16 mb-2 rounded-lg overflow-hidden bg-[#1a1a1a]">
                         <img
                           src={engine.image_url}
                           alt={engine.label}
@@ -1137,13 +1137,16 @@ const EnginePicker = React.memo(
                     
                     {/* Engine icon fallback */}
                     {!engine.image_url && (
-                      <div className="w-full aspect-square flex items-center justify-center bg-[#1a1a1a] rounded-lg">
+                      <div className="w-full h-16 mb-2 flex items-center justify-center">
                         <SvgIcon 
                           name={engine.icon} 
                           className="w-8 h-8 text-[#9e9e9e]" 
                         />
                       </div>
                     )}
+
+                    {/* Hover shadow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                 ))}
               </div>
