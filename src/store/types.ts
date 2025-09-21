@@ -233,6 +233,8 @@ export interface NodeOption {
   description: string;
   icon: any;
   node_desc_image_url?: string;
+  data?: string,
+  positiveTriggerWords?: string;
 }
 
 export interface CanvasState {

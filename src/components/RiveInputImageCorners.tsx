@@ -12,7 +12,7 @@ type Corner =
   | "bottomRight";
 
 // ---- Config (adjust if needed) ----
-const RIVE_PATH = "/rive/imagecorners.riv"; // <- replace with your .riv file
+const RIVE_PATH = "/rive/imagecorners2.riv"; // <- replace with your .riv file
 const ARTBOARD = "Artboard";                  // <- change if different
 const STATE_MACHINE = "State Machine 1";      // <- change if different
 

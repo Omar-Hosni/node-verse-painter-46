@@ -2809,7 +2809,7 @@ export class WorkflowExecutor {
     const gearLoras = gearNodes
       .map((n) => {
         const gd: any = n.data || {};
-        const model = gd.loraModel || gd.model || gd.modelAIR;
+        const model = gd.loraModel || gd.model || gd.modelAIR || gd.lora;
         if (!model) return null;
         console.log(
           `🎯 Gear ${n.id}: LoRA ${model} weight ${gd.weight || 1.0}`

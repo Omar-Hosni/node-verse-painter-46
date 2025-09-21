@@ -1,0 +1,204 @@
+Name: .gitattributes
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/.gitattributes?download=true
+-----
+Name: 2d-blue-surrealism.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-blue-surrealism.safetensors?download=true
+-----
+Name: 2d-cartoon-style.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-cartoon-style.safetensors?download=true
+-----
+Name: 2d-dark-digital-painting.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-dark-digital-painting.safetensors?download=true
+-----
+Name: 2d-fine-digital-painting.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-fine-digital-painting.safetensors?download=true
+-----
+Name: 2d-flat-illustration.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-flat-illustration.safetensors?download=true
+-----
+Name: 2d-game-typography.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-game-typography.safetensors?download=true
+-----
+Name: 2d-morning-vibes-art.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-morning-vibes-art.safetensors?download=true
+-----
+Name: 2d-pencil-sketch.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-pencil-sketch.safetensors?download=true
+-----
+Name: 2d-printer-flat-art.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-printer-flat-art.safetensors?download=true
+-----
+Name: 2d-round-character.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-round-character.safetensors?download=true
+-----
+Name: 2d-stamp-flat-art.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-stamp-flat-art.safetensors?download=true
+-----
+Name: 2d-vivid-digital-painting.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-vivid-digital-painting.safetensors?download=true
+-----
+Name: 2d-vivid-flat-art.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-vivid-flat-art.safetensors?download=true
+-----
+Name: 2d-western-anime-style.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/2d-western-anime-style.safetensors?download=true
+-----
+Name: 3d-clay-character.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-clay-character.safetensors?download=true
+-----
+Name: 3d-detailed-3d.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-detailed-3d.safetensors?download=true
+-----
+Name: 3d-fat-3d-icon.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-fat-3d-icon.safetensors?download=true
+-----
+Name: 3d-flat-scene.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-flat-scene.safetensors?download=true
+-----
+Name: 3d-icon-design.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-icon-design.safetensors?download=true
+-----
+Name: 3d-nft-character.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-nft-character.safetensors?download=true
+-----
+Name: 3d-poster.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-poster.safetensors?download=true
+-----
+Name: 3d-vivid-3d-object.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/3d-vivid-3d-object.safetensors?download=true
+-----
+Name: camera-extreme.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/camera-extreme.safetensors?download=true
+-----
+Name: camera-figh-eye-lens.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/camera-figh-eye-lens.safetensors?download=true
+-----
+Name: camera-wide-angle-lens.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/camera-wide-angle-lens.safetensors?download=true
+-----
+Name: portrait-commercial-shot.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-commercial-shot.safetensors?download=true
+-----
+Name: portrait-extreme-fashion.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-extreme-fashion.safetensors?download=true
+-----
+Name: portrait-fashion-magazine.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-fashion-magazine.safetensors?download=true
+-----
+Name: portrait-fit-sport-wear.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-fit-sport-wear.safetensors?download=true
+-----
+Name: portrait-future-fashion.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-future-fashion.safetensors?download=true
+-----
+Name: portrait-future-lady.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-future-lady.safetensors?download=true
+-----
+Name: portrait-happy-breakfast.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-happy-breakfast.safetensors?download=true
+-----
+Name: portrait-headphones.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-headphones.safetensors?download=true
+-----
+Name: portrait-street-fashion.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-street-fashion.safetensors?download=true
+-----
+Name: portrait-tech-product-holder.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/portrait-tech-product-holder.safetensors?download=true
+-----
+Name: product-shoot-air-fit.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-air-fit.safetensors?download=true
+-----
+Name: product-shoot-arctic-aesthetics.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-arctic-aesthetics.safetensors?download=true
+-----
+Name: product-shoot-cinematic-product.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-cinematic-product.safetensors?download=true
+-----
+Name: product-shoot-clean-clothes.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-clean-clothes.safetensors?download=true
+-----
+Name: product-shoot-dynamic-shot.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-dynamic-shot.safetensors?download=true
+-----
+Name: product-shoot-fine-texture-shot.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-fine-texture-shot.safetensors?download=true
+-----
+Name: product-shoot-food-phodography.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-food-phodography.safetensors?download=true
+-----
+Name: product-shoot-green-shot.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-green-shot.safetensors?download=true
+-----
+Name: product-shoot-hold-my-product.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-hold-my-product.safetensors?download=true
+-----
+Name: product-shoot-natural-commerce.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-natural-commerce.safetensors?download=true
+-----
+Name: product-shoot-wooden-shot.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/product-shoot-wooden-shot.safetensors?download=true
+-----
+Name: scene-dreamscape-location.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/scene-dreamscape-location.safetensors?download=true
+-----
+Name: scene-fresh-air.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/scene-fresh-air.safetensors?download=true
+-----
+Name: scene-hyper-reality.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/scene-hyper-reality.safetensors?download=true
+-----
+Name: scene-minimal-3d-location.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/scene-minimal-3d-location.safetensors?download=true
+-----
+Name: style-charming-fluidity.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-charming-fluidity.safetensors?download=true
+-----
+Name: style-dark-street.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-dark-street.safetensors?download=true
+-----
+Name: style-deep-emotions.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-deep-emotions.safetensors?download=true
+-----
+Name: style-glowing-light.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-glowing-light.safetensors?download=true
+-----
+Name: style-green-tone.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-green-tone.safetensors?download=true
+-----
+Name: style-high-exposure.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-high-exposure.safetensors?download=true
+-----
+Name: style-light-and-shadow.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-light-and-shadow.safetensors?download=true
+-----
+Name: style-morning-hour.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-morning-hour.safetensors?download=true
+-----
+Name: style-motion-blur.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-motion-blur.safetensors?download=true
+-----
+Name: style-nostalgic-moment.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-nostalgic-moment.safetensors?download=true
+-----
+Name: style-quiet-city.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-quiet-city.safetensors?download=true
+-----
+Name: style-saturated-food.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-saturated-food.safetensors?download=true
+-----
+Name: style-sunlight.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-sunlight.safetensors?download=true
+-----
+Name: style-synthwave-photography.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-synthwave-photography.safetensors?download=true
+-----
+Name: style-vibrant-morning.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-vibrant-morning.safetensors?download=true
+-----
+Name: style-vintage-showa.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-vintage-showa.safetensors?download=true
+-----
+Name: style-visual-tension.safetensors
+Download URL: https://huggingface.co/OmarHosny/Nover-Gears/resolve/main/style-visual-tension.safetensors?download=true
+-----

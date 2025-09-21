@@ -650,12 +650,33 @@ const Dashboard = () => {
             <p className="text-gray-400">Explore community projects and collaborate.</p>
           </div>
         );
-      case 'Nover Folio':
+      case "Nover Folio":
         return (
           <div className="pl-4 pr-[22px]">
-            <p className="text-gray-400">Your portfolio showcase - coming soon!</p>
+            <div className="relative w-full h-full">
+              {/* soon_page background image */}
+              <img
+                src="/soon_page.svg"
+                alt="Coming Soon Background"
+                className="w-full h-full"
+              />
+
+              {/* Overlay: logo + text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3">
+                <img
+                  src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png"
+                  alt="Logo"
+                  className="w-12 h-12 object-contain"
+                />
+              </div>
+              <div className="absolute inset-0 pt-20 flex flex-row items-center justify-center gap-1">
+                <p className="text-gray-400 text-sm font-medium">Nover Folio,</p>
+                <p className="text-white text-sm">Coming Soon.</p>
+              </div>
+            </div>
           </div>
         );
+
       case 'Files':
       default:
         return (

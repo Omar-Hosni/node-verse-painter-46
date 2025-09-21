@@ -122,6 +122,7 @@ export const LeftSidebar = ({
     (category) => category.options
   );
 
+
   // Handler for adding a node
   const handleAddNode = (nodeType: NodeType) => {
     // Get the center of the viewport
@@ -221,64 +222,66 @@ export const LeftSidebar = ({
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      {allNodeOptions
-                        .filter(
-                          (option) =>
-                            option.label
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase()) ||
-                            option.description
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase())
-                        )
-                        .map((option) => (
-                          <div
-                            key={option.type}
-                            onClick={() => {
-                              if (option.status !== "coming-soon") {
-                                setSelectedInsertNode(option);
-                              }
-                            }}
-                            className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
-                                    px-8 py-6 flex items-center justify-center cursor-pointer 
-                                    overflow-hidden ${
-                                      option?.image_url ? "p-0" : "flex-col"
-                                    } 
-                                    ${
-                                      option.status === "coming-soon"
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                    }`}
-                          >
-                            {/* Image or icon + label */}
-                            {option?.image_url ? (
-                              <img
-                                src={option.image_url}
-                                alt={option.label}
-                                className="scale-[220%] rounded-2xl"
-                              />
-                            ) : (
-                              <>
-                                <SvgIcon
-                                  name={option.icon.toString()}
-                                  className="h-8 w-8 text-[#f3f2f2] mb-2"
-                                />
-                                <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
-                                  {option.label}
-                                </span>
-                              </>
-                            )}
+                      {
+                        allNodeOptions
+                          .filter(option => {
+                            const t = (searchTerm ?? "").trim().toLowerCase();
+                            if (!t) return true;
 
-                            {/* Overlay for "Coming Soon" */}
-                            {option.status === "coming-soon" && (
-                              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
-                                <span className="text-white text-xs font-semibold">
-                                  Coming Soon
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                            const label = String(option.label ?? "").toLowerCase();
+                            const desc  = String(option.description ?? "").toLowerCase();
+
+                            const words = Array.isArray(option?.data?.positiveTriggerWords)
+                              ? option.data!.positiveTriggerWords
+                              : [];
+                            const matchWords = words.some(w => String(w).toLowerCase().includes(t));
+
+                            console.log(matchWords)
+
+                            return label.includes(t) || desc.includes(t) || matchWords;
+                          })
+                          .map(option => (
+                            <div
+                              key={option.type}
+                              onClick={() => {
+                                if (option.status !== "coming-soon") setSelectedInsertNode(option);
+                              }}
+                              className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
+                                          px-8 py-6 flex items-center justify-center cursor-pointer 
+                                          overflow-hidden ${option?.image_url ? "p-0" : "flex-col"} 
+                                          ${option.status === "coming-soon" ? "opacity-50 cursor-not-allowed" : ""}`}
+                            >
+                              {/* Image or icon + label */}
+                              {option?.image_url ? (
+                                <img
+                                  src={option.image_url}
+                                  alt={option.label}
+                                  className="scale-[220%] rounded-2xl"
+                                  referrerPolicy="no-referrer"
+                                  crossOrigin="anonymous"
+                                />
+                              ) : (
+                                <>
+                                  <SvgIcon
+                                    name={String(option.icon)}
+                                    className="h-8 w-8 text-[#f3f2f2] mb-2"
+                                  />
+                                  <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
+                                    {option.label}
+                                  </span>
+                                </>
+                              )}
+
+                              {/* Overlay for "Coming Soon" */}
+                              {option.status === "coming-soon" && (
+                                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                                  <span className="text-white text-xs font-semibold">Coming Soon</span>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                      }
+
                     </div>
                     {allNodeOptions.filter(
                       (option) =>
@@ -338,6 +341,8 @@ export const LeftSidebar = ({
                                 src={option.image_url}
                                 alt={option.label}
                                 className="scale-[220%] rounded-2xl"
+                                referrerPolicy="no-referrer"
+                                crossOrigin="anonymous"
                               />
                             ) : (
                               <>
@@ -431,6 +436,8 @@ export const LeftSidebar = ({
                               src={image.url}
                               alt="Uploaded asset"
                               className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              crossOrigin="anonymous"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = '/fallback-image.jpg';
@@ -498,6 +505,8 @@ export const LeftSidebar = ({
                               src={image.url}
                               alt="Generated asset"
                               className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              crossOrigin="anonymous" 
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = '/fallback-image.jpg';

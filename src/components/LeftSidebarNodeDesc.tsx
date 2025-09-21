@@ -95,6 +95,8 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
     addNode(nodeType, position, order);
     setSelectedInsertNode(null); // Close panel after insert
   };
+
+  const nodeDescVideo = selectedInsertNode?.type === "image-to-image-reangle" ? "/reangle_video.mp4" : "/relight_video.mp4"
   return (
     <div 
       ref={panelRef}
@@ -103,23 +105,42 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
     >
 
       {/* Fixed height image preview with background */}
-      <div
-        className="w-full bg-[#151515]"
-        style={{
-          height: 185,
-          backgroundImage: selectedInsertNode.node_desc_image_url
-            ? `url("/nodes/data/icons/description/${selectedInsertNode.node_desc_image_url}.png")`
-            : selectedInsertNode?.image_url
-            ? `url("${encodeURI(String(selectedInsertNode.image_url))}")`
-            : "none",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          marginBottom: 20,
-          boxShadow: "0 0 0 6px #151515",
-          borderRadius: 16,
-        }}
-      />
+      {selectedInsertNode?.type === "image-to-image-reangle" || selectedInsertNode?.type === "image-to-image-object-relight" ? (
+        <video
+          src={nodeDescVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full rounded-2xl"
+          style={{ height: 185, objectFit: "cover", marginBottom: 20 }}
+        />
+      ) : (
+        <img
+          src={
+            selectedInsertNode.node_desc_image_url
+              ? `/nodes/data/icons/description/${selectedInsertNode.node_desc_image_url}.png`
+              : selectedInsertNode?.image_url
+              ? encodeURI(String(selectedInsertNode.image_url))
+              : ""
+          }
+          alt=""
+          className="w-full bg-[#151515]"
+          referrerPolicy="no-referrer"       // helps if the server blocks based on Referer
+          crossOrigin="anonymous"            // needed only if you later draw to <canvas>
+          style={{
+            height: 185,
+            objectFit: "cover",
+            objectPosition: "center",
+            marginBottom: 20,
+            boxShadow: "0 0 0 6px #151515",
+            borderRadius: 16,
+            
+          }}
+        />
+      )}
+
+
 
 
       {/* Section 1: Node Title Section */}

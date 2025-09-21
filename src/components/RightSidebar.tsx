@@ -43,6 +43,7 @@ import RiveInputLights from "./RiveInputLights";
 
 import { HexColorPicker, RgbaColorPicker } from "react-colorful";
 import { detectWorkflows } from "@/utils/connectionUtils";
+import RiveInputImageCorners from "./RiveInputImageCorners";
 
 // Helper function for permissive URL checking
 const isUrlLike = (s?: string) =>
@@ -1215,19 +1216,25 @@ const GearPicker = React.memo(
         {/* Gear preview with hover button */}
         <div
           className="relative rounded-2xl overflow-hidden group cursor-pointer"
-          style={{
-            width: "233px",
-            height: "140px",
-            backgroundImage: value ? `url(${value})` : "none",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundColor: value ? "transparent" : "#151515",
-          }}
+          style={{ width: "233px", height: "140px", backgroundColor: value ? "transparent" : "#151515" }}
           onClick={(e) => {
             e.stopPropagation();
             setShowPicker(!showPicker);
           }}
         >
+          {/* Image (replaces background-image) */}
+          {value && (
+            <img
+              src={value}
+              alt="Selected gear"
+              className="absolute inset-0 w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+
           {/* Placeholder when no gear */}
           {!value && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
@@ -1236,9 +1243,7 @@ const GearPicker = React.memo(
                 alt="App Logo"
                 className="h-5 w-auto opacity-40"
               />
-              <span className="text-sm text-[#9e9e9e] opacity-50">
-                Select a gear
-              </span>
+              <span className="text-sm text-[#9e9e9e] opacity-50">Select a gear</span>
             </div>
           )}
 
@@ -1252,6 +1257,7 @@ const GearPicker = React.memo(
             </button>
           </div>
         </div>
+
 
         {/* Gear picker modal with horizontal stack approach */}
         {showPicker && (
@@ -3520,7 +3526,7 @@ export const RightSidebar = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
 
     const { right_sidebar } = selectedNode.data;
-    const { image_url, power = 70, tags = [] } = right_sidebar;
+    const { image_url, weight = 50, tags = [] } = right_sidebar;
 
     return (
       <PropertySection title="Gear">
@@ -3543,38 +3549,41 @@ export const RightSidebar = () => {
         <PropertyRow label="Power">
           <div className="w-full h-full">
             <NumericInput
-              value={power}
-              onChange={(value) =>
+              value={Math.round((Number(weight) || 0) * 100)} // show 0–100
+              onChange={(value: number) =>
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
                     ...right_sidebar,
-                    power: value,
+                    weight: Math.min(100, Math.max(0, value)) / 100, // store 0–1
                   },
                 })
               }
-              min={10}
+              min={0}
               max={100}
               step={10}
             />
           </div>
+
           <div className="w-full h-full flex items-center">
             <CustomSlider
-              value={power}
-              onChange={(value) =>
+              value={Math.round((Number(weight) || 0) * 100)} // 0–100 for the UI
+              onChange={(value: number | number[]) => {
+                const v = Array.isArray(value) ? value[0] : value; // some sliders return arrays
                 updateNodeData(selectedNode.id, {
                   right_sidebar: {
                     ...right_sidebar,
-                    power: value,
+                    weight: Math.min(100, Math.max(0, v)) / 100, // back to 0–1
                   },
-                })
-              }
-              min={10}
+                });
+              }}
+              min={0}
               max={100}
               step={10}
               className="w-full"
             />
           </div>
         </PropertyRow>
+
 
         {/* Tags */}
         <div className="flex items-start mb-2.5">
@@ -5130,6 +5139,11 @@ export const RightSidebar = () => {
                     })
                   }
                 />
+              </PropertyRow>
+
+              <PropertyRow>
+                {/*Rive for image corners*/}
+                {/* <RiveInputImageCorners key={selectedNode?.id}/> */}
               </PropertyRow>
 
               <PropertyRow label="Corners">
@@ -9472,7 +9486,7 @@ export const RightSidebar = () => {
 
               <PropertyRow label="Power">
                 <NumericInput
-                  value={selectedNode.data?.power || 0}
+                  value={selectedNode.data?.power || selectedNode.data?.weight || 0}
                   onChange={(value) =>
                     updateNodeData(selectedNode.id, { power: value })
                   }
@@ -10564,89 +10578,75 @@ export const RightSidebar = () => {
         );
 
       case "gear-anime":
-        return (
-          <>
-            {/* Section 1: Position */}
-            <PropertySection title="Position" isFirst={true}>
-              {/* Position alignment icons */}
-              <div className="flex justify-between items-center bg-[#1a1a1a] rounded-full border border-[#1d1d1d] px-1.5">
-                {[
-                  "left",
-                  "center-h",
-                  "right",
-                  "top",
-                  "center-v",
-                  "bottom",
-                  "between-h",
-                  "between-v",
-                ].map((p) => {
-                  // Disable between-h and between-v for now (distribute functionality)
-                  const isDisabled = p === "between-h" || p === "between-v";
-                  const isEnabled = !isDisabled; // Always enabled for basic alignment
+      case "gear-2d-blue-surrealism":
+      case "gear-2d-cartoon-style":
+      case "gear-2d-dark-digital-painting":
+      case "gear-2d-fine-digital-painting":
+      case "gear-2d-flat-illustration":
+      case "gear-2d-game-typography":
+      case "gear-2d-morning-vibes-art":
+      case "gear-2d-pencil-sketch":
+      case "gear-2d-printer-flat-art":
+      case "gear-2d-round-character":
+      case "gear-2d-stamp-flat-art":
+      case "gear-2d-vivid-digital-painting":
+      case "gear-2d-vivid-flat-art":
+      case "gear-2d-western-anime-style":
+      case "gear-3d-clay-character":
+      case "gear-3d-detailed-3d":
+      case "gear-3d-fat-3d-icon":
+      case "gear-3d-flat-scene":
+      case "gear-3d-icon-design":
+      case "gear-3d-avatar-character":
+      case "gear-3d-poster":
+      case "gear-3d-vivid-3d-object":
+      case "gear-camera-extreme":
+      case "gear-camera-figh-eye-lens":
+      case "gear-camera-wide-angle-lens":
+      case "gear-portrait-commercial-shot":
+      case "gear-portrait-extreme-fashion":
+      case "gear-portrait-fashion-magazine":
+      case "gear-portrait-fit-sport-wear":
+      case "gear-portrait-future-fashion":
+      case "gear-portrait-future-lady":
+      case "gear-portrait-happy-breakfast":
+      case "gear-portrait-headphones":
+      case "gear-portrait-street-fashion":
+      case "gear-portrait-tech-product-holder":
+      case "gear-product-shoot-air-fit":
+      case "gear-product-shoot-arctic-aesthetics":
+      case "gear-product-shoot-cinematic-product":
+      case "gear-product-shoot-clean-clothes":
+      case "gear-product-shoot-dynamic-shot":
+      case "gear-product-shoot-fine-texture-shot":
+      case "gear-product-shoot-food-photography":
+      case "gear-product-shoot-green-shot":
+      case "gear-product-shoot-hold-my-product":
+      case "gear-product-shoot-natural-commerce":
+      case "gear-product-shoot-wooden-shot":
+      case "gear-scene-dreamscape-location":
+      case "gear-scene-fresh-air":
+      case "gear-scene-hyper-reality":
+      case "gear-scene-minimal-3d-location":
+      case "gear-style-charming-fluidity":
+      case "gear-style-dark-street":
+      case "gear-style-deep-emotions":
+      case "gear-style-glowing-light":
+      case "gear-style-green-tone":
+      case "gear-style-high-exposure":
+      case "gear-style-light-and-shadow":
+      case "gear-style-morning-hour":
+      case "gear-style-motion-blur":
+      case "gear-style-nostalgic-moment":
+      case "gear-style-quiet-city":
+      case "gear-style-saturated-food":
+      case "gear-style-sunlight":
+      case "gear-style-synthwave-photography":
+      case "gear-style-vibrant-morning":
+      case "gear-style-vintage-showa":
+      case "gear-style-visual-tension":
 
-                  return (
-                    <span
-                      key={p}
-                      className={`inline-flex p-2 rounded-full transition ${
-                        isEnabled
-                          ? "hover:bg-[#333333] cursor-pointer"
-                          : "cursor-not-allowed"
-                      }`}
-                      onClick={() => isEnabled && handleAlignment(p)}
-                    >
-                      <SvgIcon
-                        name={`positions/${p}`}
-                        className="w-5 h-5"
-                        style={{
-                          color: "#007AFF",
-                          opacity: isEnabled ? 1 : 0.4,
-                        }}
-                      />
-                    </span>
-                  );
-                })}
-              </div>
-
-              <PropertyRow label="Location">
-                <PositionInput
-                  value={selectedNode.position?.x || 0}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      position: { ...selectedNode.position, x: value },
-                    })
-                  }
-                  label="X"
-                />
-                <PositionInput
-                  value={selectedNode.position?.y || 0}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      position: { ...selectedNode.position, y: value },
-                    })
-                  }
-                  label="Y"
-                />
-              </PropertyRow>
-
-              <PropertyRow label="Pin">
-                <ToggleButton
-                  options={[
-                    { label: "No", value: "false" },
-                    { label: "Yes", value: "true" },
-                  ]}
-                  value={selectedNode.data?.pin ? "true" : "false"}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, { pin: value === "true" })
-                  }
-                />
-              </PropertyRow>
-            </PropertySection>
-            {renderGearInput()}
-            {renderNodeDesignInput()}
-          </>
-        );
-      case "gear-killua":
-        return (
+      return (
           <>
             {/* Section 1: Position */}
             <PropertySection title="Position" isFirst={true}>
