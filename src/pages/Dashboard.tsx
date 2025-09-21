@@ -33,7 +33,8 @@ const Dashboard = () => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [activeTab, setActiveTab] = useState('Home');
+  const [activeTab, setActiveTab] = useState('Home');  
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const clerkAuth = useClerkIntegration();
   const { uploadedImages, generatedImages, loading: assetsLoading } = useAssetQueries();
@@ -300,6 +301,8 @@ const Dashboard = () => {
             <input
               type="text"
               placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-full bg-white/[0.04] rounded-full pl-10 pr-3 py-1.5 text-sm text-white placeholder-[#9e9e9e] outline-none"
             />
           </div>
@@ -330,17 +333,111 @@ const Dashboard = () => {
     );
   };
 
+  // Filter projects and assets based on search term
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredUploadedImages = uploadedImages.filter(image =>
+    image.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    image.projectName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredGeneratedImages = generatedImages.filter(image =>
+    image.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    image.projectName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const renderContent = () => {
     switch (activeTab) {
+      case 'Files':
+        return (
+          <div className="pl-4 pr-[22px] space-y-8">
+            <div>
+              <h3 className="text-lg font-medium text-white mb-4">
+                {searchTerm ? `Search Results for "${searchTerm}"` : 'All Files'}
+              </h3>
+              {filteredProjects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
+                  {filteredProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => navigate(`/editor/${project.id}`)}
+                    >
+                      <div
+                        className="relative rounded-lg overflow-hidden bg-[#1A1A1A]"
+                        style={{ aspectRatio: '1 / 0.7' }}
+                      >
+                        {getProjectThumbnail(project) ? (
+                          <img
+                            src={getProjectThumbnail(project)}
+                            alt={`Preview for ${project.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                            <img
+                              src="/lovable-uploads/c59cfaf0-e3e3-461c-b8ae-5de40cb6e641.png"
+                              alt="App Logo"
+                              className="h-5 w-auto opacity-40"
+                            />
+                            <span className="text-sm text-[#9e9e9e] opacity-50">
+                              Empty Project
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="font-medium text-white truncate text-sm">
+                              {project.name}
+                            </h3>
+                            {project.description && (
+                              <p className="text-xs text-gray-300 truncate mt-1">
+                                {project.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400">
+                  {searchTerm ? 'No files found matching your search' : 'No files found'}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      case 'Assets':
+        return (
+          <div className="pl-4 pr-[22px] space-y-8">
+            <AssetGrid
+              images={[...filteredUploadedImages, ...filteredGeneratedImages]}
+              title={searchTerm ? `Search Results for "${searchTerm}"` : 'All Assets'}
+              loading={assetsLoading}
+              showProjectInfo={true}
+              onImageClick={(image) => {
+                if (image.projectId) {
+                  navigate(`/editor/${image.projectId}`);
+                }
+              }}
+            />
+          </div>
+        );
       case 'Home':
         return (
           <div className="pl-4 pr-[22px] space-y-8">
             {/* Recent Files Section */}
             <div>
               <h3 className="text-lg font-medium text-white mb-4">Recent Files</h3>
-              {projects.length > 0 ? (
+              {filteredProjects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[14px]">
-                  {projects.slice(0, 4).map((project, index) => (
+                  {(searchTerm ? filteredProjects : projects.slice(0, 4)).map((project, index) => (
                     <div
                       key={project.id}
                       className="relative group cursor-pointer"
@@ -389,8 +486,11 @@ const Dashboard = () => {
             {/* Assets Section */}
             <div>
               <AssetGrid
-                images={[...uploadedImages.slice(0, 4), ...generatedImages.slice(0, 4)].slice(0, 4)}
-                title="Recent Assets"
+                images={searchTerm ? 
+                  [...filteredUploadedImages, ...filteredGeneratedImages] : 
+                  [...uploadedImages.slice(0, 4), ...generatedImages.slice(0, 4)].slice(0, 4)
+                }
+                title={searchTerm ? `Search Results for "${searchTerm}"` : "Recent Assets"}
                 loading={assetsLoading}
                 showProjectInfo={true}
                 onImageClick={(image) => {

@@ -44,6 +44,7 @@ import RiveInputLights from "./RiveInputLights";
 import { HexColorPicker, RgbaColorPicker } from "react-colorful";
 import { detectWorkflows } from "@/utils/connectionUtils";
 import RiveInputImageCorners from "./RiveInputImageCorners";
+import RiveInputEngineRatio from "./RiveInputEngineRatio";
 
 // Helper function for permissive URL checking
 const isUrlLike = (s?: string) =>
@@ -1104,19 +1105,27 @@ const EnginePicker = React.memo(
               {/* Title */}
               <h3 className="text-sm font-bold text-white">Engines</h3>
 
-              {/* Engine Grid - exact same styling as insert panel */}
+              {/* Engine Grid with actual options */}
               <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: 6 }, (_, index) => (
+                {[
+                  { id: "runware:100@1", name: "Runware v1.0", icon: "🚀" },
+                  { id: "runware:101@1", name: "Runware v1.1", icon: "⚡" },
+                  { id: "stable-diffusion", name: "Stable Diffusion", icon: "🎨" },
+                  { id: "dall-e-3", name: "DALL-E 3", icon: "🤖" },
+                  { id: "midjourney", name: "Midjourney", icon: "🌊" },
+                  { id: "flux-dev", name: "Flux Dev", icon: "⚙️" },
+                ].map((engine) => (
                   <div
-                    key={index}
-                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-8 py-6 flex items-center justify-center cursor-pointer flex-col min-h-[110px]"
+                    key={engine.id}
+                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-4 py-4 flex items-center justify-center cursor-pointer flex-col min-h-[90px]"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleEngineSelect(`engine-${index + 1}`);
+                      handleEngineSelect(engine.id);
                     }}
                   >
-                    <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
-                      Engine {index + 1}
+                    <div className="text-2xl mb-2">{engine.icon}</div>
+                    <span className="text-xs text-[#9e9e9e] text-center leading-tight">
+                      {engine.name}
                     </span>
                   </div>
                 ))}
@@ -1318,16 +1327,34 @@ const GearPicker = React.memo(
                     style={{ maxHeight: "450px" }}
                   >
                     <div className="grid grid-cols-2 gap-2">
-                      {filteredGears.map((gear) => (
+                      {[
+                        { id: "controlnet-pose", name: "Pose Detection", icon: "🤸", category: "pose" },
+                        { id: "controlnet-depth", name: "Depth Map", icon: "🏔️", category: "depth" },
+                        { id: "controlnet-canny", name: "Edge Detection", icon: "🔲", category: "edge" },
+                        { id: "controlnet-openpose", name: "OpenPose", icon: "👤", category: "pose" },
+                        { id: "controlnet-normal", name: "Normal Map", icon: "🌐", category: "normal" },
+                        { id: "controlnet-scribble", name: "Scribble", icon: "✏️", category: "sketch" },
+                        { id: "face-detector", name: "Face Detection", icon: "😊", category: "face" },
+                        { id: "hand-detector", name: "Hand Detection", icon: "✋", category: "hand" },
+                        { id: "segmentation", name: "Segmentation", icon: "🎯", category: "segment" },
+                        { id: "inpainting", name: "Inpainting", icon: "🖌️", category: "edit" },
+                        { id: "outpainting", name: "Outpainting", icon: "🖼️", category: "expand" },
+                        { id: "upscaler", name: "Upscaler", icon: "⬆️", category: "enhance" },
+                      ].filter(gear => 
+                        searchTerm === "" || 
+                        gear.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        gear.category.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).map((gear) => (
                         <div
                           key={gear.id}
-                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-8 py-6 flex items-center justify-center cursor-pointer flex-col min-h-[110px]"
+                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 flex items-center justify-center cursor-pointer flex-col min-h-[70px]"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleGearSelect(gear.id);
                           }}
                         >
-                          <span className="text-sm text-[#9e9e9e] whitespace-nowrap overflow-hidden text-ellipsis py-2">
+                          <div className="text-lg mb-1">{gear.icon}</div>
+                          <span className="text-xs text-[#9e9e9e] text-center leading-tight">
                             {gear.name}
                           </span>
                         </div>
@@ -1335,7 +1362,24 @@ const GearPicker = React.memo(
                     </div>
 
                     {/* No results message */}
-                    {filteredGears.length === 0 && (
+                    {[
+                      { id: "controlnet-pose", name: "Pose Detection", icon: "🤸", category: "pose" },
+                      { id: "controlnet-depth", name: "Depth Map", icon: "🏔️", category: "depth" },
+                      { id: "controlnet-canny", name: "Edge Detection", icon: "🔲", category: "edge" },
+                      { id: "controlnet-openpose", name: "OpenPose", icon: "👤", category: "pose" },
+                      { id: "controlnet-normal", name: "Normal Map", icon: "🌐", category: "normal" },
+                      { id: "controlnet-scribble", name: "Scribble", icon: "✏️", category: "sketch" },
+                      { id: "face-detector", name: "Face Detection", icon: "😊", category: "face" },
+                      { id: "hand-detector", name: "Hand Detection", icon: "✋", category: "hand" },
+                      { id: "segmentation", name: "Segmentation", icon: "🎯", category: "segment" },
+                      { id: "inpainting", name: "Inpainting", icon: "🖌️", category: "edit" },
+                      { id: "outpainting", name: "Outpainting", icon: "🖼️", category: "expand" },
+                      { id: "upscaler", name: "Upscaler", icon: "⬆️", category: "enhance" },
+                    ].filter(gear => 
+                      searchTerm === "" || 
+                      gear.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      gear.category.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).length === 0 && (
                       <div className="text-center text-[#9e9e9e] py-8">
                         No gears found matching "{searchTerm}"
                       </div>
@@ -5141,10 +5185,14 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow>
-                {/*Rive for image corners*/}
-                {/* <RiveInputImageCorners key={selectedNode?.id}/> */}
-              </PropertyRow>
+              {/* Render RiveInputImageCorners for image-node */}
+              {selectedNode.type === "image-node" && (
+                <PropertyRow>
+                  <div className="w-[70px] h-[70px]">
+                    <RiveInputImageCorners key={selectedNode?.id} />
+                  </div>
+                </PropertyRow>
+              )}
 
               <PropertyRow label="Corners">
                 <div className="w-full h-full">
@@ -5410,6 +5458,29 @@ export const RightSidebar = () => {
                     suffix="%"
                   />
                 </PropertyRow>
+              </PropertySection>
+            )}
+
+            {/* Mask Image Display - Show for inpainting and outpainting nodes */}
+            {(hasInpaintingConnection || hasOutpaintingConnection) && selectedNode.data?.maskImage && (
+              <PropertySection title="Mask Image">
+                <div className="flex justify-center">
+                  <div className="w-[200px] h-[120px] bg-[#151515] rounded-lg overflow-hidden border border-[#1d1d1d]">
+                    <img
+                      src={selectedNode.data.maskImage}
+                      alt="Mask"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs text-[#9e9e9e]">Invalid mask image</div>';
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               </PropertySection>
             )}
 

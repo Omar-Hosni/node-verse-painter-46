@@ -662,7 +662,7 @@ export class RunwareService {
         includeCost: true,
         outputType: ["dataURI", "URL"],
         positivePrompt: params.positivePrompt,
-        referenceImages: params.referenceImages,
+        referenceImage: params.referenceImage,
         outputQuality: 85,
         advancedFeatures: {
           guidanceEndStepPercentage: 75
