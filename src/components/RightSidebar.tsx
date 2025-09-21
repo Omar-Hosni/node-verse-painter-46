@@ -1365,11 +1365,13 @@ const GearPicker = React.memo(
                         >
                           {/* Gear preview image */}
                           {gear.image_url && (
-                            <div className="w-full h-12 mb-1 rounded-lg overflow-hidden bg-[#1a1a1a]">
+                            <div className="w-full h-[120px] mb-1 rounded-lg overflow-hidden bg-[#1a1a1a]">
                               <img
                                 src={gear.image_url}
                                 alt={gear.label}
                                 className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                crossOrigin="anonymous"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).style.display = 'none';
                                 }}
