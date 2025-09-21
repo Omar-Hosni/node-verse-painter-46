@@ -63,10 +63,10 @@ export const PillIcon = React.memo(() => (
 const baseInputClasses = "w-full h-full bg-[#1a1a1a] rounded-full px-3 py-1.5 text-sm text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 // Base property row component - memoized to prevent re-renders
-export const PropertyRow = React.memo(({ label, children }: { label: string; children: React.ReactNode }) => (
+export const PropertyRow = React.memo(({ label, children, contentClassName }: { label: string; children: React.ReactNode; contentClassName?: string }) => (
     <div className="flex items-center mb-2.5">
         <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">{label}</label>
-        <div className="flex-1 flex gap-1.5 h-[30px]">
+        <div className={`flex-1 flex gap-1.5 ${contentClassName ? contentClassName : 'h-[30px]'}`}>
             {children}
         </div>
     </div>

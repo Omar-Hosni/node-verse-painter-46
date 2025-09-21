@@ -111,19 +111,12 @@ const RiveInputImageCorners: React.FC = () => {
   return (
     <div className="text-white">
       {/* Rive preview frame (matches your other inputs) */}
-      <div className="flex items-center">
         <div
-          className="flex-1 flex gap-1.5 justify-center items-center"
-          style={{ minHeight: 235, height: 235 }}
+          className="w-[70px] h-[70px] overflow-hidden relative"
+          style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
         >
-          <div
-            className="w-[70px] h-[70px] overflow-hidden relative"
-            style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
-          >
-            <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
-          </div>
+          <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
         </div>
-      </div>
 
       {/* (Optional) Local selector — you can keep using your existing
           PropertyRow + CustomSelect outside this component. This is only
