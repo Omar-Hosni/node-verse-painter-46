@@ -3348,6 +3348,13 @@ export const RightSidebar = () => {
           <RatioSelector />
         </PropertyRow>
 
+        {/* RiveInputEngineRatio for engine nodes */}
+        <div className="-translate-y-[30px] mb-40">
+          <PropertyRow label="">
+            <RiveInputEngineRatio />
+          </PropertyRow>
+        </div>
+
         {/* Size */}
         <PropertyRow label="Size">
           <PositionInput
@@ -3381,13 +3388,6 @@ export const RightSidebar = () => {
             label="H"
           />
         </PropertyRow>
-
-        {/* RiveInputEngineRatio for engine nodes */}
-        <div className="mt-2.5 mb-60 -translate-x-[90px]">
-          <PropertyRow label="">
-            <RiveInputEngineRatio />
-          </PropertyRow>
-        </div>
       </PropertySection>
     );
   };

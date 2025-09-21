@@ -206,7 +206,7 @@ const RiveInputEngineRation: React.FC = () => {
       <div className="flex items-center">
         <div className="flex-1 flex gap-1.5 justify-center items-center" style={{ minHeight: 235, height: 235 }}>
           <div
-            className="w-[235px] h-[235px] overflow-hidden relative"
+            className="w-[147px] h-[147px] overflow-hidden relative"
             style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
           >
             <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
