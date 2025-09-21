@@ -1,44 +1,39 @@
 // RiveInputEngineRation.tsx
 // @ts-nocheck
-import React, { useEffect, useMemo } from "react";
-import { useRive, useViewModelInstanceBoolean } from "@rive-app/react-webgl2";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
+import { useRive, useStateMachineInput } from "@rive-app/react-webgl2";
 import { useCanvasStore } from "@/store/useCanvasStore";
 
 // ---- Config ----
 const RIVE_PATH = "/rive/engineratio.riv";
-const ARTBOARD = "Artboard";            // change if your artboard name differs
-const STATE_MACHINE = "State Machine 1"; // change if needed
+const ARTBOARD = "ratio";                 // change if your artboard name differs
+const STATE_MACHINE = "State Machine 1";  // change if needed
 
 const ratioOptions = ["1:1", "2:3", "3:2", "9:16", "16:9"] as const;
 type Ratio = (typeof ratioOptions)[number];
 
-// Default sizes (feel free to tweak to your engine’s preferred multiples)
+// Default sizes (tweak to your engine’s preferred multiples)
 const ratioSizeMap: Record<Ratio, { width: number; height: number }> = {
-  "1:1":  { width: 512, height: 512 },
-  "2:3":  { width: 768, height: 1152 },
-  "3:2":  { width: 1152, height: 768 },
-  "9:16": { width: 576, height: 1024 },
-  "16:9": { width: 1024, height: 576 },
+  "1:1":  { width: 512,  height: 512  },
+  "2:3":  { width: 768,  height: 1152 },
+  "3:2":  { width: 1152, height: 768  },
+  "9:16": { width: 576,  height: 1024 },
+  "16:9": { width: 1024, height: 576  },
 };
 
 // Simple visual tokens that mimic your five ratio icons
 const RatioSwatch = ({ ratio, active }: { ratio: Ratio; active: boolean }) => {
   const boxStyles =
-    ratio === "1:1"
-      ? "w-4 h-4"
-      : ratio === "2:3"
-      ? "w-3 h-4"
-      : ratio === "3:2"
-      ? "w-4 h-3"
-      : ratio === "9:16"
-      ? "w-3 h-5"
-      : /* 16:9 */   "w-5 h-3";
+    ratio === "1:1" ? "w-4 h-4"
+    : ratio === "2:3" ? "w-3 h-4"
+    : ratio === "3:2" ? "w-4 h-3"
+    : ratio === "9:16" ? "w-3 h-5"
+    : /* 16:9 */        "w-5 h-3";
 
   return (
     <span
       className={[
-        "inline-flex rounded-sm",
-        "border",
+        "inline-flex rounded-sm border",
         active ? "bg-white border-white" : "bg-[#2a2a2a] border-[#444]",
         boxStyles,
       ].join(" ")}
@@ -46,37 +41,49 @@ const RatioSwatch = ({ ratio, active }: { ratio: Ratio; active: boolean }) => {
   );
 };
 
-// Rive booleans helper wrapper
-const useRatioFlags = (vm: any) => {
-  const oneOne       = useViewModelInstanceBoolean("1:1", vm);
-  const twoThree     = useViewModelInstanceBoolean("2:3", vm);
-  const threeTwo     = useViewModelInstanceBoolean("3:2", vm);
-  const nineSixteen  = useViewModelInstanceBoolean("9:16", vm);
-  const sixteenNine  = useViewModelInstanceBoolean("16:9", vm);
+// ---- Inputs helper (no ViewModel) ----
+const useRatioInputs = (rive: any) => {
+  // Map to boolean inputs on your state machine
+  const oneOne      = useStateMachineInput(rive, STATE_MACHINE, "1:1");
+  const twoThree    = useStateMachineInput(rive, STATE_MACHINE, "2:3");
+  const threeTwo    = useStateMachineInput(rive, STATE_MACHINE, "3:2");
+  const nineSixteen = useStateMachineInput(rive, STATE_MACHINE, "9:16");
+  const sixteenNine = useStateMachineInput(rive, STATE_MACHINE, "16:9");
+
+  const ready =
+    oneOne && twoThree && threeTwo && nineSixteen && sixteenNine;
 
   const getCurrent = (): Ratio | null => {
-    if (oneOne.value) return "1:1";
-    if (twoThree.value) return "2:3";
-    if (threeTwo.value) return "3:2";
-    if (nineSixteen.value) return "9:16";
-    if (sixteenNine.value) return "16:9";
+    if (oneOne?.value) return "1:1";
+    if (twoThree?.value) return "2:3";
+    if (threeTwo?.value) return "3:2";
+    if (nineSixteen?.value) return "9:16";
+    if (sixteenNine?.value) return "16:9";
     return null;
   };
 
+  // Two-phase write: clear now, set next frame
   const setOnly = (ratio: Ratio) => {
-    // ensure exclusivity
-    oneOne.setValue(ratio === "1:1");
-    twoThree.setValue(ratio === "2:3");
-    threeTwo.setValue(ratio === "3:2");
-    nineSixteen.setValue(ratio === "9:16");
-    sixteenNine.setValue(ratio === "16:9");
+    if (!ready) return;
+
+    // Phase 1: clear all to guarantee an observed change
+    oneOne.value      = false;
+    twoThree.value    = false;
+    threeTwo.value    = false;
+    nineSixteen.value = false;
+    sixteenNine.value = false;
+
+    // Phase 2: set desired one on next frame
+    requestAnimationFrame(() => {
+      oneOne.value      = ratio === "1:1";
+      twoThree.value    = ratio === "2:3";
+      threeTwo.value    = ratio === "3:2";
+      nineSixteen.value = ratio === "9:16";
+      sixteenNine.value = ratio === "16:9";
+    });
   };
 
-  return {
-    flags: { oneOne, twoThree, threeTwo, nineSixteen, sixteenNine },
-    getCurrent,
-    setOnly,
-  };
+  return { inputs: { oneOne, twoThree, threeTwo, nineSixteen, sixteenNine }, ready, getCurrent, setOnly };
 };
 
 const RatioSelector: React.FC<{
@@ -120,47 +127,50 @@ const RiveInputEngineRation: React.FC = () => {
     src: RIVE_PATH,
     autoplay: true,
     artboard: ARTBOARD,
-    autoBind: true,
     stateMachines: STATE_MACHINE,
+    autoBind: true,
   });
 
-  // Bind the five boolean toggles
-  const ratioVM = useRatioFlags(rive?.viewModelInstance);
+  // Use state machine inputs (no ViewModel)
+  const ratioIO = useRatioInputs(rive);
 
-  // --- Sync: Rive -> Store ---
+  // Store -> Rive: initialize & keep in sync (before paint)
+  useLayoutEffect(() => {
+    if (!rive || !ratioIO.ready) return;
+    ratioIO.setOnly(ratio);
+  }, [rive, ratio, ratioIO.ready]);
+
+  // Rive -> Store: reflect changes coming from Rive into the sidebar
   useEffect(() => {
-    if (!rive?.viewModelInstance) return;
-    const current = ratioVM.getCurrent();
+    if (!rive || !ratioIO.ready) return;
+    const current = ratioIO.getCurrent();
     if (!current) return;
 
-    // If Rive selection differs from store, update store (and size if absent)
     if (current !== ratio || !size?.width || !size?.height) {
       const nextDefault = ratioSizeMap[current];
       updateNodeData(selectedNode.id, {
         right_sidebar: {
           ...right_sidebar,
           ratio: current,
-          size: { width: size?.width ?? nextDefault.width, height: size?.height ?? nextDefault.height },
+          size: {
+            width: size?.width ?? nextDefault.width,
+            height: size?.height ?? nextDefault.height,
+          },
         },
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    // listen to boolean values
-    ratioVM.flags.oneOne.value,
-    ratioVM.flags.twoThree.value,
-    ratioVM.flags.threeTwo.value,
-    ratioVM.flags.nineSixteen.value,
-    ratioVM.flags.sixteenNine.value,
+    rive,
+    ratioIO.ready,
+    ratioIO.inputs.oneOne?.value,
+    ratioIO.inputs.twoThree?.value,
+    ratioIO.inputs.threeTwo?.value,
+    ratioIO.inputs.nineSixteen?.value,
+    ratioIO.inputs.sixteenNine?.value,
   ]);
 
-  // --- Sync: Store -> Rive ---
-  useEffect(() => {
-    if (!rive?.viewModelInstance) return;
-    ratioVM.setOnly(ratio);
-  }, [rive, ratio]); // when ratio changes in store, reflect in Rive
-
-  // Ensure we have an initial size for 1:1 on first mount
+  // Ensure we have an initial size once
   useEffect(() => {
     if (!size?.width || !size?.height) {
       updateNodeData(selectedNode.id, {
@@ -174,23 +184,20 @@ const RiveInputEngineRation: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle user clicking a ratio button
+  // Handle user clicking a ratio button (sidebar -> Rive immediately)
   const handleSelectRatio = (next: Ratio) => {
-    // Update store
     const nextDefault = ratioSizeMap[next];
     updateNodeData(selectedNode.id, {
       right_sidebar: {
         ...right_sidebar,
         ratio: next,
         size: {
-          // preserve explicit size if already set; otherwise apply sensible defaults
           width: right_sidebar.size?.width ?? nextDefault.width,
           height: right_sidebar.size?.height ?? nextDefault.height,
         },
       },
     });
-    // Update Rive flags
-    if (rive?.viewModelInstance) ratioVM.setOnly(next);
+    ratioIO.setOnly(next);
   };
 
   return (

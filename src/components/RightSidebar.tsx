@@ -3234,23 +3234,34 @@ export const RightSidebar = () => {
     const height = size?.height ?? defaultSize.height;
 
     // Custom ratio selector component that preserves the 5 icons
+    // assume you have: type Ratio = "1:1" | "2:3" | "3:2" | "9:16" | "16:9"
+    // and a ratioSizeMap: Record<Ratio, { width: number; height: number }>
+
     const RatioSelector = React.memo(() => (
       <div className="flex bg-[#1a1a1a] rounded-full w-full h-full p-0.5">
         {ratioOptions.map((r) => (
           <button
             key={r}
-            onClick={() =>
+            onClick={() => {
+              if (ratio === r) return; // no-op if same ratio
+
+              const next = r as Ratio;
+              const nextDefault = ratioSizeMap[next];
+
               updateNodeData(selectedNode.id, {
                 right_sidebar: {
                   ...right_sidebar,
-                  ratio: r,
+                  ratio: next,
+                  // IMPORTANT: also reset size to the new ratio’s defaults
+                  size: {
+                    width: nextDefault.width,
+                    height: nextDefault.height,
+                  },
                 },
-              })
-            }
+              });
+            }}
             className={`flex-1 h-full flex items-center justify-center rounded-full transition-all ${
-              ratio === r
-                ? "bg-[#333333] text-white"
-                : "text-[#9e9e9e] hover:text-white"
+              ratio === r ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"
             }`}
           >
             {ratioShapeMap[r]}
@@ -3258,6 +3269,7 @@ export const RightSidebar = () => {
         ))}
       </div>
     ));
+
 
     return (
       <PropertySection title="Engine">
@@ -3371,8 +3383,10 @@ export const RightSidebar = () => {
         </PropertyRow>
 
         {/* RiveInputEngineRatio for engine nodes */}
-        <div className="mt-2.5">
-          <RiveInputEngineRatio />
+        <div className="mt-2.5 mb-60 -translate-x-[90px]">
+          <PropertyRow label="">
+            <RiveInputEngineRatio />
+          </PropertyRow>
         </div>
       </PropertySection>
     );
