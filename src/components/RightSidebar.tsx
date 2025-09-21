@@ -5066,7 +5066,7 @@ export const RightSidebar = () => {
                     min={0}
                   />
                   {/* Render RiveInputImageCorners for image-node */}
-                  <div className="w-[70px] h-[70px] flex-shrink-0 self-start relative z-10">
+                  <div className="w-[70px] h-[70px] flex-shrink-0 self-start">
                     <RiveInputImageCorners key={selectedNode?.id} />
                   </div>
                 </div>
