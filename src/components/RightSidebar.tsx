@@ -5007,7 +5007,7 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow label="Corners" contentClassName="h-[70px] items-start">
+              <PropertyRow label="Corners" rowClassName="min-h-[70px]" contentClassName="h-[70px] items-start">
                 <div className="flex items-start gap-1.5 w-full h-full">
                   <input
                     type="number"
