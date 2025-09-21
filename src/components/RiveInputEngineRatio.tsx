@@ -206,16 +206,6 @@ const RiveInputEngineRation: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Ratio selector */}
-      <div className="mt-3">
-        <RatioSelector ratio={ratio} onSelect={handleSelectRatio} />
-      </div>
-
-      {/* Size readout (optional UI; remove if you don’t want it visible) */}
-      <div className="mt-2 text-xs text-[#9e9e9e]">
-        Size: <span className="text-white">{width} × {height}</span>
-      </div>
     </div>
   );
 };
