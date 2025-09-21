@@ -5,7 +5,7 @@ import { useRive, useViewModelInstanceBoolean } from "@rive-app/react-webgl2";
 import { useCanvasStore } from "@/store/useCanvasStore";
 
 // ---- Config ----
-const RIVE_PATH = "/rive/engineration.riv";
+const RIVE_PATH = "/rive/engineratio.riv";
 const ARTBOARD = "Artboard";            // change if your artboard name differs
 const STATE_MACHINE = "State Machine 1"; // change if needed
 
