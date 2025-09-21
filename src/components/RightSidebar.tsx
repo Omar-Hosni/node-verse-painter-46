@@ -5008,7 +5008,7 @@ export const RightSidebar = () => {
               </PropertyRow>
 
               <PropertyRow label="Corners">
-                <div className="w-full h-full mb-30">
+                <div className="flex items-center gap-2 w-full">
                   <input
                     type="number"
                     value={(() => {
@@ -5065,65 +5065,10 @@ export const RightSidebar = () => {
                     className={baseInputClasses}
                     min={0}
                   />
-                </div>
-                <div className="w-full h-full flex items-center">
                   {/* Render RiveInputImageCorners for image-node */}
-                  <div className="w-[70px] h-[70px] mb-[125px]">
+                  <div className="w-[70px] h-[70px] flex-shrink-0">
                     <RiveInputImageCorners key={selectedNode?.id} />
                   </div>
-                  {/* <CustomSlider
-                    value={(() => {
-                      const activeCorner =
-                        selectedNode.data?.right_sidebar?.activeCorner ?? "all";
-                      const corners =
-                        selectedNode.data?.right_sidebar?.corners || {};
-
-                      if (activeCorner === "all") {
-                        return (
-                          selectedNode.data?.right_sidebar?.cornerRadius ?? 8
-                        );
-                      } else {
-                        return corners[activeCorner] ?? 8;
-                      }
-                    })()}
-                    min={0}
-                    max={250}
-                    step={1}
-                    onChange={(value) => {
-                      const activeCorner =
-                        selectedNode.data?.right_sidebar?.activeCorner ?? "all";
-
-                      if (activeCorner === "all") {
-                        // Update all corners and the main cornerRadius
-                        updateNodeData(selectedNode.id, {
-                          right_sidebar: {
-                            ...selectedNode.data?.right_sidebar,
-                            cornerRadius: value,
-                            corners: {
-                              topLeft: value,
-                              topRight: value,
-                              bottomLeft: value,
-                              bottomRight: value,
-                            },
-                          },
-                        });
-                      } else {
-                        // Update specific corner
-                        const currentCorners =
-                          selectedNode.data?.right_sidebar?.corners || {};
-                        updateNodeData(selectedNode.id, {
-                          right_sidebar: {
-                            ...selectedNode.data?.right_sidebar,
-                            corners: {
-                              ...currentCorners,
-                              [activeCorner]: value,
-                            },
-                          },
-                        });
-                      }
-                    }}
-                    className="w-full"
-                  /> */}
                 </div>
               </PropertyRow>
               <PropertyRow label="Blend mode">
