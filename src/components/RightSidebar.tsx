@@ -1115,7 +1115,7 @@ const EnginePicker = React.memo(
                 {engineOptions.map((engine) => (
                   <div
                     key={engine.type}
-                    className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[90px] group"
+                    className="relative cursor-pointer group"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEngineSelect(engine.type);
@@ -1123,21 +1123,19 @@ const EnginePicker = React.memo(
                   >
                     {/* Engine preview image */}
                     {engine.image_url && (
-                      <div className="w-full h-16 mb-2 rounded-lg overflow-hidden bg-[#1a1a1a]">
-                        <img
-                          src={engine.image_url}
-                          alt={engine.label}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </div>
+                      <img
+                        src={engine.image_url}
+                        alt={engine.label}
+                        className="w-full h-16 object-cover rounded-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
                     )}
                     
                     {/* Engine icon fallback */}
                     {!engine.image_url && (
-                      <div className="w-full h-16 mb-2 flex items-center justify-center">
+                      <div className="w-full h-16 flex items-center justify-center bg-[#1a1a1a] rounded-lg">
                         <SvgIcon 
                           name={engine.icon} 
                           className="w-8 h-8 text-[#9e9e9e]" 
@@ -1146,7 +1144,7 @@ const EnginePicker = React.memo(
                     )}
 
                     {/* Hover shadow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
                   </div>
                 ))}
               </div>
