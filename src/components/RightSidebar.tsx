@@ -5007,8 +5007,8 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow label="Corners" contentClassName="h-[70px] items-center">
-                <div className="flex items-center gap-2 w-full h-full">
+              <PropertyRow label="Corners" contentClassName="h-[70px] items-start">
+                <div className="flex items-start gap-1.5 w-full h-full">
                   <input
                     type="number"
                     value={(() => {
@@ -5062,11 +5062,11 @@ export const RightSidebar = () => {
                         }
                       }
                     }}
-                    className={baseInputClasses}
+                    className={`${baseInputClasses} h-[30px]`}
                     min={0}
                   />
                   {/* Render RiveInputImageCorners for image-node */}
-                  <div className="w-[70px] h-[70px] flex-shrink-0">
+                  <div className="w-[70px] h-[70px] flex-shrink-0 self-start">
                     <RiveInputImageCorners key={selectedNode?.id} />
                   </div>
                 </div>
