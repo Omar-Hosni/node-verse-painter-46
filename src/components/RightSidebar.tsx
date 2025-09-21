@@ -2007,12 +2007,12 @@ export { ColorPicker };
 
 // Property row - label + input container
 const PropertyRow = React.memo(
-  ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-center">
+  ({ label, children, contentClassName, rowClassName }: { label: string; children: React.ReactNode; contentClassName?: string; rowClassName?: string }) => (
+    <div className={`flex ${rowClassName ?? 'items-center'}`}>
       <label className="text-sm text-[#9e9e9e] w-[85px] flex-shrink-0">
         {label}
       </label>
-      <div className="flex-1 flex gap-1.5 h-[30px]">{children}</div>
+      <div className={`flex-1 flex gap-1.5 ${contentClassName ? contentClassName : 'h-[30px]'}`}>{children}</div>
     </div>
   )
 );
@@ -5007,8 +5007,8 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow label="Corners" rowClassName="h-[90px] items-start" contentClassName="h-[90px] items-start">
-                <div className="flex items-start gap-1.5 w-full h-full">
+              <PropertyRow label="Corners" rowClassName="corners-row items-start" contentClassName="corners-row-content items-start min-h-[72px] h-auto">
+                <div className="flex items-start gap-1.5 w-full h-auto min-h-[72px]">
                   <input
                     type="number"
                     value={(() => {

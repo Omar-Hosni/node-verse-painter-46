@@ -401,3 +401,14 @@ body {
   display: none;
   /* WebKit */
 }
+
+/* Specialized layout fix for the Corners property row so it fully contains the Rive preview */
+.corners-row {
+  align-items: flex-start !important;
+}
+.corners-row-content {
+  height: auto !important;
+  min-height: 72px; /* matches Rive preview size */
+  align-items: flex-start !important;
+  overflow: visible; /* ensure any internal visuals are not clipped */
+}
