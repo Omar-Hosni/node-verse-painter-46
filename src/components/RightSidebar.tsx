@@ -1320,7 +1320,7 @@ const GearPicker = React.memo(
               {/* Content Box - List View */}
               <div className="flex-shrink-0" style={{ width: "231px" }}>
                 <div
-                  className="w-full h-32 m-0 px-0"
+                  className="w-full m-0 px-0"
                   style={{
                     paddingTop: "0px",
                     paddingBottom: "0px",
@@ -1357,7 +1357,7 @@ const GearPicker = React.memo(
                       ).map((gear) => (
                         <div
                           key={gear.type}
-                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[70px] group"
+                          className="relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl px-3 py-3 cursor-pointer flex-col min-h-[140px] group"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleGearSelect(gear.type);
