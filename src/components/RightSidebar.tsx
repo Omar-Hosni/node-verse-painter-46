@@ -1320,7 +1320,7 @@ const GearPicker = React.memo(
               {/* Content Box - List View */}
               <div className="flex-shrink-0" style={{ width: "231px" }}>
                 <div
-                  className="w-full m-0 px-0"
+                  className="w-full h-32 m-0 px-0"
                   style={{
                     paddingTop: "0px",
                     paddingBottom: "0px",
