@@ -3349,11 +3349,7 @@ export const RightSidebar = () => {
         </PropertyRow>
 
         {/* RiveInputEngineRatio for engine nodes */}
-        <div className="-translate-y-[30px] mb-40">
-          <PropertyRow label="">
-            <RiveInputEngineRatio />
-          </PropertyRow>
-        </div>
+        <RiveInputEngineRatio />
 
         {/* Size */}
         <PropertyRow label="Size">
@@ -5011,17 +5007,8 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              {/* Render RiveInputImageCorners for image-node */}
-              {selectedNode.type === "image-node" && (
-                <PropertyRow>
-                  <div className="w-[70px] h-[70px]">
-                    <RiveInputImageCorners key={selectedNode?.id} />
-                  </div>
-                </PropertyRow>
-              )}
-
               <PropertyRow label="Corners">
-                <div className="w-full h-full">
+                <div className="w-full h-full mb-30">
                   <input
                     type="number"
                     value={(() => {
@@ -5080,7 +5067,11 @@ export const RightSidebar = () => {
                   />
                 </div>
                 <div className="w-full h-full flex items-center">
-                  <CustomSlider
+                  {/* Render RiveInputImageCorners for image-node */}
+                  <div className="w-[70px] h-[70px] mb-[125px]">
+                    <RiveInputImageCorners key={selectedNode?.id} />
+                  </div>
+                  {/* <CustomSlider
                     value={(() => {
                       const activeCorner =
                         selectedNode.data?.right_sidebar?.activeCorner ?? "all";
@@ -5132,7 +5123,7 @@ export const RightSidebar = () => {
                       }
                     }}
                     className="w-full"
-                  />
+                  /> */}
                 </div>
               </PropertyRow>
               <PropertyRow label="Blend mode">

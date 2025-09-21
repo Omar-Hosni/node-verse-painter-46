@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { useRive, useStateMachineInput } from "@rive-app/react-webgl2";
 import { useCanvasStore } from "@/store/useCanvasStore";
+import { PropertyRow } from "./PropertyComponents";
 
 // ---- Config ----
 const RIVE_PATH = "/rive/engineratio.riv";
@@ -201,19 +202,23 @@ const RiveInputEngineRation: React.FC = () => {
   };
 
   return (
-    <div className="text-white">
-      {/* Rive preview */}
-      <div className="flex items-center">
-        <div className="flex-1 flex gap-1.5 justify-center items-center" style={{ minHeight: 235, height: 235 }}>
-          <div
-            className="w-[147px] h-[147px] overflow-hidden relative"
-            style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
-          >
-            <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
+    <div className="mb-[108.5px]">
+      <PropertyRow>
+        <div className="text-white">
+          {/* Rive preview */}
+          <div className="flex items-center">
+            <div className="flex-1 flex gap-1.5 justify-center items-center" >
+              <div
+                className="w-[147px] h-[147px] overflow-hidden relative"
+                style={{ borderRadius: 19, border: "1.5px solid #1d1d1d" }}
+              >
+                <RiveComponent className="w-full h-full block" style={{ borderRadius: 16 }} />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+    </PropertyRow>
+  </div>
   );
 };
 
