@@ -611,7 +611,7 @@ export class RunwareService {
         outputType: ["dataURI", "URL"],
         positivePrompt: params.positivePrompt,
         referenceImages: params.referenceImages,
-        outputQuality: 85,
+        outputQuality: 95,
         advancedFeatures: {
           guidanceEndStepPercentage: 75
         }
@@ -662,8 +662,8 @@ export class RunwareService {
         includeCost: true,
         outputType: ["dataURI", "URL"],
         positivePrompt: params.positivePrompt,
-        referenceImage: params.referenceImage,
-        outputQuality: 85,
+        referenceImages: [...params.referenceImage],
+        outputQuality: 95,
         advancedFeatures: {
           guidanceEndStepPercentage: 75
         }

@@ -1151,16 +1151,14 @@ export class WorkflowExecutor {
           break;
 
         case node.type.includes('input-text'):
-          if (
-            !node.data.right_sidebar.prompt ||
-            typeof node.data.right_sidebar.prompt !== "string" ||
-            node.data?.right_sidebar?.prompt.trim().length === 0
-          ) {
-            errors.push(`Text input node ${node.id} is missing prompt text`);
-          } else if (node.data?.right_sidebar?.prompt.length > 1000) {
-            warnings.push(
-              `Text input node ${node.id} has very long prompt (${node.data?.right_sidebar?.prompt.length} chars) which may affect performance`
-            );
+        case node.type.includes('text'):
+          const prompt = node.data?.right_sidebar?.prompt || node.data?.right_sidebar?.text
+          if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+            warnings.push(`Text input node ${node.id} is missing prompt text`);
+          }
+
+          if (prompt.length > 1000) {
+            warnings.push(`Text input node ${node.id} has very long prompt (${node.data?.right_sidebar?.prompt.length} chars) which may affect performance`);
           }
           break;
 
@@ -2220,34 +2218,156 @@ export class WorkflowExecutor {
     );
   }
 
-  // Simplified Re-scene processing
+    // inside WorkflowExecutor class
+  private async combineTwoImagesToDataURL(url1: string, url2: string): Promise<string> {
+    // load images
+    const load = (src: string) =>
+      new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+
+    const img1 = await load(url1);
+    const img2 = await load(url2);
+
+    const isPortrait1 = img1.height >= img1.width;
+    const isPortrait2 = img2.height >= img2.width;
+
+    let combinedWidth = 0, combinedHeight = 0;
+    let img1X = 0, img1Y = 0, img1W = img1.width, img1H = img1.height;
+    let img2X = 0, img2Y = 0, img2W = img2.width, img2H = img2.height;
+
+    if (isPortrait1 && isPortrait2) {
+      const maxH = Math.max(img1.height, img2.height);
+      const s1 = maxH / img1.height;
+      const s2 = maxH / img2.height;
+      img1W = img1.width * s1; img1H = maxH;
+      img2W = img2.width * s2; img2H = maxH;
+      combinedWidth = img1W + img2W; combinedHeight = maxH;
+      img1X = 0; img1Y = 0; img2X = img1W; img2Y = 0;
+    } else if (!isPortrait1 && !isPortrait2) {
+      const maxW = Math.max(img1.width, img2.width);
+      const s1 = maxW / img1.width;
+      const s2 = maxW / img2.width;
+      img1W = maxW; img1H = img1.height * s1;
+      img2W = maxW; img2H = img2.height * s2;
+      combinedWidth = maxW; combinedHeight = img1H + img2H;
+      img1X = 0; img1Y = 0; img2X = 0; img2Y = img1H;
+    } else {
+      const targetH = Math.min(img1.height, img2.height);
+      const s1 = targetH / img1.height;
+      const s2 = targetH / img2.height;
+      img1W = img1.width * s1; img1H = targetH;
+      img2W = img2.width * s2; img2H = targetH;
+      combinedWidth = img1W + img2W; combinedHeight = targetH;
+      img1X = 0; img1Y = 0; img2X = img1W; img2Y = 0;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(combinedWidth);
+    canvas.height = Math.round(combinedHeight);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img1, img1X, img1Y, img1W, img1H);
+    ctx.drawImage(img2, img2X, img2Y, img2W, img2H);
+    return canvas.toDataURL("image/png");
+  }
+
+  private async dataUrlToFile(dataUrl: string, filename = "combined-image.png"): Promise<File> {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: "image/png" });
+  }
+
   private async processReScene(
     node: Node,
     inputs: Record<string, string>
   ): Promise<string | null> {
-    const inputImages = Object.values(inputs).filter(Boolean);
-    if (inputImages.length < 2) return null;
+    // collect the two image inputs and preserve tag ordering if present (object -> scene)
+    const { nodes, edges } = useWorkflowStore.getState();
+    const incoming = edges.filter((e) => e.target === node.id);
 
-    console.log(
-      `🏠 Re-scene node ${node.id} with ${inputImages.length} images`
-    );
+    console.log("incomings are: ", incoming)
 
-    // Use flux kontext for re-scene
-    const params = {
-      positivePrompt: "blend this image to that scene",
-      model: "bfl:3@1", // Flux Kontext
-      width: 1024,
-      height: 1024,
-      numberResults: 1,
-      outputFormat: "JPEG",
-      includeCost: true,
-      outputType: ["URL"],
-      referenceImages: inputImages,
-    };
+    // map upstream images + tags from edge.data.tag ('object' | 'scene') set in Canvas.tsx
+    const tagged: Record<"object" | "scene", string | null> = { object: null, scene: null };
+    for (const e of incoming) {
+      const src = nodes.find((n) => n.id === e.source);
+      if (!src) continue;
+      const url =
+        this.processedImages.get(src.id) ||
+        this.extractImageUrlFromNode(src) ||
+        (src.data as any)?.imageUrl ||
+        (src.data as any)?.generatedImage ||
+        (src.data as any)?.right_sidebar?.imageUrl;
+      const tag = (e as any)?.data?.tag;
+      if (url && (tag === "object" || tag === "scene")) tagged[tag] = url;
 
-    const result = await this.runwareService.generateImage(params);
+      console.log("IMAGE INCOMINGS URL IS: ", url)
+    }
+
+    // fallback to whatever arrived in inputs if tags are missing
+    const all = Object.values(inputs).filter(Boolean);
+    const objectUrl = tagged.object || all[0];
+    const sceneUrl  = tagged.scene  || all[1];
+
+    if (!objectUrl || !sceneUrl) return null;
+
+    // 1) combine into a single reference image
+    const dataUrl = await this.combineTwoImagesToDataURL(objectUrl, sceneUrl);
+    const file = await this.dataUrlToFile(dataUrl);
+
+    // 2) upload and get a runware URL
+    const uploaded = await this.runwareService.uploadImageForURL(file);
+
+    console.log("UPLOADED COMBINED IMAGE: ", uploaded)
+
+    // 3) Flux Kontext with the built-in composition prompt
+    const KONTEKST_PROMPT = `
+      OBJECT = image[0]          # reference image of the object (any category)
+      SCENE  = image[1]          # target scene/background (any environment)
+
+      TASK: Composite OBJECT naturally into SCENE as a real part of that environment.
+
+      Composition
+      - Anchor: {lower-third | center-right | custom}
+      - Position (normalized 0–1): x={0.62}, y={0.58}
+      - Scale: {0.25} of frame height (±5% tolerance)
+      - Orientation: yaw {15}°, pitch {0}°, roll {0}° (adjust to match scene lines/horizon)
+      - Depth: place OBJECT at the {foreground | midground | background}; allow partial occlusion if depth demands it.
+
+      Fidelity to OBJECT
+      - Preserve exact shape, proportions, materials, textures, and distinctive details (logos/labels if present).
+      - No redesign or stylization; keep true geometry and surface finish.
+
+      Scene Match
+      - Perspective: match SCENE camera FOV and horizon; align base to ground plane without floating.
+      - Lighting: estimate SCENE key light direction/intensity; apply consistent shading, ambient occlusion at contacts, and a believable cast shadow matching light angle/softness.
+      - Color/exposure: harmonize white balance, contrast, and noise/grain to SCENE.
+      - DoF: match focus; if SCENE is shallow DoF and OBJECT is off the focal plane, blur accordingly.
+      - Reflections/speculars: add subtle environment reflections appropriate to OBJECT material (glass/metal/water, etc.).
+
+      Integrity
+      - Keep SCENE from image[1] intact (do not replace sky/background layout).
+      - Add only what’s needed for realism (contact shadows, minor sand/dust/grass at contact if it exists in SCENE).
+      - Output a single photorealistic composite.
+
+      NEGATIVE (avoid)
+      - Floating/halo edges, wrong scale, warped geometry, duplicated objects, extra components, harsh cutouts,
+        mismatched shadows/reflections, oversharpening, watermarks, text overlays, heavy stylization.
+    `.trim();
+
+    const result = await this.runwareService.generateFluxKontext({
+      positivePrompt: KONTEKST_PROMPT,
+      referenceImages: [uploaded], // Flux Kontext expects array
+    }); // generateFluxKontext is already implemented in runwareService
     return result.imageURL;
   }
+
 
   // Simplified Re-light processing
   private async processReLight(
@@ -2259,9 +2379,9 @@ export class WorkflowExecutor {
 
     // Get seed image from rive light node
     const nd: any = node.data || {};
-    const seedImage = nd.imageUrl || nd.right_sidebar?.imageUrl;
+    const seedImage = nd.image || nd.imageUrl || nd.right_sidebar?.imageUrl;
 
-    console.log(`💡 Re-light node ${node.id}`);
+    console.log(`💡 Object Re-light node ${node.id}`);
 
     if (!seedImage) {
       // No seed image, use flux kontext with single image
@@ -2277,23 +2397,23 @@ export class WorkflowExecutor {
         referenceImages: [inputImage],
       };
 
-      const result = await this.runwareService.generateImage(params);
+      const result = await this.runwareService.generateQwenEdit(params);
       return result.imageURL;
     }
 
     // Use seed image for image-to-image
-    const params = {
-      positivePrompt: "apply that light to that image",
-      model: "civitai:139562@297320",
-      seedImage: seedImage,
-      height: 1024,
-      width: 1024,
-      strength: 0.7,
-      numberResults: 1,
-    };
+    // const params = {
+    //   positivePrompt: "apply that light to that image",
+    //   model: "civitai:139562@297320",
+    //   seedImage: seedImage,
+    //   height: 1024,
+    //   width: 1024,
+    //   strength: 0.7,
+    //   numberResults: 1,
+    // };
 
-    const result = await this.runwareService.generateImage(params);
-    return result.imageURL;
+    // const result = await this.runwareService.generateImage(params);
+    // return result.imageURL;
   }
 
   // Simplified Re-angle processing
@@ -2306,23 +2426,29 @@ export class WorkflowExecutor {
 
     const nd: any = node.data || {};
     const degrees = nd.degrees || 15;
-    const direction = nd.direction || "right";
+    const direction = Object.entries(x).find(([k, v]) => typeof v === 'boolean' && v)?.[0];
+    const prompt = `Obtain the ${direction}-side`;
 
     console.log(`📐 Re-angle node ${node.id}: ${degrees}° ${direction}`);
 
-    const params = {
-      positivePrompt: `obtain this angle from this degree: ${degrees}° ${direction}`,
-      model: "bfl:3@1", // Flux Kontext
-      width: 1024,
-      height: 1024,
-      numberResults: 1,
-      outputFormat: "JPEG",
-      includeCost: true,
-      outputType: ["URL"],
-      referenceImages: [inputImage],
-    };
+    // const params = {
+    //   positivePrompt: `obtain this angle from this degree: ${degrees}° ${direction}`,
+    //   model: "bfl:3@1", // Flux Kontext
+    //   width: 1024,
+    //   height: 1024,
+    //   numberResults: 1,
+    //   outputFormat: "JPEG",
+    //   includeCost: true,
+    //   outputType: ["URL"],
+    //   referenceImages: [inputImage],
+    // };
 
-    const result = await this.runwareService.generateImage(params);
+    // const result = await this.runwareService.generateImage(params);
+    const params ={
+      positivePrompt: prompt,
+      referenceImages: inputImage
+    }
+    const result = await this.runwareService.generateQwenEdit(params)
     return result.imageURL;
   }
 
@@ -2609,30 +2735,41 @@ export class WorkflowExecutor {
       return result.imageURL; // EARLY RETURN
     }
 
-    // --- PROMPTS (from Text Prompt node data, or engine data) ---
-    const textNode2 = upstream.find((n) => {
-      const nodeType = n.type || "";
-      const dataType = (n.data as any)?.type || "";
-      return (
-        nodeType.toLowerCase().includes("text") ||
-        dataType.toLowerCase().includes("text")
-      );
-    });
+  // --- PROMPTS (from Text Prompt node data, or engine data) ---
+  const textNode2 = upstream.find((n) => {
+    const nodeType = n.type || "";
+    const dataType = (n.data as any)?.type || "";
+    return nodeType.toLowerCase().includes("text") || dataType.toLowerCase().includes("text");
+  });
 
-    const tData: any = textNode2?.data || {};
-    const pos =
-      tData.positive ??
-      tData.right_sidebar.prompt ??
-      tData.text ??
-      (node.data as any)?.positivePrompt ??
-      (node.data as any)?.prompt ??
-      "Generate an image, please";
-    const neg =
-      tData.negative ?? (node.data as any)?.negativePrompt ?? undefined;
+  const tData: any = textNode2?.data || {};
+  let pos =
+    tData.positive ??
+    tData?.right_sidebar?.prompt ??   // <-- safe optional chaining
+    tData.text ??
+    (node.data as any)?.positivePrompt ??
+    (node.data as any)?.prompt ??
+    "__BLANK__";
 
-    console.log(
-      `📝 Extracted prompts - Positive: "${pos}", Negative: "${neg || "none"}"`
-    );
+  const neg =
+    tData.negative ?? (node.data as any)?.negativePrompt ?? undefined;
+
+  // If no prompt provided, use a built-in depending on upstream re-render nodes
+  const hasReimagine = upstream.some(n => ((n.data as any)?.type || "").includes("image-to-image-reimagine"));
+  const hasRemix    = upstream.some(n => ((n.data as any)?.type || "").includes("image-to-image-remix"));
+
+  if (!pos || pos === "__BLANK__" || (typeof pos === "string" && pos.trim() === "")) {
+    if (hasRemix) {
+      pos = "Blend the reference images coherently with faithful structure and style.";
+    } else if (hasReimagine) {
+      pos = "Re-imagine this image with improved detail and fidelity.";
+    } else {
+      pos = "Generate a high-quality, photorealistic image.";
+    }
+  }
+
+  console.log(`📝 Extracted prompts - Positive: "${pos}", Negative: "${neg || "none"}"`);
+
 
     // --- MODEL & BASIC PARAMS (from engine node data ONLY) ---
     const nd: any = node.data || {};
@@ -2850,6 +2987,38 @@ export class WorkflowExecutor {
       );
     }
 
+      // Collect ipAdapters from upstream Remix node(s)
+    const remixNodes = upstream.filter(n => ((n.data as any)?.type || "").includes("image-to-image-remix"));
+    let ipAdapters: Array<{ model: string; guideImage: string; weight: number }> = [];
+
+    if (remixNodes.length > 0) {
+      const allNodes = useWorkflowStore.getState().nodes;
+      const allEdges = useWorkflowStore.getState().edges;
+      const imgUrls: string[] = [];
+
+      remixNodes.forEach(rn => {
+        const remixIncoming = allEdges.filter(e => e.target === rn.id);
+        remixIncoming.forEach(e => {
+          const src = allNodes.find(n => n.id === e.source);
+          if (!src) return;
+          const url =
+            this.processedImages.get(src.id) ||
+            this.extractImageUrlFromNode(src) ||
+            (src.data as any)?.imageUrl ||
+            (src.data as any)?.generatedImage ||
+            (src.data as any)?.right_sidebar?.imageUrl;
+          if (typeof url === "string") imgUrls.push(url);
+        });
+      });
+
+      ipAdapters = imgUrls.filter(Boolean).map(url => ({
+        model: "runware:105@1",
+        guideImage: url,
+        weight: 1.0
+      }));
+    }
+
+
     // --- FINAL PARAMS (following specification examples) ---
     const params: any = {
       taskType: "imageInference",
@@ -2862,6 +3031,32 @@ export class WorkflowExecutor {
       outputFormat: "WEBP",
       outputType: ["URL"],
     };
+
+    // If Re-imagine is upstream, pull its input as seedImage
+    let reimagineSeed: string | null = null;
+    let reimagineStrength = 0.7;
+
+    if (hasReimagine) {
+      const reimagineNode = upstream.find(n => ((n.data as any)?.type || "").includes("image-to-image-reimagine"));
+      if (reimagineNode) {
+        const allNodes = useWorkflowStore.getState().nodes;
+        const allEdges = useWorkflowStore.getState().edges;
+        const reimagineIncoming = allEdges.filter(e => e.target === reimagineNode.id);
+        const seedSrc = reimagineIncoming
+          .map(e => allNodes.find(n => n.id === e.source))
+          .find(Boolean);
+
+        const rsd: any = (reimagineNode.data || {});
+        const rsb: any = (rsd.right_sidebar || {});
+        if (typeof rsb.creativity === "number") reimagineStrength = rsb.creativity;
+        if (typeof rsb.strength === "number")   reimagineStrength = rsb.strength;
+
+        reimagineSeed =
+          (seedSrc && (this.processedImages.get(seedSrc.id) || this.extractImageUrlFromNode(seedSrc))) ||
+          rsd.imageUrl || rsb.imageUrl || null;
+      }
+    }
+
 
     // Add optional parameters based on specification
     if (neg) params.negativePrompt = neg;
@@ -2891,6 +3086,17 @@ export class WorkflowExecutor {
       params.seedImage = seedImage;
       params.strength = strength;
       console.log(`🌱 Using seed image with strength: ${strength}`);
+    }
+
+    // NEW: ipAdapters if Remix is upstream
+    if (ipAdapters.length > 0) {
+      params.ipAdapters = ipAdapters;
+    }
+
+    // NEW: seed image if Re-imagine is upstream
+    if (reimagineSeed) {
+      params.seedImage = reimagineSeed;
+      params.strength  = reimagineStrength ?? 0.7;
     }
 
     console.log(

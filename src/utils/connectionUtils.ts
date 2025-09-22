@@ -217,14 +217,32 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
 
   // Re-rendering nodes rules
   if (sourceFunctionality === 'image-to-image' && sourceType?.includes('re-')) {
+
+    // if (['re-scene', 're-light', 're-angle'].some(type => sourceType?.includes(type))) {
+    //   if (targetFunctionality !== 'engine') {
+    //     toast.error("Re-scene, re-light, and re-angle nodes can only connect to engine nodes");
+    //     return false;
+    //   }
+    // }
+    
     if (['re-scene', 're-light', 're-angle'].some(type => sourceType?.includes(type))) {
-      if (targetFunctionality !== 'engine') {
-        toast.error("Re-scene, re-light, and re-angle nodes can only connect to engine nodes");
+      const allowedTargets = ['engine', 'output'];
+      const isPreview = targetNode.type === 'previewNode' || targetNode.type === 'preview-realtime-node';
+      if (!allowedTargets.includes(targetFunctionality || '') && !isPreview) {
+        toast.error("Re-scene, re-light, and re-angle nodes can connect to Preview/Output (or Engine).");
         return false;
       }
     }
-    
-    // Re-imagen special rules
+
+    // Remix special case: must feed the engine (no preview-only rendering)
+    if (sourceType?.includes('re-mix') || sourceType?.includes('remix')) {
+      if (targetFunctionality !== 'engine') {
+        toast.error("Remix nodes must connect to an Engine (they’re applied as IP Adapters).");
+        return false;
+      }
+    }
+
+    // Re-imagine special rules
     if (sourceType?.includes('re-imagine')) {
       const sourceHasEngineInput = edges.some(edge => {
         if (edge.target === sourceNode.id) {

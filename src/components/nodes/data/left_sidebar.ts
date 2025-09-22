@@ -339,8 +339,7 @@ export const insertCategories: NodeCategory[] = [
         type: "engine-real",
         model: "khialmaster:978314@1413433",
         loras: ["khialmaster:1551668@1755780", "civitai:686704@768584"],
-        image_url:
-          "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/b5f9bfd0-97ed-425f-b619-eccbc599d548/original=true,quality=90/Screenshot%202025-06-09%20000350.jpeg",
+        image_url: "https://framerusercontent.com/images/WsUaly5if0xT5w1jOkDj3Pdk.png?scale-down-to=512&width=1500&height=1900",
         data: {
           functionality: "engine",
         },
@@ -355,8 +354,7 @@ export const insertCategories: NodeCategory[] = [
         type: "engine-style",
         model: "civitai:778691@1205317",
         loras: ["nover:2@1", "civitai:686704@768584"],
-        image_url:
-          "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/16267bcd-6ec4-4395-939a-dd1c14c060fc/width=800,original=false/C-0806200522-HQ__1.jpeg",
+        image_url: "/nodes/engines/left_sidebar/style.png",
         data: {
           functionality: "engine",
         },
@@ -387,8 +385,7 @@ export const insertCategories: NodeCategory[] = [
         type: "engine-chic",
         model: "nover:1@4",
         loras: ["civitai:686704@768584"],
-        image_url:
-          "https://framerusercontent.com/images/npFSgBlEWFP7XRsJ4zu8e5eLaM.webp?scale-down-to=1024&width=1024&height=1536",
+        image_url: "/nodes/engines/left_sidebar/chic.png",
         data: {
           functionality: "engine",
         },
@@ -403,8 +400,7 @@ export const insertCategories: NodeCategory[] = [
         type: "engine-ads",
         model: "nover:1@5",
         loras: ["civitai:686704@768584"],
-        image_url:
-          "https://framerusercontent.com/images/Sy0oVd6AdS3lpBXH2TxoNCVmKxc.webp?width=764&height=1019",
+        image_url: "/nodes/engines/left_sidebar/ads.png",
         data: {
           functionality: "engine",
         },
@@ -419,8 +415,7 @@ export const insertCategories: NodeCategory[] = [
         type: "engine-home",
         model: "nover:1@6",
         loras: ["civitai:686704@768584"],
-        image_url:
-          "https://framerusercontent.com/images/VSsF7Tbkqygnd5KWF13fXlH3qY.webp?width=764&height=1019",
+        image_url: "/nodes/engines/left_sidebar/home.png",
         data: {
           functionality: "engine",
         },
