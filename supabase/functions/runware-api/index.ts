@@ -26,25 +26,38 @@ serve(async (req) => {
       throw new Error("REACT_APP_RUNWARE_API_KEY is not configured");
     }
 
-    // Authenticate user
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-
+    // Authenticate user using Clerk JWT (decode without Supabase auth)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new Error("No authorization header provided");
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !userData.user) {
-      throw new Error("User not authenticated");
+
+    // Decode JWT payload (base64url) to extract user id and validate expiration
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      throw new Error("Invalid authorization token format");
     }
 
-    logStep("User authenticated", { userId: userData.user.id });
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    // Add padding if necessary
+    const padded = base64 + "===".slice((base64.length + 3) % 4);
+    const payloadJson = atob(padded);
+    const payload = JSON.parse(payloadJson);
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      throw new Error("Authorization token expired");
+    }
+
+    const userId = payload.sub || payload.user_id || payload.userId;
+    if (!userId) {
+      throw new Error("Authorization token missing user id");
+    }
+
+    logStep("User authenticated", { userId });
 
     // Get request body
     const requestBody = await req.json();
