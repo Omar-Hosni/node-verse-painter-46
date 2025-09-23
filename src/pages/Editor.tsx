@@ -175,12 +175,15 @@ const Editor = () => {
           .from('projects')
           .select('name')
           .eq('id', projectId)
-          .single();
+          .maybeSingle();
         
         if (error) {
+          console.error('Error loading project:', error);
           toast.error(`Error loading project: ${error.message}`);
         } else if (data) {
           setProjectName(data.name);
+        } else {
+          toast.error('Project not found');
         }
         
         setLoadingProgress(70);

@@ -79,11 +79,17 @@ export const loadProject = async (
       .from('projects')
       .select('canvas_data')
       .eq('id', projectId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error loading project:', error);
       toast.error(`Failed to load project: ${error.message}`);
+      return false;
+    }
+
+    if (!data) {
+      console.error('Project not found');
+      toast.error('Project not found');
       return false;
     }
 
