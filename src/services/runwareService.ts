@@ -1,6 +1,7 @@
 import { pickDimsForEdit } from "@/utils/imageUtils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthToken } from "@/services/authToken";
 
 const API_ENDPOINT = "wss://ws-api.runware.ai/v1";
 
@@ -539,8 +540,10 @@ export class RunwareService {
 
       console.log("Sending image generation request to edge function:", requestBody);
 
+      const token = await getAuthToken();
       const { data, error } = await supabase.functions.invoke('runware-api', {
-        body: requestBody
+        body: requestBody,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
       if (error) {
