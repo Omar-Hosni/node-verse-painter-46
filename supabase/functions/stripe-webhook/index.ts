@@ -2,6 +2,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import Stripe from "https://esm.sh/stripe@18.5.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -9,31 +15,45 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
+// Initialize Stripe
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+  apiVersion: '2025-08-27.basil',
+});
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
+    console.log('[STRIPE-WEBHOOK] Processing webhook request');
+
     // Get the Stripe signature from headers
     const signature = req.headers.get('Stripe-Signature');
     const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     
     if (!signature || !endpointSecret) {
+      console.error('[STRIPE-WEBHOOK] Missing signature or secret');
       return new Response(
         JSON.stringify({ error: 'Missing Stripe signature or webhook secret' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get the request body
+    // Get the request body as raw bytes for signature verification
     const body = await req.text();
     
-    // In a real implementation, you would verify the webhook signature here
-    // For now, we'll parse the event directly
+    // CRITICAL SECURITY FIX: Verify webhook signature to prevent tampering
     let event;
     try {
-      event = JSON.parse(body);
+      event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
+      console.log('[STRIPE-WEBHOOK] Signature verified successfully');
     } catch (err) {
+      console.error('[STRIPE-WEBHOOK] Signature verification failed:', err.message);
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in webhook body' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

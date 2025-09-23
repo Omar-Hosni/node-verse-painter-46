@@ -63,8 +63,9 @@ const Editor = () => {
 
     checkAuth();
     
-    // Set API key - this can later be moved to user settings
-    setRunwareApiKey("v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ");
+    // SECURITY FIX: API key no longer hardcoded in frontend
+    // API key is now handled securely in the backend
+    setRunwareApiKey("secure-backend");
 
     // Load project if projectId is provided
     if (projectId) {

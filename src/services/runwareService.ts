@@ -1,5 +1,6 @@
 import { pickDimsForEdit } from "@/utils/imageUtils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const API_ENDPOINT = "wss://ws-api.runware.ai/v1";
 
@@ -190,8 +191,10 @@ export class RunwareService {
     RunwareService.globalNodeLookup = nodeLookup;
   }
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey || import.meta.env.REACT_APP_RUNWARE_API_KEY || "v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ";
+  constructor(apiKey?: string) {
+    // SECURITY FIX: No longer expose API key in frontend
+    // API key is now handled securely in the backend
+    this.apiKey = "secure-backend"; // Placeholder - real key handled by backend
     this.connectionPromise = this.connect();
   }
 

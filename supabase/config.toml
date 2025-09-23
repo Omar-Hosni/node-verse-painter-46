@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.delete-user-project]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.runware-api]
+verify_jwt = false

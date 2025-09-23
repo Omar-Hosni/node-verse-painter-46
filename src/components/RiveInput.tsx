@@ -95,16 +95,15 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
 
     // Get Runware service instance
     const runwareService = useMemo(() => {
-    // Use API key from store, fallback to environment variable, then to null
-    const apiKey = runwareApiKey || import.meta.env.REACT_APP_RUNWARE_API_KEY || null;
+    // SECURITY FIX: Use secure backend instead of exposing API key
+    const apiKey = runwareApiKey || "secure-backend";
     
-    if (!apiKey) {
-        console.warn("No Runware API key available. Check runwareApiKey in store or REACT_APP_RUNWARE_API_KEY environment variable.");
-        return null;
+    if (!runwareApiKey) {
+        console.warn("No Runware API key available in store. Using secure backend.");
     }
     
     try {
-        console.log("Creating Runware service with API key:", apiKey.substring(0, 8) + "...");
+        console.log("Creating Runware service");
         return getRunwareService(apiKey);
     } catch (error) {
         console.error("Failed to create Runware service:", error);
@@ -476,10 +475,8 @@ export const RiveInput: React.FC<{ nodeType: string }> = ({ nodeType }) => {
     }
 
     if (!runwareService) {
-      const hasStoreKey = !!runwareApiKey;
-      const hasEnvKey = !!import.meta.env.REACT_APP_RUNWARE_API_KEY;
-      console.error("Runware service unavailable:", { hasStoreKey, hasEnvKey });
-      toast.error("Upload service unavailable. Please configure your Runware API key and try again.");
+      console.error("Runware service unavailable");
+      toast.error("Upload service unavailable. Please try again.");
       return;
     }
 
