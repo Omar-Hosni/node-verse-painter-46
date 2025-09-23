@@ -26,3 +26,15 @@ verify_jwt = false
 
 [functions.runware-api]
 verify_jwt = false
+
+[functions.get-project]
+verify_jwt = false
+
+[functions.update-project]
+verify_jwt = false
+
+[functions.deduct-credits]
+verify_jwt = false
+
+[functions.get-user-credits]
+verify_jwt = false

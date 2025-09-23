@@ -171,17 +171,15 @@ const Editor = () => {
         setLoadingStep('project');
         setLoadingProgress(40);
         
-        const { data, error } = await supabase
-          .from('projects')
-          .select('name')
-          .eq('id', projectId)
-          .maybeSingle();
+        const { data: projectResponse, error } = await supabase.functions.invoke('get-project', {
+          body: { projectId }
+        });
         
         if (error) {
           console.error('Error loading project:', error);
           toast.error(`Error loading project: ${error.message}`);
-        } else if (data) {
-          setProjectName(data.name);
+        } else if (projectResponse?.project) {
+          setProjectName(projectResponse.project.name);
         } else {
           toast.error('Project not found');
         }
