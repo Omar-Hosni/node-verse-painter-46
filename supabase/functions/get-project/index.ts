@@ -36,6 +36,7 @@ serve(async (req) => {
         throw new Error("Token expired");
       }
       
+      // Clerk JWT uses 'sub' field for user ID
       const userId = payload.sub;
       
       if (!userId) {

@@ -39,12 +39,21 @@ export const saveProject = async (
       edges: JSON.parse(JSON.stringify(edges))
     };
 
+    const token = await clerkAuth.getToken();
+    if (!token) {
+      toast.error('Authentication required to save project');
+      return null;
+    }
+
     // Use the create-user-project edge function
     const { data, error } = await supabase.functions.invoke('create-user-project', {
       body: {
         name,
         description,
         canvas_data: canvasData
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -73,8 +82,18 @@ export const loadProject = async (
   resetNodeIdCounterFunc: () => void
 ): Promise<boolean> => {
   try {
+    const clerkAuth = getClerkUser();
+    const token = await clerkAuth.getToken();
+    if (!token) {
+      toast.error('Authentication required to load project');
+      return false;
+    }
+
     const { data: projectResponse, error } = await supabase.functions.invoke('get-project', {
-      body: { projectId }
+      body: { projectId },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     if (error) {
@@ -171,7 +190,21 @@ export const loadProject = async (
 // Fetch user credits
 export const fetchUserCredits = async (): Promise<number | null> => {
   try {
-    const { data, error } = await supabase.functions.invoke('get-user-credits');
+    const clerkAuth = getClerkUser();
+    if (!clerkAuth.getToken) {
+      return 50; // Default for unauthenticated users
+    }
+
+    const token = await clerkAuth.getToken();
+    if (!token) {
+      return 50; // Default for users without valid token
+    }
+
+    const { data, error } = await supabase.functions.invoke('get-user-credits', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
     if (error) {
       console.error('Error fetching user credits:', error);
@@ -207,8 +240,18 @@ export const fetchUserSubscription = async (): Promise<UserSubscription | null> 
 // Use credits for generation
 export const useCreditsForGeneration = async (currentCredits: number | null): Promise<boolean> => {
   try {
+    const clerkAuth = getClerkUser();
+    const token = await clerkAuth.getToken();
+    if (!token) {
+      toast.error('Authentication required for generation');
+      return false;
+    }
+
     const { data, error } = await supabase.functions.invoke('deduct-credits', {
-      body: { amount: 5 }
+      body: { amount: 5 },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     if (error) {
