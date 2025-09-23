@@ -504,6 +504,10 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
         },
       ],
     },
+    "control-net-reference": {
+      referenceType: "object",
+      power: 0
+    },
     "image-to-image-object-relight": {
       export_version: false,
       editing: true,

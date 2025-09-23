@@ -7,8 +7,14 @@ import { ConnectionHandler } from "../services/connectionHandler";
 import { PreprocessingTrigger } from "../services/preprocessingTrigger";
 import { ImageCaptionTrigger } from "../services/imageCaptionTrigger";
 import { toast } from "sonner";
-import { dataUrlToFile } from "../utils/imageUtils";
+import { combineTwoImagesToDataURL, dataUrlToFile, dataUrlToFileSimple } from "../utils/imageUtils";
 import { useCanvasStore } from "./useCanvasStore";
+import { KONTEXT_REFERENCE_BASE_PROMPT, 
+         KONTEXT_REFERENCE_CHARACTER_PROMPT,
+         KONTEXT_REFERENCE_CLOTH_PROMPT,
+         KONTEXT_REFERENCE_FACE_PROMPT,
+         KONTEXT_REFERENCE_OBJECT_PROMPT,
+         KONTEXT_REFERENCE_STYLE_PROMPT } from "@/constants/prompts";
 
 export interface WorkflowState {
   // Core state
@@ -88,6 +94,122 @@ export interface WorkflowState {
 // Helper function for preprocessing idempotency
 const makePreprocessSignature = (preprocessor: string, imageUrl: string) =>
   `${preprocessor}|${imageUrl}`;
+
+// workflowStore.ts (add near other helpers)
+type RefContext = {
+  refNodeId: string;
+  refType: string;
+  refImageNodeId: string;   // the image node feeding the Reference node
+  targetNodeId: string;     // the final node we want to render to
+};
+
+function stripReference(nodes: Node[], edges: Edge[], refNodeId: string) {
+  return {
+    nodes: nodes.filter(n => n.id !== refNodeId),
+    edges: edges.filter(e => e.source !== refNodeId && e.target !== refNodeId),
+  };
+}
+
+function promptForReferenceType(refType: string, userPrompt?: string) {
+  const t = refType.toLowerCase();
+
+  if (t.includes("style"))
+    return KONTEXT_REFERENCE_BASE_PROMPT.trim() + ' ' + KONTEXT_REFERENCE_STYLE_PROMPT
+  if (t.includes("cloth"))
+    return KONTEXT_REFERENCE_BASE_PROMPT.trim() + ' ' + KONTEXT_REFERENCE_CLOTH_PROMPT
+  if (t.includes("product") || t.includes("object"))
+    return KONTEXT_REFERENCE_BASE_PROMPT.trim() + ' ' + KONTEXT_REFERENCE_OBJECT_PROMPT
+  if (t.includes("character") || t.includes("identity"))
+      return KONTEXT_REFERENCE_BASE_PROMPT.trim() + ' ' + KONTEXT_REFERENCE_CHARACTER_PROMPT
+  if (t.includes("face") || t.includes("composition"))
+      return KONTEXT_REFERENCE_BASE_PROMPT.trim() + ' ' + KONTEXT_REFERENCE_FACE_PROMPT
+  
+  return userPrompt?.trim() + " And blend both images coherently; preserve subject identity from the second; borrow global style/composition from the first.";
+}
+
+function findReferenceContext(nodes: Node[], edges: Edge[], targetNodeId: string): RefContext | null {
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  const incoming = (id: string) => edges.filter(e => e.target === id);
+
+  // DFS upstream to locate a “reference” node on the path to target
+  const stack = [targetNodeId];
+  const seen = new Set<string>();
+  let refNode: Node | undefined;
+
+  while (stack.length) {
+    const cur = stack.pop()!;
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+
+    for (const e of incoming(cur)) {
+      const src = byId.get(e.source);
+      if (!src) continue;
+
+      const t  = (src.type || "").toLowerCase();
+      const dt = ((src.data as any)?.type || "").toLowerCase();
+      if (t.includes("reference") || dt.includes("reference") || t.includes("control-net-reference")) {
+        refNode = src;
+        break;
+      }
+      stack.push(src.id);
+    }
+    if (refNode) break;
+  }
+
+  if (!refNode) return null;
+
+  // pull referenceType from right_sidebar
+  const rs: any = (refNode.data as any)?.right_sidebar || refNode.data || {};
+  const refType = (rs.referenceType || rs.type || "style") + "";
+
+  // find the image node feeding the reference node
+  const refIncoming = incoming(refNode.id);
+  const imgEdge = refIncoming.find(e => {
+    const n = byId.get(e.source);
+    const nt = (n?.type || "").toLowerCase();
+    const ndt = (((n?.data as any)?.type) || "").toLowerCase();
+    return nt.includes("image") || ndt.includes("image");
+  });
+  const refImageNodeId = imgEdge?.source || refIncoming[0]?.source || "";
+
+  return { refNodeId: refNode.id, refType, refImageNodeId, targetNodeId };
+}
+
+
+// From a preview/output node, walk one step upstream to find the node that actually generates the image
+function findLastExecutable(nodes: any[], edges: any[], targetNodeId: string): string {
+  const byId = new Map(nodes.map((n: any) => [n.id, n]));
+  const incoming = (id: string) => edges.filter((e: any) => e.target === id);
+
+  const execTypes = [
+    "engine",
+    "text-to-image",
+    "image-to-image-reangle",
+    "image-to-image-rescene",
+    "image-to-image-relight",
+    "image-to-image-remix",
+  ];
+
+  let cur = targetNodeId;
+  const seen = new Set<string>();
+  while (!seen.has(cur)) {
+    seen.add(cur);
+    const ins = incoming(cur);
+    if (!ins.length) break;
+
+    // pick the first upstream; you can add smarter selection if you tag edges
+    const src = byId.get(ins[0].source);
+    if (!src) break;
+
+    const t  = String(src.type || "").toLowerCase();
+    const dt = String((src.data?.type) || "").toLowerCase();
+    if (execTypes.some(x => t.includes(x) || dt.includes(x))) return src.id;
+
+    cur = src.id;
+  }
+  // fallback: if target is itself executable
+  return targetNodeId;
+}
 
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   // Initial state
@@ -200,54 +322,127 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   // Execute workflow for target node
+  // executeWorkflow: async (targetNodeId: string) => {
+  //   const { nodes, edges, workflowExecutor, runwareService } = get();
+
+  //   if (!workflowExecutor || !runwareService) {
+  //     toast.error("Services not initialized. Please set your API key first.");
+  //     return;
+  //   }
+
+  //   if (!targetNodeId) {
+  //     toast.error("No target node specified for execution.");
+  //     return;
+  //   }
+
+  //   try {
+  //     set({ isGenerating: true });
+      
+
+  //     console.log("Starting workflow execution for node:", targetNodeId);
+
+  //     // Execute the workflow
+  //     const result = await workflowExecutor.executeWorkflow(
+  //       nodes,
+  //       edges,
+  //       targetNodeId
+  //     );
+
+  //     if (result) {
+  //       // Update the target node with the result
+  //       get().updateNodeData(targetNodeId, { generatedImage: result });
+
+  //       // Update processed images map
+  //       get().setProcessedImage(targetNodeId, result);
+
+  //       toast.success("Workflow executed successfully!");
+  //       console.log("Workflow execution completed with result:", result);
+  //     } else {
+  //       toast.warning("Workflow completed but no result was generated.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Workflow execution failed:", error);
+  //     toast.error(
+  //       `Workflow execution failed: ${
+  //         error instanceof Error ? error.message : "Unknown error"
+  //       }`
+  //     );
+  //   } finally {
+  //     set({ isGenerating: false });
+  //   }
+  // },
+
+  // workflowStore.ts (inside your executeWorkflow action)
   executeWorkflow: async (targetNodeId: string) => {
     const { nodes, edges, workflowExecutor, runwareService } = get();
+    if (!workflowExecutor || !runwareService) return;
 
-    if (!workflowExecutor || !runwareService) {
-      toast.error("Services not initialized. Please set your API key first.");
-      return;
-    }
-
-    if (!targetNodeId) {
-      toast.error("No target node specified for execution.");
-      return;
-    }
+    set({ isGenerating: true });
 
     try {
-      set({ isGenerating: true });
+      // Identify if a Reference node exists upstream
+      const refCtx = findReferenceContext(nodes, edges, targetNodeId);
 
-      console.log("Starting workflow execution for node:", targetNodeId);
+      // Determine the node that actually generates the image used by the target (usually preview/output's upstream)
+      const renderNodeId = findLastExecutable(nodes, edges, targetNodeId);
 
-      // Execute the workflow
-      const result = await workflowExecutor.executeWorkflow(
-        nodes,
-        edges,
-        targetNodeId
-      );
+      if (!refCtx) {
+        // ── PASS-0: normal single-pass execution (no Reference on path)
+        const url = await workflowExecutor.executeWorkflow(nodes, edges, renderNodeId);
+        if (!url) return;
 
-      if (result) {
-        // Update the target node with the result
-        get().updateNodeData(targetNodeId, { generatedImage: result });
-
-        // Update processed images map
-        get().setProcessedImage(targetNodeId, result);
-
-        toast.success("Workflow executed successfully!");
-        console.log("Workflow execution completed with result:", result);
-      } else {
-        toast.warning("Workflow completed but no result was generated.");
+        // write result into the actual target node (preview/output)
+        set(state => ({
+          nodes: state.nodes.map(n =>
+            n.id === targetNodeId ? { ...n, data: { ...n.data, generatedImage: url } } : n
+          )
+        }));
+        get().setProcessedImage?.(targetNodeId, url);
+        return;
       }
-    } catch (error) {
-      console.error("Workflow execution failed:", error);
-      toast.error(
-        `Workflow execution failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+
+      // ── PASS-1: run the graph with the Reference node removed
+      const stripped = stripReference(nodes, edges, refCtx.refNodeId);
+      const generatedImageUrl = await workflowExecutor.executeWorkflow(stripped.nodes, stripped.edges, renderNodeId);
+      if (!generatedImageUrl) throw new Error("Base generation returned no image URL.");
+
+      // Resolve the input image feeding the Reference node, then upload to Runware for a persistent URL
+      // Try processed cache first
+      let refInputUrl =
+        get().processedImages?.get?.(refCtx.refImageNodeId) ||
+        await workflowExecutor.executeWorkflow(nodes, edges, refCtx.refImageNodeId);
+      if (!refInputUrl) throw new Error("Could not resolve the input image feeding the Reference node.");
+
+      const referenceImageUrl = refInputUrl;
+      const combinedImage = await combineTwoImagesToDataURL(referenceImageUrl, generatedImageUrl)
+      const file = await dataUrlToFileSimple(combinedImage)
+      const uploaded = await runwareService.uploadImageForURL(file)
+
+      // ── PASS-2: Flux Kontext with [generatedImageUrl, referenceImageUrl]
+      const kontextPrompt = promptForReferenceType(refCtx.refType);
+      const kontextResult = await runwareService.generateFluxKontext({
+        positivePrompt: kontextPrompt,
+        referenceImages: [uploaded], // when refs exist → omit width/height
+      });
+
+      const finalUrl = kontextResult.imageURL;
+
+      // ONLY render the Kontext output in the target node (preview/output)
+      set(state => ({
+        nodes: state.nodes.map(n =>
+          n.id === targetNodeId ? { ...n, data: { ...n.data, generatedImage: finalUrl, generatedImageUrl: finalUrl } } : n
+        )
+      }));
+      get().setProcessedImage?.(targetNodeId, finalUrl);
+    } catch (err) {
+      console.error("Reference-aware execution failed:", err);
+      // (optional) surface a toast here
     } finally {
       set({ isGenerating: false });
     }
   },
+
+
 
   // Update node data
   updateNodeData: (nodeId: string, data: any) => {

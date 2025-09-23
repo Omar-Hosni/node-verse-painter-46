@@ -9328,12 +9328,15 @@ export const RightSidebar = () => {
                     { label: "Object", value: "object" },
                     { label: "Style", value: "style" },
                     { label: "Cloth", value: "cloth" },
-
                   ]}
-                  value={selectedNode.data?.type || "source"}
+                  value={selectedNode.data?.right_sidebar?.referenceType || "character"}
                   onChange={(value) =>
-                    updateNodeData(selectedNode.id, { type: value })
-                  }
+                    updateNodeData(selectedNode.id, {
+                        right_sidebar: {
+                          ...selectedNode.data?.right_sidebar,
+                          referenceType: value,
+                        },
+                      })}
                 />
               </PropertyRow>
 
