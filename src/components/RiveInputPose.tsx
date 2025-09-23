@@ -368,6 +368,8 @@ export const RiveInputPose: React.FC = () => {
   };
 
   // When exportVersion is set to true => upload screenshot for pose
+  const isPose = selectedNode?.data?.type.includes("pose");
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !selectedNode) return;
@@ -379,7 +381,7 @@ export const RiveInputPose: React.FC = () => {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [exportVersion, selectedNode]);
+  }, [exportVersion, selectedNode, rive, isPose, canvasRef.current]);
 
   if (!rivePath) return null;
 

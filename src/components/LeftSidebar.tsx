@@ -298,7 +298,7 @@ export const LeftSidebar = ({
                     )}
                   </div>
                 ) : (
-                  // Show categories when not searching
+                  // Show categories when not searching or no searchTerm
                   insertCategories.map((category) => (
                     <div key={category.name} className="mb-8">
                       <div className="flex flex-row items-center mb-3 ml-4">
@@ -314,26 +314,16 @@ export const LeftSidebar = ({
                         {category.options.map((option) => (
                           <div
                             key={option.type}
-                            // onClick={
-                            //   option.status === 'coming-soon'
-                            //     ? undefined
-                            //     : () => handleAddNode(option.type)
-                            // }
                             onClick={() => {
-                              if (option.status !== "coming-soon") {
+                              if (option.status) {
                                 setSelectedInsertNode(option);
                               }
                             }}
-                            className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
+                            className={`relative bg-[#151515] rounded-2xl border border-transparent 
                                 px-8 py-6 flex items-center justify-center cursor-pointer 
-                                overflow-hidden ${
-                                  option?.image_url ? "p-0" : "flex-col"
-                                } 
-                                ${
-                                  option.status === "coming-soon"
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
+                                overflow-hidden ${option?.image_url ? "p-0" : "flex-col"}
+                                ${option.status === "stable" ? "hover:border-[#007AFF]" : "hover:outline hover:outline-[2px] hover:outline-dashed hover:outline-gray-400"}
+                            `}
                           >
                             {/* Image or icon + label */}
                             {option?.image_url ? (
@@ -357,13 +347,16 @@ export const LeftSidebar = ({
                             )}
 
                             {/* Overlay for "Coming Soon" */}
+                            {/* SOON badge (top-left) */}
                             {option.status === "coming-soon" && (
-                              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
-                                <span className="text-white text-xs font-semibold">
-                                  Coming Soon
+                              <div className="absolute top-[8px] left-[8px] z-10 pointer-events-none">
+                                <span className="inline-flex items-center rounded-full pt-[1px] pl-[4px] pr-[4px] text-[9px] font-bold
+                                                bg-[#FFBB00]/10 border border-[#FFBB00]/20 text-gray-300">
+                                  SOON
                                 </span>
                               </div>
                             )}
+
                           </div>
                         ))}
                       </div>

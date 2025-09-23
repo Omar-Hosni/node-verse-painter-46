@@ -226,7 +226,7 @@ export const isValidConnection = (connection: Connection, nodes: ReactFlowNode[]
     // }
     
     if (['re-scene', 're-light', 're-angle'].some(type => sourceType?.includes(type))) {
-      const allowedTargets = ['engine', 'output'];
+      const allowedTargets = ['engine', 'output', 'previewNode'];
       const isPreview = targetNode.type === 'previewNode' || targetNode.type === 'preview-realtime-node';
       if (!allowedTargets.includes(targetFunctionality || '') && !isPreview) {
         toast.error("Re-scene, re-light, and re-angle nodes can connect to Preview/Output (or Engine).");

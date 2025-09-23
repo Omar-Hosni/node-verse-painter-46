@@ -27,7 +27,7 @@ const PrimaryButton = React.memo(({
     disabled={disabled}
     className={`disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 justify-center transition-colors ${className}`}
     style={{
-      backgroundColor: disabled ? undefined : '#007AFF',
+      backgroundColor: disabled ? `##808080` : '#007AFF',
       minHeight: '30px',
       height: '30px'
     }}
@@ -158,15 +158,20 @@ const LeftSidebarNodeDesc: React.FC<LeftSidebarNodeDescProps> = ({ selectedInser
         <p className="text-sm text-[#9e9e9e] leading-snug">
           {selectedInsertNode.description}
         </p>
+        <p className="text-sm text-white font-semibold leading-snug">{selectedInsertNode?.instruction}</p>
       </div>
 
       {/* Section 3: Action Section */}
       <div>
         <PrimaryButton
-          onClick={() => handleAddNode(selectedInsertNode.type)}
-          icon={FaPlus}
+          disabled={selectedInsertNode?.status === "coming-soon"}
+          onClick={() => {
+            if(selectedInsertNode?.status !== "coming-soon")
+              handleAddNode(selectedInsertNode.type)
+          }}
+          icon={selectedInsertNode?.status !== "coming-soon" ? FaPlus: ""}
         >
-          Insert
+          {selectedInsertNode?.status === "coming-soon" ? "Coming Soon" : "Insert"}
         </PrimaryButton>
       </div>
     </div>

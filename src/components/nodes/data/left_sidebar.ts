@@ -17,6 +17,7 @@ type NodeOption = {
   label: string;
   icon: string;
   description: string;
+  instruction?: string;
   design?: string;
   functionality?: string;
   model?: string;
@@ -146,6 +147,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "reimagine",
         description:
           "The Re-Imagine Node generates creative variations of an image, maintaining its essence while exploring new visual possibilities.",
+        instruction: "Connect to an Engine Node",
         node_desc_image_url: "re-imagine",
         status: "stable",
       },
@@ -157,6 +159,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "rescene",
         description:
           "The Re-Scene Node merges a subject with a background, blending both into a realistic, well-composited scene.",
+        instruction: "Connect to an Image Output Node",
         node_desc_image_url: "re-scene",
         status: "stable",
       },
@@ -168,6 +171,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "objectrelight",
         description:
           "The Relight Node modifies the lighting of an existing image, allowing for new visual moods or improved highlight and shadow dynamics.",
+        instruction: "Connect to an Image Output Node",
         node_desc_image_url: "re-light",
         status: "stable",
       },
@@ -179,6 +183,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "reangle",
         description:
           "The Re-Angle Node shifts the camera viewpoint to offer alternate perspectives while preserving the core composition.",
+        instruction: "Connect to an Image Output Node",
         node_desc_image_url: "re-angle",
         status: "stable",
       },
@@ -190,6 +195,7 @@ export const insertCategories: NodeCategory[] = [
         icon: "merger",
         description:
           "The Re-Mix Node merges multiple images into one cohesive output, blending elements and styles to form a unified composition.",
+        instruction: "Connect to an Engine Node",
         node_desc_image_url: "re-mix",
         status: "stable",
       },
@@ -250,6 +256,7 @@ export const insertCategories: NodeCategory[] = [
         label: "3D Maker",
         icon: "3dmaker",
         description: "Generate mesh and texture from image",
+        node_desc_image_url: "3d-maker",
         status: "coming-soon",
       },
       {
@@ -324,6 +331,7 @@ export const insertCategories: NodeCategory[] = [
         },
         label: "Real-Time Preview",
         icon: "realtime",
+        node_desc_image_url: "realtime-render",
         description: "Live preview during generation",
         status: "coming-soon",
       },

@@ -3,6 +3,7 @@ import { Node, Edge } from "@xyflow/react";
 import { RunwareService } from "./runwareService";
 import { useWorkflowStore } from "@/store/workflowStore";
 import { toast } from "sonner";
+import { KONTEXT_RESCENE_PROMPT } from "@/constants/prompts";
 
 // Workflow execution error types
 export enum WorkflowErrorType {
@@ -2326,43 +2327,10 @@ export class WorkflowExecutor {
 
     console.log("UPLOADED COMBINED IMAGE: ", uploaded)
 
-    // 3) Flux Kontext with the built-in composition prompt
-    const KONTEKST_PROMPT = `
-      OBJECT = image[0]          # reference image of the object (any category)
-      SCENE  = image[1]          # target scene/background (any environment)
-
-      TASK: Composite OBJECT naturally into SCENE as a real part of that environment.
-
-      Composition
-      - Anchor: {lower-third | center-right | custom}
-      - Position (normalized 0–1): x={0.62}, y={0.58}
-      - Scale: {0.25} of frame height (±5% tolerance)
-      - Orientation: yaw {15}°, pitch {0}°, roll {0}° (adjust to match scene lines/horizon)
-      - Depth: place OBJECT at the {foreground | midground | background}; allow partial occlusion if depth demands it.
-
-      Fidelity to OBJECT
-      - Preserve exact shape, proportions, materials, textures, and distinctive details (logos/labels if present).
-      - No redesign or stylization; keep true geometry and surface finish.
-
-      Scene Match
-      - Perspective: match SCENE camera FOV and horizon; align base to ground plane without floating.
-      - Lighting: estimate SCENE key light direction/intensity; apply consistent shading, ambient occlusion at contacts, and a believable cast shadow matching light angle/softness.
-      - Color/exposure: harmonize white balance, contrast, and noise/grain to SCENE.
-      - DoF: match focus; if SCENE is shallow DoF and OBJECT is off the focal plane, blur accordingly.
-      - Reflections/speculars: add subtle environment reflections appropriate to OBJECT material (glass/metal/water, etc.).
-
-      Integrity
-      - Keep SCENE from image[1] intact (do not replace sky/background layout).
-      - Add only what’s needed for realism (contact shadows, minor sand/dust/grass at contact if it exists in SCENE).
-      - Output a single photorealistic composite.
-
-      NEGATIVE (avoid)
-      - Floating/halo edges, wrong scale, warped geometry, duplicated objects, extra components, harsh cutouts,
-        mismatched shadows/reflections, oversharpening, watermarks, text overlays, heavy stylization.
-    `.trim();
-
+    // 3) Flux Kontext generation with the built-in composition prompt
+    
     const result = await this.runwareService.generateFluxKontext({
-      positivePrompt: KONTEKST_PROMPT,
+      positivePrompt: KONTEXT_RESCENE_PROMPT.trim(),
       referenceImages: [uploaded], // Flux Kontext expects array
     }); // generateFluxKontext is already implemented in runwareService
     return result.imageURL;
@@ -2417,40 +2385,47 @@ export class WorkflowExecutor {
   }
 
   // Simplified Re-angle processing
+  // inside WorkflowExecutor
   private async processReAngle(
     node: Node,
     inputs: Record<string, string>
   ): Promise<string | null> {
     const inputImage = inputs.default || Object.values(inputs)[0];
-    if (!inputImage) return null;
-
-    const nd: any = node.data || {};
-    const degrees = nd.degrees || 15;
-    const direction = Object.entries(x).find(([k, v]) => typeof v === 'boolean' && v)?.[0];
-    const prompt = `Obtain the ${direction}-side`;
-
-    console.log(`📐 Re-angle node ${node.id}: ${degrees}° ${direction}`);
-
-    // const params = {
-    //   positivePrompt: `obtain this angle from this degree: ${degrees}° ${direction}`,
-    //   model: "bfl:3@1", // Flux Kontext
-    //   width: 1024,
-    //   height: 1024,
-    //   numberResults: 1,
-    //   outputFormat: "JPEG",
-    //   includeCost: true,
-    //   outputType: ["URL"],
-    //   referenceImages: [inputImage],
-    // };
-
-    // const result = await this.runwareService.generateImage(params);
-    const params ={
-      positivePrompt: prompt,
-      referenceImages: inputImage
+    if (!inputImage) {
+      throw new WorkflowExecutionError(
+        "Re-angle requires an input image.",
+        WorkflowErrorType.VALIDATION_ERROR,
+        node.id,
+        undefined,
+        false
+      );
     }
-    const result = await this.runwareService.generateQwenEdit(params)
+
+    // pull controls from the right sidebar
+    const rs: any = (node.data && (node.data as any).right_sidebar) || {};
+    // possible shapes: rs.direction = "front"/"back"/"left"/"right"; or booleans like rs.front = true
+    const fallbackDir = ["front","back","left","right","up","down"]
+      .find(k => rs?.[k] === true) || rs?.direction || "right";
+    const degrees = typeof rs?.degrees === "number" ? rs.degrees : 15;
+
+    const isSide = fallbackDir === "left" || fallbackDir === "right";
+    // Built-in prompt (keep it short; the service has its own system prompt)
+    const prompt = isSide ? `Obtain the ${fallbackDir}-side`: `Obtain the ${fallbackDir} view`
+
+    // const result = await this.runwareService.generateFluxKontext({
+    //   positivePrompt: prompt,       // internal/built-in
+    //   referenceImages: [inputImage],   // singular field
+    //   // you can omit model to use the default inside the service
+    // });
+
+    const result = await this.runwareService.generateQwenEdit({
+      positivePrompt: prompt,       // internal/built-in
+      referenceImage: inputImage,   // singular field
+      // you can omit model to use the default inside the service
+    });
     return result.imageURL;
   }
+
 
   // Simplified Remix processing
   private async processReMix(

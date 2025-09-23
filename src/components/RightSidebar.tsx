@@ -46,6 +46,7 @@ import { detectWorkflows } from "@/utils/connectionUtils";
 import RiveInputImageCorners from "./RiveInputImageCorners";
 import RiveInputEngineRatio from "./RiveInputEngineRatio";
 import { insertCategories } from "./nodes/data/left_sidebar";
+import RiveInput from "./RiveInput";
 
 // Helper function for permissive URL checking
 const isUrlLike = (s?: string) =>
@@ -3204,12 +3205,12 @@ export const RightSidebar = () => {
     onChange: (v: Angle) => void;
   }) {
     return (
-      <div className="flex bg-[#1a1a1a] rounded-full w-full h-full p-0.5 border border-[#1d1d1d]">
+      <div className="flex bg-[#1a1a1a] rounded-sm w-full h-[46px] -translate-y-4 p-0.5 border border-[#1d1d1d] grid grid-rows-2 grid-cols-3">
         {angleOptions.map((opt) => (
           <button
             key={opt}
             onClick={() => onChange(opt)}
-            className={`flex-1 h-full rounded-full px-3 text-xs capitalize transition-all
+            className={`flex-1 h-full rounded-sm px-3 text-xs capitalize transition-all
               ${value === opt ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"}`}
             title={opt}
           >
@@ -4187,7 +4188,7 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow label="Corners">
+              <PropertyRow label="Corners" rowClassName="corners-row items-start" contentClassName="items-start h-auto min-h-[72px] gap-1.5">
                 <div className="w-full h-full">
                   <input
                     type="number"
@@ -4246,7 +4247,7 @@ export const RightSidebar = () => {
                     min={0}
                   />
                 </div>
-                <div className="w-full h-full flex items-center">
+                {/* <div className="w-full h-full flex items-center">
                   <CustomSlider
                     value={(() => {
                       const activeCorner =
@@ -4300,6 +4301,10 @@ export const RightSidebar = () => {
                     }}
                     className="w-full"
                   />
+                </div> */}
+                {/* Render RiveInputImageCorners for frame-node */}
+                <div className="w-[70px] h-[70px] flex-shrink-0 self-start">
+                  <RiveInputImageCorners key={selectedNode?.id} />
                 </div>
               </PropertyRow>
 
@@ -6877,7 +6882,7 @@ export const RightSidebar = () => {
                 />
               </PropertyRow>
 
-              <PropertyRow label="Corners">
+              <PropertyRow label="Corners" rowClassName="corners-row items-start" contentClassName="items-start h-auto min-h-[72px] gap-1.5">
                 <div className="w-full h-full">
                   <input
                     type="number"
@@ -6936,7 +6941,12 @@ export const RightSidebar = () => {
                     min={0}
                   />
                 </div>
-                <div className="w-full h-full flex items-center">
+                {/* Render RiveInputImageCorners for frame-node */}
+                <div className="w-[70px] h-[70px] flex-shrink-0 self-start">
+                  <RiveInputImageCorners key={selectedNode?.id} />
+                </div>
+
+                {/* <div className="w-full h-full flex items-center">
                   <CustomSlider
                     value={(() => {
                       const activeCorner =
@@ -6990,7 +7000,8 @@ export const RightSidebar = () => {
                     }}
                     className="w-full"
                   />
-                </div>
+                </div> */}
+                
               </PropertyRow>
               <PropertyRow label="Blend mode">
                 <CustomSelect
@@ -7972,7 +7983,7 @@ export const RightSidebar = () => {
                 </div>
               </PropertyRow>
 
-              <PropertyRow label="Corners">
+              <PropertyRow label="Corners" rowClassName="corners-row items-start" contentClassName="items-start h-auto min-h-[72px] gap-1.5">
                 <div className="w-full h-full">
                   <input
                     type="number"
@@ -7992,7 +8003,7 @@ export const RightSidebar = () => {
                     min={0}
                   />
                 </div>
-                <div className="w-full h-full flex items-center">
+                {/* <div className="w-full h-full flex items-center">
                   <CustomSlider
                     value={selectedNode.data?.right_sidebar?.cornerRadius ?? 8}
                     min={0}
@@ -8008,6 +8019,10 @@ export const RightSidebar = () => {
                     }
                     className="w-full"
                   />
+                </div> */}
+                {/* Render RiveInputImageCorners for frame-node */}
+                <div className="w-[70px] h-[70px] flex-shrink-0 self-start">
+                  <RiveInputImageCorners key={selectedNode?.id} />
                 </div>
               </PropertyRow>
 
@@ -8429,7 +8444,8 @@ export const RightSidebar = () => {
                 </div>
               ) : (
                 // Show Rive component when no input connection
-                <RiveInputPose key={selectedNode?.id}/>
+                // <RiveInputPose key={selectedNode?.id}/>
+                <RiveInput nodeType="pose" key={selectedNode?.id}/>
               )}
 
               {selectedNode.data?.right_sidebar?.type === "source" && (
@@ -9307,8 +9323,12 @@ export const RightSidebar = () => {
               <PropertyRow label="Type">
                 <CustomSelect
                   options={[
-                    { label: "Source", value: "source" },
-                    { label: "Final Map", value: "final map" },
+                    { label: "Character", value: "character" },
+                    { label: "Face ID", value: "face_id" },
+                    { label: "Object", value: "object" },
+                    { label: "Style", value: "style" },
+                    { label: "Cloth", value: "cloth" },
+
                   ]}
                   value={selectedNode.data?.type || "source"}
                   onChange={(value) =>

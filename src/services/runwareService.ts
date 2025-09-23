@@ -1,3 +1,4 @@
+import { pickDimsForEdit } from "@/utils/imageUtils";
 import { toast } from "sonner";
 
 const API_ENDPOINT = "wss://ws-api.runware.ai/v1";
@@ -344,6 +345,7 @@ export class RunwareService {
       this.ws!.send(JSON.stringify(message));
     });
   }
+  
 
   // Upload image and get UUID for upscaling operations
   async uploadImage(imageFile: File): Promise<string> {
@@ -594,9 +596,8 @@ export class RunwareService {
       this.connectionPromise = this.connect();
       await this.connectionPromise;
     }
-
     const taskUUID = crypto.randomUUID();
-    
+
     return new Promise((resolve, reject) => {
       const message: any = [{
         taskType: "imageInference",
@@ -639,6 +640,7 @@ export class RunwareService {
     });
   }
 
+  // Qwen Edit generation
   async generateQwenEdit(params: QwenEditParams): Promise<GeneratedImage> {
     await this.connectionPromise;
 
@@ -647,8 +649,11 @@ export class RunwareService {
       await this.connectionPromise;
     }
 
+
     const taskUUID = crypto.randomUUID();
     
+    const { width, height } = await pickDimsForEdit(params.referenceImage);
+
     return new Promise((resolve, reject) => {
       const message: any = [{
         taskType: "imageInference",
@@ -661,8 +666,10 @@ export class RunwareService {
         scheduler: "Default",
         includeCost: true,
         outputType: ["dataURI", "URL"],
+        width:width,
+        height:height,
         positivePrompt: params.positivePrompt,
-        referenceImages: [...params.referenceImage],
+        referenceImages: [params.referenceImage],
         outputQuality: 95,
         advancedFeatures: {
           guidanceEndStepPercentage: 75
@@ -677,7 +684,7 @@ export class RunwareService {
         }
       }
 
-      console.log("Sending Flux Kontext generation message:", message);
+      console.log("Sending Qwen Edit generation message:", message);
 
       this.messageCallbacks.set(taskUUID, (data) => {
         if (data.error) {
