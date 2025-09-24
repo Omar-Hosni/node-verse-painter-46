@@ -68,9 +68,10 @@ export const addUserCredits = async (userId: string, creditsToAdd: number) => {
       .from('user_credits')
       .select('credits')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
-    if (userError) {
+    if (userError && userError.code !== 'PGRST116') {
+      // PGRST116 means no rows returned, which is fine if user has no credits record yet
       throw new Error(`Error fetching user credits: ${userError.message}`);
     }
 

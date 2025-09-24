@@ -1,7 +1,5 @@
 import { pickDimsForEdit } from "@/utils/imageUtils";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { getAuthToken } from "@/services/authToken";
 
 const API_ENDPOINT = "wss://ws-api.runware.ai/v1";
 
@@ -192,11 +190,9 @@ export class RunwareService {
     RunwareService.globalNodeLookup = nodeLookup;
   }
 
-  constructor(apiKey?: string) {
-    // Use only the provided API key; never fall back to placeholders
-    this.apiKey = apiKey ?? null;
-    // Defer WS connection until a method explicitly needs it
-    this.connectionPromise = null;
+  constructor(apiKey: string) {
+    this.apiKey = apiKey || import.meta.env.REACT_APP_RUNWARE_API_KEY || "v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ";
+    this.connectionPromise = this.connect();
   }
 
   private connect(): Promise<void> {
@@ -280,25 +276,17 @@ export class RunwareService {
     });
   }
 
-  // Helper method to initialize WebSocket connection when needed (for non-generation tasks)
-  private async ensureConnection(): Promise<void> {
-    if (!this.connectionPromise) {
-      this.connectionPromise = this.connect();
-    }
+  normalizeModel(m?: string): string | undefined {
+    return m ? m.trim().replace(/^runware:/i, "runware:") : m;
+  }
+
+  async preprocessImage(imageFile: File, preprocessor: string): Promise<PreprocessedImage> {
     await this.connectionPromise;
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.isAuthenticated) {
       this.connectionPromise = this.connect();
       await this.connectionPromise;
     }
-  }
-
-  normalizeModel(m?: string): string | undefined {
-    return m ? m.trim().replace(/^runware:/i, "runware:") : m;
-  }
-
-  async preprocessImage(imageFile: File, preprocessor: string): Promise<PreprocessedImage> {
-    await this.ensureConnection();
 
     // Map preprocessor types to ensure valid values
     const preprocMap: Record<string, string> = {
@@ -361,7 +349,12 @@ export class RunwareService {
 
   // Upload image and get UUID for upscaling operations
   async uploadImage(imageFile: File): Promise<string> {
-    await this.ensureConnection();
+    await this.connectionPromise;
+
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.isAuthenticated) {
+      this.connectionPromise = this.connect();
+      await this.connectionPromise;
+    }
 
     const taskUUID = crypto.randomUUID();
     
@@ -481,10 +474,17 @@ export class RunwareService {
   }
 
   async generateImage(params: GenerateImageParams): Promise<GeneratedImage> {
-    try {
-      const taskUUID = crypto.randomUUID();
-      
-      const requestBody: any = {
+    await this.connectionPromise;
+
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.isAuthenticated) {
+      this.connectionPromise = this.connect();
+      await this.connectionPromise;
+    }
+
+    const taskUUID = crypto.randomUUID();
+    
+    return new Promise((resolve, reject) => {
+      const message: any = [{
         taskType: "imageInference",
         taskUUID,
         model: this.normalizeModel(params.model) || "runware:101@1",
@@ -494,7 +494,7 @@ export class RunwareService {
         outputFormat: "JPG",
         includeCost: true,
         outputType: "URL",
-        outputQuality: 95,
+        outputQuality:95,
         positivePrompt: params.positivePrompt,
         ...(params.negativePrompt && { negativePrompt: params.negativePrompt }),
         ...(params.acceleratorOptions && { acceleratorOptions: params.acceleratorOptions }),
@@ -503,76 +503,45 @@ export class RunwareService {
         ...(params.strength && { strength: params.strength }),
         ...(params.ipAdapters && { ipAdapters: params.ipAdapters }),
         ...(params.referenceImages && { referenceImages: params.referenceImages })
-      };
+      }];
 
       // Only add these parameters if they exist in the original params
       if (params.steps !== undefined) {
-        requestBody.steps = params.steps;
+        message[0].steps = params.steps;
       } else if (!params.referenceImages) {
-        requestBody.steps = 4;
+        message[0].steps = 4;
       }
 
       if (params.CFGScale !== undefined) {
-        requestBody.CFGScale = params.CFGScale;
+        message[0].CFGScale = params.CFGScale;
       } else if (!params.referenceImages) {
-        requestBody.CFGScale = 1;
+        message[0].CFGScale = 1;
       }
 
       if (params.scheduler !== undefined) {
-        requestBody.scheduler = params.scheduler;
+        message[0].scheduler = params.scheduler;
       } else if (!params.referenceImages) {
-        requestBody.scheduler = "FlowMatchEulerDiscreteScheduler";
+        message[0].scheduler = "FlowMatchEulerDiscreteScheduler";
       }
 
       if (params.lora !== undefined) {
-        requestBody.lora = params.lora;
+        message[0].lora = params.lora;
       } else if (!params.referenceImages) {
-        requestBody.lora = [];
+        message[0].lora = [];
       }
 
-      // Remove undefined/null seed
-      if (!params.seed) {
-        delete requestBody.seed;
-      } else {
-        requestBody.seed = params.seed;
-      }
+      console.log("Sending image generation message:", message);
 
-      console.log("Sending image generation request to edge function:", requestBody);
-
-      const token = await getAuthToken();
-      const { data, error } = await supabase.functions.invoke('runware-api', {
-        body: requestBody,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      this.messageCallbacks.set(taskUUID, (data) => {
+        if (data.error) {
+          reject(new Error(data.errorMessage));
+        } else {
+          resolve(data);
+        }
       });
 
-      if (error) {
-        console.error("Runware API error:", error);
-        throw new Error(error.message || "Failed to generate image");
-      }
-
-      if (!data?.data || data.data.length === 0) {
-        throw new Error("No image data received from API");
-      }
-
-      const result = data.data[0];
-      
-      if (result.error) {
-        throw new Error(result.errorMessage || "Image generation failed");
-      }
-
-      return {
-        imageURL: result.imageURL,
-        positivePrompt: result.positivePrompt || params.positivePrompt,
-        seed: result.seed || 0,
-        NSFWContent: result.NSFWContent || false,
-        cost: result.cost
-      };
-    } catch (error) {
-      console.error("Error generating image:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to generate image";
-      toast.error(errorMessage);
-      throw error;
-    }
+      this.ws!.send(JSON.stringify(message));
+    });
   }
 
   // Image-to-Image generation (re-imagine)

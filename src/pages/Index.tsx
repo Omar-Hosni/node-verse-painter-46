@@ -13,9 +13,9 @@ const Index = () => {
   const setRunwareApiKey = useCanvasStore(state => state.setRunwareApiKey);
   const addNode = useCanvasStore(state => state.addNode);
   
-  // SECURITY FIX: API key no longer hardcoded in frontend
+  // Set the API key on component mount
   useEffect(() => {
-    setRunwareApiKey('secure-backend');
+    setRunwareApiKey('v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ');
     
     // Add some initial nodes in a horizontal layout
     // This demonstrates the horizontal flow

@@ -39,23 +39,16 @@ export const saveProject = async (
       edges: JSON.parse(JSON.stringify(edges))
     };
 
-    const token = await clerkAuth.getToken();
-    if (!token) {
-      toast.error('Authentication required to save project');
-      return null;
-    }
-
-    // Use the create-user-project edge function
-    const { data, error } = await supabase.functions.invoke('create-user-project', {
-      body: {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
         name,
         description,
-        canvas_data: canvasData
-      },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+        canvas_data: canvasData,
+        user_id: clerkAuth.userId,
+      })
+      .select('id')
+      .single();
 
     if (error) {
       console.error('Error saving project:', error);
@@ -64,7 +57,7 @@ export const saveProject = async (
     }
 
     toast.success('Project saved successfully!');
-    return data.project.id;
+    return data.id;
   } catch (error: any) {
     console.error('Error saving project:', error);
     toast.error(`Failed to save: ${error.message}`);
@@ -82,33 +75,17 @@ export const loadProject = async (
   resetNodeIdCounterFunc: () => void
 ): Promise<boolean> => {
   try {
-    const clerkAuth = getClerkUser();
-    const token = await clerkAuth.getToken();
-    if (!token) {
-      toast.error('Authentication required to load project');
-      return false;
-    }
-
-    const { data: projectResponse, error } = await supabase.functions.invoke('get-project', {
-      body: { projectId },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const { data, error } = await supabase
+      .from('projects')
+      .select('canvas_data')
+      .eq('id', projectId)
+      .single();
 
     if (error) {
       console.error('Error loading project:', error);
       toast.error(`Failed to load project: ${error.message}`);
       return false;
     }
-
-    if (!projectResponse?.project) {
-      console.error('Project not found');
-      toast.error('Project not found');
-      return false;
-    }
-
-    const data = projectResponse.project;
 
     if (data && data.canvas_data) {
       // Fix: Add type assertion and validation
@@ -191,30 +168,21 @@ export const loadProject = async (
 export const fetchUserCredits = async (): Promise<number | null> => {
   try {
     const clerkAuth = getClerkUser();
-    if (!clerkAuth.getToken) {
-      return 50; // Default for unauthenticated users
+    if (!clerkAuth.userId) {
+      return null;
     }
 
-    const token = await clerkAuth.getToken();
-    if (!token) {
-      return 50; // Default for users without valid token
+    // Special case for admin user with unlimited credits
+    if (clerkAuth.userEmail === 'omarhosny.barcelona@gmail.com') {
+      return 999999; // Effectively unlimited
     }
 
-    const { data, error } = await supabase.functions.invoke('get-user-credits', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (error) {
-      console.error('Error fetching user credits:', error);
-      return 50; // Default to 50 credits on error
-    }
-
-    return data.credits || 50;
+    // Get credits from the database
+    const credits = await getUserCredits(clerkAuth.userId);
+    return credits;
   } catch (error) {
-    console.error('Error fetching user credits:', error);
-    return 50; // Default to 50 credits on error
+    console.error('Error fetching credits:', error);
+    return null;
   }
 };
 
@@ -239,47 +207,43 @@ export const fetchUserSubscription = async (): Promise<UserSubscription | null> 
 
 // Use credits for generation
 export const useCreditsForGeneration = async (currentCredits: number | null): Promise<boolean> => {
+  // If no credits or less than 5, return false (5 credits needed for 1 generation)
+  if (!currentCredits || currentCredits < 5) {
+    toast.error('Not enough credits for generation (5 credits required)');
+    return false;
+  }
+
   try {
     const clerkAuth = getClerkUser();
-    const token = await clerkAuth.getToken();
-    if (!token) {
-      toast.error('Authentication required for generation');
+    if (!clerkAuth.userId) {
+      toast.error('User not authenticated');
       return false;
     }
 
-    const { data, error } = await supabase.functions.invoke('deduct-credits', {
-      body: { amount: 5 },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    // Special case for admin user - no credits deducted
+    if (clerkAuth.userEmail === 'omarhosny.barcelona@gmail.com') {
+      return true;
+    }
+
+    // Deduct 5 credits for generation
+    const newCredits = currentCredits - 5;
+    
+    // Update user credits in database
+    const { error } = await supabase
+      .from('user_credits')
+      .update({ credits: newCredits, updated_at: new Date().toISOString() })
+      .eq('user_id', clerkAuth.userId);
 
     if (error) {
-      console.error('Error deducting credits:', error);
-      toast.error(error.message || 'Failed to deduct credits');
+      console.error('Error updating credits:', error);
+      toast.error('Failed to deduct credits');
       return false;
     }
 
-    if (!data.success) {
-      if (data.error === 'Insufficient credits') {
-        toast.error(`Not enough credits for generation. You have ${data.currentCredits} credits but need ${data.requiredAmount}.`);
-      } else {
-        toast.error(data.error || 'Failed to deduct credits');
-      }
-      return false;
-    }
-
-    // Success - inform user of remaining credits
-    if (data.isAdmin) {
-      toast.success('Generation started (Admin account - unlimited credits)');
-    } else {
-      toast.success(`Generation started! ${data.remainingCredits} credits remaining.`);
-    }
-    
     return true;
-  } catch (error: any) {
-    console.error('Error in useCreditsForGeneration:', error);
-    toast.error(`Failed to use credits: ${error.message}`);
+  } catch (error) {
+    console.error('Error using credits:', error);
+    toast.error('Failed to process credits');
     return false;
   }
 };

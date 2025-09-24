@@ -63,9 +63,8 @@ const Editor = () => {
 
     checkAuth();
     
-    // SECURITY FIX: API key no longer hardcoded in frontend
-    // API key is now handled securely in the backend
-    setRunwareApiKey("secure-backend");
+    // Set API key - this can later be moved to user settings
+    setRunwareApiKey("v8r2CamVZNCtye7uypGvHfQOh48ZQQaZ");
 
     // Load project if projectId is provided
     if (projectId) {
@@ -171,17 +170,16 @@ const Editor = () => {
         setLoadingStep('project');
         setLoadingProgress(40);
         
-        const { data: projectResponse, error } = await supabase.functions.invoke('get-project', {
-          body: { projectId }
-        });
+        const { data, error } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', projectId)
+          .single();
         
         if (error) {
-          console.error('Error loading project:', error);
           toast.error(`Error loading project: ${error.message}`);
-        } else if (projectResponse?.project) {
-          setProjectName(projectResponse.project.name);
-        } else {
-          toast.error('Project not found');
+        } else if (data) {
+          setProjectName(data.name);
         }
         
         setLoadingProgress(70);
