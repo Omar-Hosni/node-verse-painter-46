@@ -193,10 +193,9 @@ export class RunwareService {
   }
 
   constructor(apiKey?: string) {
-    // SECURITY FIX: API key is now handled securely in the backend edge function
-    // No longer store API key in frontend for security
-    this.apiKey = "secure-backend"; // Placeholder - real key handled by backend
-    // Only initialize WebSocket connection when specifically needed for non-generation tasks
+    // Use only the provided API key; never fall back to placeholders
+    this.apiKey = apiKey ?? null;
+    // Defer WS connection until a method explicitly needs it
     this.connectionPromise = null;
   }
 
