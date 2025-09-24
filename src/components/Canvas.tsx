@@ -806,6 +806,14 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
         selectionOnDrag={isSelectTool}
         nodesDraggable={isSelectTool}
         panOnDrag={isHandTool ? true : [1, 2]}
+        
+        /* trackpad/touchpad friendliness */
+        panOnScroll
+        panOnScrollMode={"free"}
+        panOnScrollSpeed={0.7}   // tweak 0.4–1.0 to taste
+        zoomOnPinch
+        zoomOnScroll={false}
+        zoomOnDoubleClick={false}
         onNodesChange={handleNodesChangeWithHelperLines}
         onEdgesChange={onEdgesChange}
         onConnect={(connection: Connection) => {

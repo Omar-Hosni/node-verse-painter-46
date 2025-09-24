@@ -1,6 +1,5 @@
-// @ts-nocheck
-import { memo, useState, useEffect, useRef } from 'react';
-import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
+import { memo, useState, useEffect } from 'react';
+import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 
 interface RectangleNodeData {
@@ -11,7 +10,6 @@ interface RectangleNodeData {
     pin?: boolean;
     visibility?: boolean;
     opacity?: number;
-    blendMode?: string;
     cornerRadius?: number;
     activeCorner?: string;
     corners?: {
@@ -33,29 +31,21 @@ interface RectangleNodeData {
   icon?: string;
 }
 
-const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>) => {
+const RectangleNode = memo(({ id, data, selected }: NodeProps) => {
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const { getZoom } = useReactFlow();
   const [isHovered, setIsHovered] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(getZoom());
-  const updateNodeInternals = useUpdateNodeInternals();
 
-  // Visual dimensions (updated in real-time during resize)
-  const [visualWidth, setVisualWidth] = useState((data as RectangleNodeData).width || 200);
-  const [visualHeight, setVisualHeight] = useState((data as RectangleNodeData).height || 200);
-
-  // Store dimensions (only updated when resize is complete)
-  const [storeWidth, setStoreWidth] = useState((data as RectangleNodeData).width || 200);
-  const [storeHeight, setStoreHeight] = useState((data as RectangleNodeData).height || 200);
-
-  const isResizing = useRef(false);
+  // Simple dimension management - use data values directly like FrameNode
+  const width = (data as RectangleNodeData)?.width || 200;
+  const height = (data as RectangleNodeData)?.height || 200;
 
   // Get rectangle properties with defaults
-  const rectangleProps = data?.right_sidebar || {};
+  const rectangleProps = (data as RectangleNodeData)?.right_sidebar || {};
   const {
     visibility = true,
     opacity = 100,
-    blendMode = 'normal',
     cornerRadius = 8,
     activeCorner = 'all',
     corners = {},
@@ -74,16 +64,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
     return `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`;
   };
 
-  // Update dimensions when data changes from properties panel
-  useEffect(() => {
-    const newWidth = (data as RectangleNodeData).width || 200;
-    const newHeight = (data as RectangleNodeData).height || 200;
 
-    setVisualWidth(newWidth);
-    setVisualHeight(newHeight);
-    setStoreWidth(newWidth);
-    setStoreHeight(newHeight);
-  }, [data?.width, data?.height]);
 
   // Track zoom changes in real time - when selected or hovered for performance
   useEffect(() => {
@@ -108,19 +89,13 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
     };
   }, [getZoom, currentZoom, selected, isHovered]);
 
-  // Update store when store dimensions change (but not during active resize to avoid conflicts)
-  useEffect(() => {
-    if (!isResizing.current) {
-      updateNodeData(id, { width: storeWidth, height: storeHeight });
-    }
-  }, [storeWidth, storeHeight, id, updateNodeData]);
+
 
   const rectangleStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
     backgroundColor: fillColor,
     opacity: opacity / 100,
-    mixBlendMode: blendMode as any,
     display: visibility ? 'block' : 'none',
     borderRadius: getBorderRadius(),
     border: strokeWidth > 0 ? `${strokeWidth}px ${strokeStyle} ${strokeColor}` : 'none',
@@ -132,8 +107,8 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
   return (
     <div
       style={{
-        width: visualWidth,
-        height: visualHeight,
+        width: width,
+        height: height,
         position: 'relative',
         background: 'transparent',
         border: 'none', // Remove CSS border completely
@@ -158,23 +133,17 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
           pointerEvents: 'none',
           zIndex: 99999999 // High z-index to ensure it's on top
         }}
-        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+        viewBox={`0 0 ${width} ${height}`}
       >
         {/* Border stroke with smooth transitions */}
         <rect
           x={0}
           y={0}
-          width={visualWidth}
-          height={visualHeight}
+          width={width}
+          height={height}
           fill="none"
           stroke="#3b82f6"
-          strokeOpacity={
-            selected
-              ? 1
-              : isHovered
-                ? 0.5
-                : 0
-          }
+          strokeOpacity={0}
           strokeWidth={2 / currentZoom}
           vectorEffect="non-scaling-stroke"
           style={{
@@ -197,7 +166,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
             zIndex: 999999999999,
             overflow: 'visible'
           }}
-          viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+          viewBox={`0 0 ${width} ${height}`}
         >
           {/* Top-left corner */}
           <rect
@@ -211,7 +180,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
           />
           {/* Top-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
             y={-3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
@@ -222,7 +191,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
           {/* Bottom-left corner */}
           <rect
             x={-3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -231,8 +200,8 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
           />
           {/* Bottom-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -247,12 +216,10 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
         <>
           <NodeResizer
             isVisible={selected}
-            minWidth={1}
-            minHeight={1}
-            shouldResize={() => true}
             lineStyle={{
               borderColor: 'transparent', // Hide the default border since we use SVG
-              borderWidth: '0px'
+              borderWidth: '0px',
+
             }}
             handleStyle={{
               backgroundColor: 'transparent',
@@ -263,38 +230,13 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
               borderRadius: '0px',
               zIndex: '999999999999',
             }}
-            onResizeStart={() => {
-              isResizing.current = true;
-            }}
             onResize={(_, params) => {
-              // Update visual dimensions immediately for smooth UX
-              setVisualWidth(params.width);
-              setVisualHeight(params.height);
-              
-              // Update store dimensions directly and immediately
-              const store = useCanvasStore.getState();
-              const currentNodes = store.nodes;
-              const updatedNodes = currentNodes.map(node => 
-                node.id === id 
-                  ? { 
-                      ...node, 
-                      data: { 
-                        ...node.data, 
-                        width: params.width, 
-                        height: params.height 
-                      } 
-                    }
-                  : node
-              );
-              useCanvasStore.setState({ nodes: updatedNodes });
-            }}
-            onResizeEnd={(event, params) => {
-              isResizing.current = false;
-              
-              // Final update to ensure everything is in sync
-              setStoreWidth(params.width);
-              setStoreHeight(params.height);
-              updateNodeData(id, { width: params.width, height: params.height });
+              // Simple real-time update like FrameNode - no complex state management
+              updateNodeData(id, {
+                ...(data as RectangleNodeData),
+                width: params.width,
+                height: params.height
+              });
             }}
           />
         </>
@@ -303,7 +245,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
       {/* Size tag using NodeToolbar */}
       <NodeToolbar
         isVisible={selected}
-        position="bottom"
+        position={Position.Bottom}
         offset={4}
       >
         <div
@@ -319,7 +261,7 @@ const RectangleNode = memo(({ id, data, selected }: NodeProps<RectangleNodeData>
             userSelect: 'none'
           }}
         >
-          {Math.round(visualWidth)} × {Math.round(visualHeight)}
+          {Math.round(width)} × {Math.round(height)}
         </div>
       </NodeToolbar>
 

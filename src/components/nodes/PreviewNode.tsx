@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizer, NodeToolbar, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -12,24 +11,23 @@ export const PreviewNode: React.FC<NodeProps> = React.memo(({
   selected
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
-  const [width, setWidth] = useState(data?.width || 300);
-  const [height, setHeight] = useState(data?.height || 300);
   const [currentZoom, setCurrentZoom] = useState(1);
   const { updateNodeData } = useCanvasStore();
   const { getProcessedImage } = useWorkflowStore();
   const { getNodes, getEdges, getZoom } = useReactFlow();
 
-  // Get rotation, flip, and aspect ratio values from data
-  const rotation = data?.rotation || 0;
-  const flipHorizontal = data?.flipHorizontal || false;
-  const flipVertical = data?.flipVertical || false;
-  const aspectRatioLocked = data?.aspectRatioLocked || false;
-  const storedAspectRatio = data?.storedAspectRatio;
+  // Simple dimension management - use data values directly like FrameNode
+  const width = (data?.width as number) || 300;
+  const height = (data?.height as number) || 300;
 
-  // Update node data when dimensions change
-  useEffect(() => {
-    updateNodeData(id, { width, height });
-  }, [width, height, id, updateNodeData]);
+  // Get rotation, flip, and aspect ratio values from data
+  const rotation = (data?.rotation as number) || 0;
+  const flipHorizontal = (data?.flipHorizontal as boolean) || false;
+  const flipVertical = (data?.flipVertical as boolean) || false;
+  const aspectRatioLocked = (data?.aspectRatioLocked as boolean) || false;
+  const storedAspectRatio = data?.storedAspectRatio as number;
+
+
 
   // Track zoom changes in real time - when selected or hovered for performance
   useEffect(() => {
@@ -54,15 +52,7 @@ export const PreviewNode: React.FC<NodeProps> = React.memo(({
     };
   }, [getZoom, currentZoom, selected, isHovered]);
 
-  // Update local state when data changes (from properties panel)
-  useEffect(() => {
-    if (data?.width !== undefined && data?.width !== width) {
-      setWidth(data.width);
-    }
-    if (data?.height !== undefined && data?.height !== height) {
-      setHeight(data.height);
-    }
-  }, [data?.width, data?.height]);
+
 
   // Function to get connected images from input nodes
   const getConnectedImages = () => {
@@ -493,63 +483,15 @@ const singleImageSource = ownProcessedImage ||
               zIndex: '999999999999',
             }}
             keepAspectRatio={aspectRatioLocked}
-            onResizeStart={() => {
-              // Add resize start logic if needed
-            }}
             onResize={(_, params) => {
-              // Update visual dimensions immediately for smooth UX
-              if (aspectRatioLocked && storedAspectRatio) {
-                // When aspect ratio is locked, calculate proper dimensions
-                const widthChange = Math.abs(params.width - width);
-                const heightChange = Math.abs(params.height - height);
-
-                let newWidth, newHeight;
-
-                if (widthChange >= heightChange) {
-                  // Width-driven resize
-                  newWidth = params.width;
-                  newHeight = newWidth / storedAspectRatio;
-                } else {
-                  // Height-driven resize
-                  newHeight = params.height;
-                  newWidth = newHeight * storedAspectRatio;
-                }
-
-                setWidth(newWidth);
-                setHeight(newHeight);
-              } else {
-                // Free resize when unlocked
-                setWidth(params.width);
-                setHeight(params.height);
-              }
+              // Simple real-time update like FrameNode - no complex state management
+              updateNodeData(id, {
+                ...data,
+                width: params.width,
+                height: params.height
+              });
             }}
-            onResizeEnd={(_, params) => {
-              // Update store dimensions only when resize is complete
-              if (aspectRatioLocked && storedAspectRatio) {
-                // When aspect ratio is locked, calculate proper dimensions
-                const widthChange = Math.abs(params.width - width);
-                const heightChange = Math.abs(params.height - height);
 
-                let newWidth, newHeight;
-
-                if (widthChange >= heightChange) {
-                  // Width-driven resize
-                  newWidth = params.width;
-                  newHeight = newWidth / storedAspectRatio;
-                } else {
-                  // Height-driven resize
-                  newHeight = params.height;
-                  newWidth = newHeight * storedAspectRatio;
-                }
-
-                setWidth(newWidth);
-                setHeight(newHeight);
-              } else {
-                // Free resize when unlocked
-                setWidth(params.width);
-                setHeight(params.height);
-              }
-            }}
           />
         </>
       )}
@@ -646,7 +588,7 @@ const singleImageSource = ownProcessedImage ||
       {/* Size display when selected */}
       <NodeToolbar
         isVisible={selected}
-        position="bottom"
+        position={Position.Bottom}
         offset={4}
       >
         <div

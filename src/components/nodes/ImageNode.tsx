@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { memo, useState, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -13,7 +12,6 @@ interface ImageNodeData {
     pin?: boolean;
     visibility?: boolean;
     opacity?: number;
-    blendMode?: string;
     cornerRadius?: number;
     activeCorner?: string;
     corners?: {
@@ -56,7 +54,7 @@ interface ImageNodeData {
   icon?: string;
 }
 
-const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
+const ImageNode = memo(({ id, data, selected }: NodeProps) => {
   const { updateNodeData, edges, nodes, setSelectedNode } = useCanvasStore(state => ({
     updateNodeData: state.updateNodeData,
     edges: state.edges,
@@ -107,19 +105,19 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
   const lastDrawPointRef = useRef<{ x: number; y: number } | null>(null);
 
   // Drawing storage - store as base64 data URL for persistence
-  const drawingData = data?.right_sidebar?.drawingData || null;
+  const drawingData = (data as ImageNodeData)?.right_sidebar?.drawingData || null;
 
   // Helper function to draw with brush/eraser properties
   const drawWithTool = (ctx: CanvasRenderingContext2D, x: number, y: number, tool: 'brush' | 'eraser', isStartPoint = false) => {
     // Get tool properties from node data
-    const brushSize = data?.right_sidebar?.brushSize || 8;
-    const brushHardness = data?.right_sidebar?.brushHardness ?? 100;
-    const brushFlow = data?.right_sidebar?.brushFlow ?? 100;
+    const brushSize = (data as ImageNodeData)?.right_sidebar?.brushSize || 8;
+    const brushHardness = (data as ImageNodeData)?.right_sidebar?.brushHardness ?? 100;
+    const brushFlow = (data as ImageNodeData)?.right_sidebar?.brushFlow ?? 100;
 
-    const eraserSize = data?.right_sidebar?.eraserSize || 8;
-    const eraserHardness = data?.right_sidebar?.eraserHardness ?? 100;
-    const eraserOpacity = data?.right_sidebar?.eraserOpacity ?? 100;
-    const eraserFlow = data?.right_sidebar?.eraserFlow ?? 100;
+    const eraserSize = (data as ImageNodeData)?.right_sidebar?.eraserSize || 8;
+    const eraserHardness = (data as ImageNodeData)?.right_sidebar?.eraserHardness ?? 100;
+    const eraserOpacity = (data as ImageNodeData)?.right_sidebar?.eraserOpacity ?? 100;
+    const eraserFlow = (data as ImageNodeData)?.right_sidebar?.eraserFlow ?? 100;
 
     // Use appropriate tool properties
     const size = tool === 'brush' ? brushSize : eraserSize;
@@ -318,7 +316,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
         if (rotation !== 0) {
           updateNodeData(id, {
             right_sidebar: {
-              ...data?.right_sidebar,
+              ...(data as ImageNodeData)?.right_sidebar,
               rotation: 0
             }
           });
@@ -329,7 +327,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       if (originalRotationRef.current !== null) {
         updateNodeData(id, {
           right_sidebar: {
-            ...data?.right_sidebar,
+            ...(data as ImageNodeData)?.right_sidebar,
             rotation: originalRotationRef.current
           }
         });
@@ -338,22 +336,15 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     }
   }, [toolbarMode, id, updateNodeData, data?.right_sidebar]);
 
-  // Visual dimensions (updated in real-time during resize) - same as FrameNode
-  const [visualWidth, setVisualWidth] = useState((data as ImageNodeData).width || 200);
-  const [visualHeight, setVisualHeight] = useState((data as ImageNodeData).height || 200);
-
-  // Store dimensions (only updated when resize is complete) - same as FrameNode
-  const [storeWidth, setStoreWidth] = useState((data as ImageNodeData).width || 200);
-  const [storeHeight, setStoreHeight] = useState((data as ImageNodeData).height || 200);
-
-  const isResizing = useRef(false);
+  // Simple dimension management - use data values directly like FrameNode
+  const width = (data as ImageNodeData)?.width || 200;
+  const height = (data as ImageNodeData)?.height || 200;
 
   // Get image properties with defaults
-  const imageProps = data?.right_sidebar || {};
+  const imageProps = (data as ImageNodeData)?.right_sidebar || {};
   const {
     visibility = true,
     opacity = 100,
-    blendMode = 'normal',
     cornerRadius = 8,
     activeCorner = 'all',
     corners = {},
@@ -390,20 +381,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     }
   }, [imageUrl]);
 
-  // Save drawing data to node storage
-  const saveDrawingData = () => {
-    const canvas = paintingCanvasRef.current;
-    if (canvas) {
-      const dataURL = canvas.toDataURL('image/png');
-      updateNodeData(id, {
-        right_sidebar: {
-          ...data?.right_sidebar,
-          drawingData: dataURL,
-          drawingDimensions: { width: canvas.width, height: canvas.height }
-        }
-      });
-    }
-  };
+
 
   // Load drawing data onto canvas
   const loadDrawingData = (canvas: HTMLCanvasElement) => {
@@ -422,6 +400,21 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     }
   };
 
+  // Save drawing data to node storage
+  const saveDrawingData = () => {
+    const canvas = paintingCanvasRef.current;
+    if (canvas) {
+      const dataURL = canvas.toDataURL('image/png');
+      updateNodeData(id, {
+        right_sidebar: {
+          ...(data as ImageNodeData)?.right_sidebar,
+          drawingData: dataURL,
+          drawingDimensions: { width: canvas.width, height: canvas.height }
+        }
+      });
+    }
+  };
+
   // Clear all drawing data
   const clearDrawingData = () => {
     const canvas = paintingCanvasRef.current;
@@ -433,7 +426,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     }
     updateNodeData(id, {
       right_sidebar: {
-        ...data?.right_sidebar,
+        ...(data as ImageNodeData)?.right_sidebar,
         drawingData: null,
         drawingDimensions: null
       }
@@ -444,10 +437,10 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
   const getDrawingData = () => {
     return {
       dataURL: drawingData,
-      dimensions: data?.right_sidebar?.drawingDimensions,
+      dimensions: (data as ImageNodeData)?.right_sidebar?.drawingDimensions,
       imageDisplayBounds: imageNaturalDimensions.width > 0 ? getImageDisplayBounds(
-        visualWidth,
-        visualHeight,
+        width,
+        height,
         imageNaturalDimensions.width,
         imageNaturalDimensions.height,
         getObjectFit(imageType)
@@ -461,7 +454,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       if (!drawingData || !imageNaturalDimensions.width || !imageNaturalDimensions.height) return null;
 
       const overlay = drawingData;
-      const dims = data?.right_sidebar?.drawingDimensions;
+      const dims = (data as ImageNodeData)?.right_sidebar?.drawingDimensions;
       if (!overlay) return null;
 
       // create mask at the seed image's natural resolution
@@ -551,35 +544,9 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     }
   };
 
-  // Update dimensions when data changes from properties panel
-  useEffect(() => {
-    const newWidth = (data as ImageNodeData).width || 200;
 
-    const newHeight = (data as ImageNodeData).height || 200;
 
-    setVisualWidth(newWidth);
-    setVisualHeight(newHeight);
-    setStoreWidth(newWidth);
-    setStoreHeight(newHeight);
-  }, [data?.width, data?.height]);
 
-  // Only update store when store dimensions change (not during active resize)
-  useEffect(() => {
-    if (!isResizing.current) {
-      updateNodeData(id, { width: storeWidth, height: storeHeight });
-
-      // Force React Flow to update edge positions after dimension change
-      setTimeout(() => {
-        const currentNodes = getNodes();
-        const updatedNodes = currentNodes.map(node =>
-          node.id === id
-            ? { ...node, width: storeWidth, height: storeHeight }
-            : node
-        );
-        setNodes(updatedNodes);
-      }, 50); // Small delay to ensure store update is complete
-    }
-  }, [storeWidth, storeHeight, id, updateNodeData, getNodes, setNodes]);
 
 
 
@@ -645,8 +612,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
   };
 
   // Calculate aspect-ratio-adjusted dimensions for outpaint mode
-  let adjustedWidth = visualWidth;
-  let adjustedHeight = visualHeight;
+  let adjustedWidth = width;
+  let adjustedHeight = height;
 
   // Store original dimensions when entering outpainting mode
   const originalDimensions = useRef<{ width: number; height: number } | null>(null);
@@ -656,8 +623,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
   if ((toolbarMode === 'outpainting' || toolbarMode === 'outpainted') && imageNaturalDimensions.width > 0 && imageNaturalDimensions.height > 0) {
     const imageAspectRatio = imageNaturalDimensions.width / imageNaturalDimensions.height;
     // Prioritize height - keep current height and adjust width based on image aspect ratio
-    adjustedHeight = visualHeight;
-    adjustedWidth = visualHeight * imageAspectRatio;
+    adjustedHeight = height;
+    adjustedWidth = height * imageAspectRatio;
   }
 
   // Helper functions to convert between percentage and pixel values
@@ -665,10 +632,10 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
   const pxToPercent = (px: number, dimension: number) => dimension > 0 ? (px / dimension) * 100 : 0;
 
   // Get padding values for outpaint mode (stored as percentages, converted to pixels)
-  const paddingTopPercent = data?.right_sidebar?.paddingTop || 0;
-  const paddingBottomPercent = data?.right_sidebar?.paddingBottom || 0;
-  const paddingLeftPercent = data?.right_sidebar?.paddingLeft || 0;
-  const paddingRightPercent = data?.right_sidebar?.paddingRight || 0;
+  const paddingTopPercent = (data as ImageNodeData)?.right_sidebar?.paddingTop || 0;
+  const paddingBottomPercent = (data as ImageNodeData)?.right_sidebar?.paddingBottom || 0;
+  const paddingLeftPercent = (data as ImageNodeData)?.right_sidebar?.paddingLeft || 0;
+  const paddingRightPercent = (data as ImageNodeData)?.right_sidebar?.paddingRight || 0;
 
   // Convert percentage values to pixels for rendering
   const paddingTop = percentToPx(paddingTopPercent, adjustedHeight);
@@ -686,24 +653,20 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       // Store original dimensions if not already stored
       if (!originalDimensions.current) {
         originalDimensions.current = {
-          width: visualWidth,
-          height: visualHeight
+          width: width,
+          height: height
         };
       }
 
       const imageAspectRatio = imageNaturalDimensions.width / imageNaturalDimensions.height;
-      const newWidth = visualHeight * imageAspectRatio;
+      const newWidth = height * imageAspectRatio;
 
       // Only update if the calculated width is significantly different
-      if (Math.abs(newWidth - visualWidth) > 1) {
-        isResizing.current = true;
+      if (Math.abs(newWidth - width) > 1) {
         updateNodeData(id, {
           width: newWidth,
-          height: visualHeight
+          height: height
         });
-        setTimeout(() => {
-          isResizing.current = false;
-        }, 100);
       }
     }
 
@@ -714,13 +677,11 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       const restoredWidth = originalDimensions.current.width;
       const restoredHeight = originalDimensions.current.height;
 
-      isResizing.current = true;
       updateNodeData(id, {
         width: restoredWidth,
         height: restoredHeight
       });
       setTimeout(() => {
-        isResizing.current = false;
         // Workaround: Update again with slightly different values to force edge repositioning
         updateNodeData(id, {
           width: restoredWidth + 0.1,
@@ -735,7 +696,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     // Update previous state references
     prevToolbarMode.current = toolbarMode;
     prevSelected.current = selected;
-  }, [selected, toolbarMode, imageNaturalDimensions.width, imageNaturalDimensions.height, visualHeight, visualWidth, id, updateNodeData]);
+  }, [selected, toolbarMode, imageNaturalDimensions.width, imageNaturalDimensions.height, height, width, id, updateNodeData]);
 
 
 
@@ -746,7 +707,6 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
     height: '100%',
     objectFit: getObjectFit(imageType),
     opacity: opacity / 100,
-    mixBlendMode: blendMode as any,
     display: visibility ? 'block' : 'none'
   };
 
@@ -914,7 +874,11 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
             <img
               src={imageUrl}
               alt={imageName}
-              style={imageStyle}
+              style={{
+                ...imageStyle,
+                position: 'relative',
+                zIndex: 1
+              }}
               draggable={false}
             />
           ) : (
@@ -932,8 +896,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
           {toolbarMode === 'inpainting' && imageUrl && imageNaturalDimensions.width > 0 && (() => {
             // Calculate actual image display bounds based on imageType
             const imageDisplayBounds = getImageDisplayBounds(
-              visualWidth,
-              visualHeight,
+              width,
+              height,
               imageNaturalDimensions.width,
               imageNaturalDimensions.height,
               getObjectFit(imageType)
@@ -959,7 +923,6 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   height: `${imageDisplayBounds.height}px`,
                   cursor: selectedTool === 'hand' ? 'grab' : 'crosshair',
                   zIndex: 10,
-                  mixBlendMode: 'screen',
                   opacity: 0.5,
                   pointerEvents: 'auto'
                 }}
@@ -1183,11 +1146,10 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
           <>
             <NodeResizer
               isVisible={selected}
-              minWidth={1}
-              minHeight={1}
               lineStyle={{
                 borderColor: 'transparent', // Hide the default border since we use SVG
-                borderWidth: '0px'
+                borderWidth: '0px',
+
               }}
               handleStyle={{
                 backgroundColor: 'transparent',
@@ -1199,72 +1161,13 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 zIndex: '999999999999',
               }}
               keepAspectRatio={aspectRatioLocked}
-              onResizeStart={() => {
-                isResizing.current = true;
-              }}
               onResize={(_, params) => {
-                // Update visual dimensions immediately for smooth UX
-                if (aspectRatioLocked && storedAspectRatio) {
-                  // When aspect ratio is locked, calculate proper dimensions
-                  // Use the larger dimension change to determine the resize direction
-                  const currentAspectRatio = visualWidth / visualHeight;
-                  const targetAspectRatio = storedAspectRatio;
-
-                  // Determine which dimension changed more significantly
-                  const widthChange = Math.abs(params.width - visualWidth);
-                  const heightChange = Math.abs(params.height - visualHeight);
-
-                  let newWidth, newHeight;
-
-                  if (widthChange >= heightChange) {
-                    // Width-driven resize
-                    newWidth = params.width;
-                    newHeight = newWidth / targetAspectRatio;
-                  } else {
-                    // Height-driven resize
-                    newHeight = params.height;
-                    newWidth = newHeight * targetAspectRatio;
-                  }
-
-                  setVisualWidth(newWidth);
-                  setVisualHeight(newHeight);
-                } else {
-                  // Free resize when unlocked
-                  setVisualWidth(params.width);
-                  setVisualHeight(params.height);
-                }
-              }}
-              onResizeEnd={(_, params) => {
-                isResizing.current = false;
-                // Update store dimensions only when resize is complete
-                if (aspectRatioLocked && storedAspectRatio) {
-                  // When aspect ratio is locked, calculate proper dimensions
-                  const currentAspectRatio = storeWidth / storeHeight;
-                  const targetAspectRatio = storedAspectRatio;
-
-                  // Determine which dimension changed more significantly
-                  const widthChange = Math.abs(params.width - storeWidth);
-                  const heightChange = Math.abs(params.height - storeHeight);
-
-                  let newWidth, newHeight;
-
-                  if (widthChange >= heightChange) {
-                    // Width-driven resize
-                    newWidth = params.width;
-                    newHeight = newWidth / targetAspectRatio;
-                  } else {
-                    // Height-driven resize
-                    newHeight = params.height;
-                    newWidth = newHeight * targetAspectRatio;
-                  }
-
-                  setStoreWidth(newWidth);
-                  setStoreHeight(newHeight);
-                } else {
-                  // Free resize when unlocked
-                  setStoreWidth(params.width);
-                  setStoreHeight(params.height);
-                }
+                // Simple real-time update like FrameNode - no complex state management
+                updateNodeData(id, {
+                  ...(data as ImageNodeData),
+                  width: params.width,
+                  height: params.height
+                });
               }}
             />
           </>
@@ -1276,7 +1179,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
       {/* Only show toolbar when selected (not in outpainted mode) */}
       <NodeToolbar
         isVisible={selected && toolbarMode !== 'outpainted'}
-        position="bottom"
+        position={Position.Bottom}
         offset={8}
       >
         <div
@@ -1321,7 +1224,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
               <div className="flex rounded-full h-full p-0.5" style={{ minWidth: '140px' }}>
                 {ratioOptions.map((r) => {
                   // Use ImageNode's own ratio property
-                  const currentRatio = data?.right_sidebar?.ratio || '1:1';
+                  const currentRatio = (data as ImageNodeData)?.right_sidebar?.ratio || '1:1';
 
                   // Create dynamic shape with appropriate colors
                   const isActive = currentRatio === r;
@@ -1355,8 +1258,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                           const targetAspectRatio = widthRatio / heightRatio;
 
                           // Get current image dimensions (without padding)
-                          const currentWidth = visualWidth;
-                          const currentHeight = visualHeight;
+                          const currentWidth = width;
+                          const currentHeight = height;
                           const currentAspectRatio = currentWidth / currentHeight;
 
                           let paddingTop = 0;
@@ -1393,7 +1296,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                         // Update the ImageNode's ratio property and padding
                         updateNodeData(id, {
                           right_sidebar: {
-                            ...data?.right_sidebar,
+                            ...(data as ImageNodeData)?.right_sidebar,
                             ratio: r,
                             paddingTop: newPadding.paddingTop,
                             paddingBottom: newPadding.paddingBottom,
@@ -1405,8 +1308,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                         // Add 0.01 to width and height properties after 2ms
                         setTimeout(() => {
                           updateNodeData(id, {
-                            width: (data?.width || 200) + 0.01,
-                            height: (data?.height || 200) + 0.01
+                            width: ((data as ImageNodeData)?.width || 200) + 0.01,
+                            height: ((data as ImageNodeData)?.height || 200) + 0.01
                           });
                         }, 2);
                       }}
@@ -1434,7 +1337,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                   minWidth: '20px'
                 }}
               >
-                {data?.right_sidebar?.ratio || '1:1'}
+                {(data as ImageNodeData)?.right_sidebar?.ratio || '1:1'}
               </span>
 
               {/* White divider */}
@@ -1782,7 +1685,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 const newPaddingPercent = pxToPercent(newPaddingPx, adjustedHeight);
 
                 updateNodeData(id, {
-                  right_sidebar: { ...data?.right_sidebar, paddingTop: newPaddingPercent }
+                  right_sidebar: { ...(data as ImageNodeData)?.right_sidebar, paddingTop: newPaddingPercent }
                 });
               };
 
@@ -1794,8 +1697,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 // Add 0.01 to width and height properties after 2ms
                 setTimeout(() => {
                   updateNodeData(id, {
-                    width: (data?.width || 200) + 0.01,
-                    height: (data?.height || 200) + 0.01
+                    width: ((data as ImageNodeData)?.width || 200) + 0.01,
+                    height: ((data as ImageNodeData)?.height || 200) + 0.01
                   });
                 }, 2);
               };
@@ -1830,7 +1733,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 const newPaddingPercent = pxToPercent(newPaddingPx, adjustedHeight);
 
                 updateNodeData(id, {
-                  right_sidebar: { ...data?.right_sidebar, paddingBottom: newPaddingPercent }
+                  right_sidebar: { ...(data as ImageNodeData)?.right_sidebar, paddingBottom: newPaddingPercent }
                 });
               };
 
@@ -1842,8 +1745,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 // Add 0.01 to width and height properties after 2ms
                 setTimeout(() => {
                   updateNodeData(id, {
-                    width: (data?.width || 200) + 0.01,
-                    height: (data?.height || 200) + 0.01
+                    width: ((data as ImageNodeData)?.width || 200) + 0.01,
+                    height: ((data as ImageNodeData)?.height || 200) + 0.01
                   });
                 }, 2);
               };
@@ -1878,7 +1781,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 const newPaddingPercent = pxToPercent(newPaddingPx, adjustedWidth);
 
                 updateNodeData(id, {
-                  right_sidebar: { ...data?.right_sidebar, paddingLeft: newPaddingPercent }
+                  right_sidebar: { ...(data as ImageNodeData)?.right_sidebar, paddingLeft: newPaddingPercent }
                 });
               };
 
@@ -1890,8 +1793,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 // Add 0.01 to width and height properties after 2ms
                 setTimeout(() => {
                   updateNodeData(id, {
-                    width: (data?.width || 200) + 0.01,
-                    height: (data?.height || 200) + 0.01
+                    width: ((data as ImageNodeData)?.width || 200) + 0.01,
+                    height: ((data as ImageNodeData)?.height || 200) + 0.01
                   });
                 }, 2);
               };
@@ -1926,7 +1829,7 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 const newPaddingPercent = pxToPercent(newPaddingPx, adjustedWidth);
 
                 updateNodeData(id, {
-                  right_sidebar: { ...data?.right_sidebar, paddingRight: newPaddingPercent }
+                  right_sidebar: { ...(data as ImageNodeData)?.right_sidebar, paddingRight: newPaddingPercent }
                 });
               };
 
@@ -1938,8 +1841,8 @@ const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>) => {
                 // Add 0.01 to width and height properties after 2ms
                 setTimeout(() => {
                   updateNodeData(id, {
-                    width: (data?.width || 200) + 0.01,
-                    height: (data?.height || 200) + 0.01
+                    width: ((data as ImageNodeData)?.width || 200) + 0.01,
+                    height: ((data as ImageNodeData)?.height || 200) + 0.01
                   });
                 }, 2);
               };

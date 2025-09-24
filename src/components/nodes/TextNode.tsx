@@ -17,7 +17,6 @@ interface TextNodeData {
     letterSpacing?: number;
     visibility?: boolean;
     opacity?: number;
-    blendMode?: string;
     color?: string;
     text?: string;
     rotation?: number;
@@ -40,12 +39,9 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
   const [currentZoom, setCurrentZoom] = useState(getZoom());
   const updateNodeInternals = useUpdateNodeInternals();
 
-  // Simple resizing state - always use fixed dimensions
-  const [visualWidth, setVisualWidth] = useState(data?.width || 200);
-  const [visualHeight, setVisualHeight] = useState(data?.height || 100);
-  const [storeWidth, setStoreWidth] = useState(data?.width || 200);
-  const [storeHeight, setStoreHeight] = useState(data?.height || 100);
-  const isResizing = useRef(false);
+  // Simple dimension management - use data values directly like other nodes
+  const width = (data?.width as number) || 200;
+  const height = (data?.height as number) || 100;
 
   // Get text properties with defaults
   const textProps = data?.right_sidebar || {};
@@ -58,7 +54,6 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
     letterSpacing = 0,
     visibility = true,
     opacity = 100,
-    blendMode = 'normal',
     color = '#FFFFFF',
     text = 'New Text',
     rotation = 0,
@@ -92,22 +87,9 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
     };
   }, [getZoom, currentZoom, selected, isHovered]);
 
-  // Update store dimensions when they change (not during active resize)
-  useEffect(() => {
-    if (!isResizing.current) {
-      updateNodeData(id, {
-        width: storeWidth,
-        height: storeHeight
-      });
-    }
-  }, [storeWidth, storeHeight, id, updateNodeData]);
-
   // Update dimensions when data changes
   useEffect(() => {
-    setVisualWidth(data?.width || 200);
-    setVisualHeight(data?.height || 100);
-    setStoreWidth(data?.width || 200);
-    setStoreHeight(data?.height || 100);
+    // This effect will run when data.width or data.height changes from external sources
   }, [data?.width, data?.height]);
 
   // Load Google Font dynamically with proper loading detection
@@ -209,7 +191,6 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
     letterSpacing: `${letterSpacing}px`,
     color: color,
     opacity: opacity / 100,
-    mixBlendMode: blendMode as any,
     display: visibility ? 'block' : 'none',
     whiteSpace: 'pre-wrap', // Preserve line breaks and allow wrapping
     userSelect: 'none',
@@ -221,8 +202,8 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
 
   // Container style - simple fixed size
   const containerStyle: React.CSSProperties = {
-    width: visualWidth,
-    height: visualHeight,
+    width: width,
+    height: height,
     position: 'relative',
     background: 'transparent',
     border: 'none', // Remove CSS border completely
@@ -255,7 +236,6 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
             letterSpacing: `${letterSpacing}px`,
             color: color,
             opacity: opacity / 100,
-            mixBlendMode: blendMode as any,
             background: 'transparent',
             border: 'none',
             outline: 'none',
@@ -301,15 +281,15 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
           height: '100%',
           pointerEvents: 'none',
           zIndex: 99999999 // High z-index to ensure it's on top
-        }}
-        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+        }}  
+        viewBox={`0 0 ${width} ${height}`}
       >
         {/* Border stroke with smooth transitions */}
         <rect
           x={0}
           y={0}
-          width={visualWidth}
-          height={visualHeight}
+          width={width}
+          height={height}
           fill="none"
           stroke="#3b82f6"
           strokeOpacity={
@@ -341,7 +321,7 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
             zIndex: 999999999999,
             overflow: 'visible'
           }}
-          viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+          viewBox={`0 0 ${width} ${height}`}
         >
           {/* Top-left corner */}
           <rect
@@ -355,7 +335,7 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
           />
           {/* Top-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
             y={-3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
@@ -366,7 +346,7 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
           {/* Bottom-left corner */}
           <rect
             x={-3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -375,8 +355,8 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
           />
           {/* Bottom-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -406,29 +386,13 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
               borderRadius: '0px',
               zIndex: '999999999999',
             }}
-            onResizeStart={() => {
-              isResizing.current = true;
-              
-              // Turn off hug mode when user manually resizes
-              if (hugMode) {
-                updateNodeData(id, {
-                  right_sidebar: {
-                    ...data?.right_sidebar,
-                    hugMode: false
-                  }
-                });
-              }
-            }}
             onResize={(_, params) => {
-              // Update visual dimensions immediately for smooth UX
-              setVisualWidth(params.width);
-              setVisualHeight(params.height);
-            }}
-            onResizeEnd={(_, params) => {
-              isResizing.current = false;
-              // Update store dimensions only when resize is complete
-              setStoreWidth(params.width);
-              setStoreHeight(params.height);
+              // Simple real-time update like other nodes - no complex state management
+              updateNodeData(id, {
+                ...(data as TextNodeData),
+                width: params.width,
+                height: params.height
+              });
             }}
           />
         </>
@@ -454,7 +418,7 @@ const TextNode: React.FC<NodeProps<TextNodeData>> = ({ data, selected, id }) => 
               userSelect: 'none'
             }}
           >
-            {Math.round(visualWidth || 0)} × {Math.round(visualHeight || 0)}
+            {Math.round(width || 0)} × {Math.round(height || 0)}
           </div>
         </NodeToolbar>
       )}

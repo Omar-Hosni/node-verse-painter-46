@@ -1,6 +1,5 @@
-// @ts-nocheck
-import { memo, useState, useEffect, useRef } from 'react';
-import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useUpdateNodeInternals, useReactFlow } from '@xyflow/react';
+import { memo, useState, useEffect } from 'react';
+import { NodeProps, NodeResizer, NodeToolbar, Handle, Position, useReactFlow } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
 
 interface CircleNodeData {
@@ -11,7 +10,6 @@ interface CircleNodeData {
     pin?: boolean;
     visibility?: boolean;
     opacity?: number;
-    blendMode?: string;
     fillColor?: string;
     strokeColor?: string;
     strokeWidth?: number;
@@ -25,29 +23,21 @@ interface CircleNodeData {
   icon?: string;
 }
 
-const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
+const CircleNode = memo(({ id, data, selected }: NodeProps) => {
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const { getZoom } = useReactFlow();
   const [isHovered, setIsHovered] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(getZoom());
-  const updateNodeInternals = useUpdateNodeInternals();
 
-  // Visual dimensions (updated in real-time during resize)
-  const [visualWidth, setVisualWidth] = useState((data as CircleNodeData).width || 200);
-  const [visualHeight, setVisualHeight] = useState((data as CircleNodeData).height || 200);
-
-  // Store dimensions (only updated when resize is complete)
-  const [storeWidth, setStoreWidth] = useState((data as CircleNodeData).width || 200);
-  const [storeHeight, setStoreHeight] = useState((data as CircleNodeData).height || 200);
-
-  const isResizing = useRef(false);
+  // Simple dimension management - use data values directly like FrameNode
+  const width = (data as CircleNodeData)?.width || 200;
+  const height = (data as CircleNodeData)?.height || 200;
 
   // Get circle properties with defaults
-  const circleProps = data?.right_sidebar || {};
+  const circleProps = (data as CircleNodeData)?.right_sidebar || {};
   const {
     visibility = true,
     opacity = 100,
-    blendMode = 'normal',
     fillColor = '#007AFF',
     strokeColor = '#FFFFFF',
     strokeWidth = 0,
@@ -57,16 +47,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
     flipVertical = false
   } = circleProps;
 
-  // Update dimensions when data changes from properties panel
-  useEffect(() => {
-    const newWidth = (data as CircleNodeData).width || 200;
-    const newHeight = (data as CircleNodeData).height || 200;
 
-    setVisualWidth(newWidth);
-    setVisualHeight(newHeight);
-    setStoreWidth(newWidth);
-    setStoreHeight(newHeight);
-  }, [data?.width, data?.height]);
 
   // Track zoom changes in real time - when selected or hovered for performance
   useEffect(() => {
@@ -91,19 +72,13 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
     };
   }, [getZoom, currentZoom, selected, isHovered]);
 
-  // Only update store when store dimensions change (not during active resize)
-  useEffect(() => {
-    if (!isResizing.current) {
-      updateNodeData(id, { width: storeWidth, height: storeHeight });
-    }
-  }, [storeWidth, storeHeight, id, updateNodeData]);
+
 
   const circleStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
     backgroundColor: fillColor,
     opacity: opacity / 100,
-    mixBlendMode: blendMode as any,
     display: visibility ? 'block' : 'none',
     borderRadius: '50%', // Always 50% for perfect circle
     border: strokeWidth > 0 ? `${strokeWidth}px ${strokeStyle} ${strokeColor}` : 'none',
@@ -115,8 +90,8 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
   return (
     <div
       style={{
-        width: visualWidth,
-        height: visualHeight,
+        width: width,
+        height: height,
         position: 'relative',
         background: 'transparent',
         border: 'none', // Remove CSS border completely
@@ -141,23 +116,17 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
           pointerEvents: 'none',
           zIndex: 99999999 // High z-index to ensure it's on top
         }}
-        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+        viewBox={`0 0 ${width} ${height}`}
       >
         {/* Border stroke with smooth transitions */}
         <rect
           x={0}
           y={0}
-          width={visualWidth}
-          height={visualHeight}
+          width={width}
+          height={height}
           fill="none"
           stroke="#3b82f6"
-          strokeOpacity={
-            selected
-              ? 1
-              : isHovered
-                ? 0.5
-                : 0
-          }
+          strokeOpacity={0}
           strokeWidth={2 / currentZoom}
           vectorEffect="non-scaling-stroke"
           style={{
@@ -180,7 +149,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
             zIndex: 999999999999,
             overflow: 'visible'
           }}
-          viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+          viewBox={`0 0 ${width} ${height}`}
         >
           {/* Top-left corner */}
           <rect
@@ -194,7 +163,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
           />
           {/* Top-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
             y={-3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
@@ -205,7 +174,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
           {/* Bottom-left corner */}
           <rect
             x={-3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -214,8 +183,8 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
           />
           {/* Bottom-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -230,11 +199,10 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
         <>
           <NodeResizer
             isVisible={selected}
-            minWidth={1}
-            minHeight={1}
             lineStyle={{
               borderColor: 'transparent', // Hide the default border since we use SVG
-              borderWidth: '0px'
+              borderWidth: '0px',
+
             }}
             handleStyle={{
               backgroundColor: 'transparent',
@@ -245,19 +213,13 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
               borderRadius: '0px',
               zIndex: '999999999999',
             }}
-            onResizeStart={() => {
-              isResizing.current = true;
-            }}
             onResize={(_, params) => {
-              // Update visual dimensions immediately for smooth UX
-              setVisualWidth(params.width);
-              setVisualHeight(params.height);
-            }}
-            onResizeEnd={(_, params) => {
-              isResizing.current = false;
-              // Update store dimensions only when resize is complete
-              setStoreWidth(params.width);
-              setStoreHeight(params.height);
+              // Simple real-time update like FrameNode - no complex state management
+              updateNodeData(id, {
+                ...(data as CircleNodeData),
+                width: params.width,
+                height: params.height
+              });
             }}
           />
         </>
@@ -266,7 +228,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
       {/* Size tag using NodeToolbar */}
       <NodeToolbar
         isVisible={selected}
-        position="bottom"
+        position={Position.Bottom}
         offset={4}
       >
         <div
@@ -282,7 +244,7 @@ const CircleNode = memo(({ id, data, selected }: NodeProps<CircleNodeData>) => {
             userSelect: 'none'
           }}
         >
-          {Math.round(visualWidth)} × {Math.round(visualHeight)}
+          {Math.round(width)} × {Math.round(height)}
         </div>
       </NodeToolbar>
 

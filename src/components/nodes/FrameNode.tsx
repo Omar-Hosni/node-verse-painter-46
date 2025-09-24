@@ -1,64 +1,30 @@
-// @ts-nocheck
-import { memo, useState, useEffect, useRef } from 'react';
 import { NodeProps, NodeResizer, useReactFlow, NodeToolbar, Handle, Position } from '@xyflow/react';
 import { useCanvasStore } from '@/store/useCanvasStore';
+import { memo, useState, useEffect, useRef, useCallback } from 'react';
 
-interface FrameNodeData {
-  displayName?: string;
-  width?: number;
-  height?: number;
-  right_sidebar?: {
-    pin?: boolean;
-    visibility?: boolean;
-    opacity?: number;
-    blendMode?: string;
-    cornerRadius?: number;
-    activeCorner?: string;
-    corners?: {
-      topLeft?: number;
-      topRight?: number;
-      bottomLeft?: number;
-      bottomRight?: number;
-    };
-    fillColor?: string;
-    strokeColor?: string;
-    strokeWidth?: number;
-    strokeStyle?: 'solid' | 'dashed';
-    aspectRatioLocked?: boolean;
-    storedAspectRatio?: number;
-
-    title?: string;
-  };
-  color?: string;
-  icon?: string;
-  label?: string;
-  children?: string[];
-  isDropTarget?: boolean;
+interface FrameNodeProps {
+  id: string;
+  data: any;
+  selected?: boolean;
 }
 
-const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
+const FrameNode = memo(({ id, data, selected }: FrameNodeProps) => {
   const { getNodes, getZoom } = useReactFlow();
   const updateNodeData = useCanvasStore(state => state.updateNodeData);
   const [isHovered, setIsHovered] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(getZoom());
 
-  // Visual dimensions (updated in real-time during resize)
-  const [visualWidth, setVisualWidth] = useState((data as FrameNodeData).width || 400);
-  const [visualHeight, setVisualHeight] = useState((data as FrameNodeData).height || 300);
-
-  // Store dimensions (only updated when resize is complete)
-  const [storeWidth, setStoreWidth] = useState((data as FrameNodeData).width || 400);
-  const [storeHeight, setStoreHeight] = useState((data as FrameNodeData).height || 300);
+  // Simple dimension management - use data values directly like ResizeShapeNode
+  const width = data?.width || 400;
+  const height = data?.height || 300;
 
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const isResizing = useRef(false);
 
   // Get frame properties with defaults
   const frameProps = data?.right_sidebar || {};
   const {
     visibility = true,
     opacity = 100,
-    blendMode = 'normal',
     cornerRadius = 1,
     activeCorner = 'all',
     corners = {},
@@ -77,17 +43,6 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
     const { topLeft = cornerRadius, topRight = cornerRadius, bottomLeft = cornerRadius, bottomRight = cornerRadius } = corners;
     return `${topLeft}px ${topRight}px ${bottomRight}px ${bottomLeft}px`;
   };
-
-  // Update dimensions when data changes from properties panel
-  useEffect(() => {
-    const newWidth = (data as FrameNodeData).width || 400;
-    const newHeight = (data as FrameNodeData).height || 300;
-
-    setVisualWidth(newWidth);
-    setVisualHeight(newHeight);
-    setStoreWidth(newWidth);
-    setStoreHeight(newHeight);
-  }, [data?.width, data?.height]);
 
   // Track zoom changes in real time - when selected or hovered for performance
   useEffect(() => {
@@ -112,13 +67,6 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
     };
   }, [getZoom, currentZoom, selected, isHovered]);
 
-  // Only update store when store dimensions change (not during active resize)
-  useEffect(() => {
-    if (!isResizing.current) {
-      updateNodeData(id, { width: storeWidth, height: storeHeight });
-    }
-  }, [storeWidth, storeHeight, id, updateNodeData]);
-
   // Check if nodes are being dragged over this frame
   useEffect(() => {
     const checkDropTarget = () => {
@@ -137,8 +85,8 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
       const frameRect = frameElement.getBoundingClientRect();
       const frameLeft = frameRect.left;
       const frameTop = frameRect.top;
-      const frameRight = frameLeft + visualWidth;
-      const frameBottom = frameTop + visualHeight;
+      const frameRight = frameLeft + width;
+      const frameBottom = frameTop + height;
 
       // Check if any INDEPENDENT node (no parent) is being dragged over this frame
       const isDraggedOver = nodes.some(node => {
@@ -200,15 +148,15 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
 
     const interval = setInterval(checkDropTarget, 16); // ~60fps
     return () => clearInterval(interval);
-  }, [getNodes, id, visualWidth, visualHeight, isDropTarget]);
+  }, [getNodes, id, width, height, isDropTarget]);
 
 
 
   return (
     <div
       style={{
-        width: visualWidth,
-        height: visualHeight,
+        width: width,
+        height: height,
         position: 'relative',
         background: 'transparent',
         border: 'none', // Remove CSS border completely
@@ -230,14 +178,13 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
           display: visibility ? 'block' : 'none',
           border: strokeWidth > 0 ? `${strokeWidth}px ${strokeStyle} ${strokeColor}` : 'none',
           boxSizing: 'border-box',
-          opacity: opacity / 100,
-          mixBlendMode: blendMode as any
+          opacity: opacity / 100
         }}
       />
       {/* Frame label using NodeToolbar for scale independence */}
       <NodeToolbar
         isVisible={true}
-        position="top"
+        position={Position.Top}
         offset={4}
         align="start"
       >
@@ -270,14 +217,14 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
           pointerEvents: 'none',
           zIndex: 99999999 // High z-index to ensure it's on top
         }}
-        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+        viewBox={`0 0 ${width} ${height}`}
       >
         {/* Border stroke with smooth transitions */}
         <rect
           x={0}
           y={0}
-          width={visualWidth}
-          height={visualHeight}
+          width={width}
+          height={height}
           fill="none"
           stroke="#3b82f6"
           strokeOpacity={
@@ -311,7 +258,7 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
             zIndex: 999999999999,
             overflow: 'visible'
           }}
-          viewBox={`0 0 ${visualWidth} ${visualHeight}`}
+          viewBox={`0 0 ${width} ${height}`}
         >
           {/* Top-left corner */}
           <rect
@@ -325,7 +272,7 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
           />
           {/* Top-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
             y={-3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
@@ -336,7 +283,7 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
           {/* Bottom-left corner */}
           <rect
             x={-3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -345,8 +292,8 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
           />
           {/* Bottom-right corner */}
           <rect
-            x={visualWidth - 3.5 / currentZoom}
-            y={visualHeight - 3.5 / currentZoom}
+            x={width - 3.5 / currentZoom}
+            y={height - 3.5 / currentZoom}
             width={7 / currentZoom}
             height={7 / currentZoom}
             fill="white"
@@ -376,70 +323,13 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
               zIndex: '999999999999',
             }}
             keepAspectRatio={aspectRatioLocked}
-            onResizeStart={() => {
-              isResizing.current = true;
-            }}
             onResize={(_, params) => {
-              // Update visual dimensions immediately for smooth UX
-              if (aspectRatioLocked && storedAspectRatio) {
-                // When aspect ratio is locked, calculate proper dimensions
-                // Use the larger dimension change to determine the resize direction
-                const targetAspectRatio = storedAspectRatio;
-
-                // Determine which dimension changed more significantly
-                const widthChange = Math.abs(params.width - visualWidth);
-                const heightChange = Math.abs(params.height - visualHeight);
-
-                let newWidth: number, newHeight: number;
-
-                if (widthChange >= heightChange) {
-                  // Width-driven resize
-                  newWidth = params.width;
-                  newHeight = newWidth / targetAspectRatio;
-                } else {
-                  // Height-driven resize
-                  newHeight = params.height;
-                  newWidth = newHeight * targetAspectRatio;
-                }
-
-                setVisualWidth(newWidth);
-                setVisualHeight(newHeight);
-              } else {
-                // Free resize when unlocked
-                setVisualWidth(params.width);
-                setVisualHeight(params.height);
-              }
-            }}
-            onResizeEnd={(_, params) => {
-              isResizing.current = false;
-              // Update store dimensions only when resize is complete
-              if (aspectRatioLocked && storedAspectRatio) {
-                // When aspect ratio is locked, calculate proper dimensions
-                const targetAspectRatio = storedAspectRatio;
-
-                // Determine which dimension changed more significantly
-                const widthChange = Math.abs(params.width - storeWidth);
-                const heightChange = Math.abs(params.height - storeHeight);
-
-                let newWidth: number, newHeight: number;
-
-                if (widthChange >= heightChange) {
-                  // Width-driven resize
-                  newWidth = params.width;
-                  newHeight = newWidth / targetAspectRatio;
-                } else {
-                  // Height-driven resize
-                  newHeight = params.height;
-                  newWidth = newHeight * targetAspectRatio;
-                }
-
-                setStoreWidth(newWidth);
-                setStoreHeight(newHeight);
-              } else {
-                // Free resize when unlocked
-                setStoreWidth(params.width);
-                setStoreHeight(params.height);
-              }
+              // Simple real-time update like ResizeShapeNode - no complex state management
+              updateNodeData(id, {
+                ...data,
+                width: params.width,
+                height: params.height
+              });
             }}
           />
         </>
@@ -448,7 +338,7 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
       {/* Size tag using NodeToolbar */}
       <NodeToolbar
         isVisible={selected}
-        position="bottom"
+        position={Position.Bottom}
         offset={4}
       >
         <div
@@ -464,7 +354,7 @@ const FrameNode = memo(({ id, data, selected }: NodeProps<FrameNodeData>) => {
             userSelect: 'none'
           }}
         >
-          {Math.round(visualWidth)} × {Math.round(visualHeight)}
+          {Math.round(width)} × {Math.round(height)}
         </div>
       </NodeToolbar>
 

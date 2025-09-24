@@ -423,3 +423,10 @@ body {
   align-items: flex-start !important;
   overflow: visible; /* ensure any internal visuals are not clipped */
 }
+
+.react-flow__nodesselection,
+.react-flow__nodesselection-rect {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
