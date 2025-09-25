@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const Subscription = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'test' | 'basic' | 'premium' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'starter' | 'basic' | 'premium' | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const navigate = useNavigate();
@@ -19,19 +19,19 @@ const Subscription = () => {
 
   // Stripe products mapping
   const plans = {
-    test: {
-      name: 'Test Plan',
+    starter: {
+      name: 'Starter Plan',
       monthlyPrice: 2,
-      priceId: 'price_1S8MgoRXXdJaLGyuwK3xxzxW',
-      productId: 'prod_T4VijoKEKcIRbX',
-      credits: 1000,
+      priceId: 'price_1SB8Z8RXXdJaLGyuV6UlPBJk',
+      productId: 'prod_T7NJBL8Dq7qo5Y',
+      credits: 50,
       features: [
-        '1,000 credits monthly',
+        '50 credits monthly',
         'AI image generation',
         'Basic templates',
-        'Email support',
       ],
       missingFeatures: [
+        'Email support',
         'Priority support',
         'Advanced features',
         'API access',
@@ -103,7 +103,7 @@ const Subscription = () => {
     checkSubscription();
   }, [user]);
 
-  const handlePlanSelect = (plan: 'test' | 'basic' | 'premium') => {
+  const handlePlanSelect = (plan: 'starter' | 'basic' | 'premium') => {
     setSelectedPlan(plan);
   };
 
@@ -216,12 +216,18 @@ const Subscription = () => {
         )}
 
         <div className="flex flex-row gap-5 max-w-none">
-          {(Object.keys(plans) as Array<keyof typeof plans>).slice(1).map((planKey) => {
+          {(Object.keys(plans) as Array<keyof typeof plans>).map((planKey) => {
             const plan = plans[planKey];
             const isCurrentPlan = currentSubscription?.subscribed && 
-              ((planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
+              ((planKey === 'starter' && currentSubscription.planName === 'Starter Plan') ||
+               (planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
                (planKey === 'premium' && currentSubscription.planName === 'Premium Plan'));
             const isPremium = planKey === 'premium';
+            
+            // Plan display names
+            const displayName = planKey === 'starter' ? 'Mini' : 
+                               planKey === 'basic' ? 'Pro' : 
+                               planKey === 'premium' ? 'Premium' : planKey;
             
             return (
               <div 
@@ -234,7 +240,7 @@ const Subscription = () => {
                 <div className="flex justify-between items-center w-full gap-2">
                   <CreditCard className="w-5 h-5 opacity-40" />
                   <span className="text-2xl font-semibold text-white/40 w-full text-left">
-                    {planKey === 'basic' ? 'Mini' : 'Pro'}
+                    {displayName}
                   </span>
                   <span className={`${
                     isPremium 
@@ -255,7 +261,9 @@ const Subscription = () => {
 
                 {/* Plan description */}
                 <p className="text-sm text-white/40 m-0">
-                  Perfect for {planKey === 'basic' ? 'getting started with AI image generation' : 'power users who need more credits and advanced features'}.
+                  Perfect for {planKey === 'starter' ? 'trying out AI image generation' : 
+                              planKey === 'basic' ? 'getting started with regular AI image generation' : 
+                              'power users who need more credits and advanced features'}.
                 </p>
 
                 {/* Divider */}
