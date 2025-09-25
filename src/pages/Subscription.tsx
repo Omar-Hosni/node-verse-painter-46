@@ -187,116 +187,119 @@ const Subscription = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
+    <div className="min-h-screen bg-black text-white">
       <AppHeader onBackToDashboard={handleBackToDashboard} />
       
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold text-center mb-2">Choose Your Plan</h1>
-        <p className="text-gray-400 text-center mb-10">Select the plan that works best for your needs</p>
-        
+      <div className="w-full min-h-screen bg-black flex justify-center items-center p-10 box-border">
         {/* Current Subscription Status */}
         {currentSubscription?.subscribed && (
-          <div className="mb-8 p-6 bg-[#1A1A1A] rounded-lg border border-green-500/20">
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 mb-8 p-6 bg-[#0D0D0D] rounded-3xl border border-green-500/20">
             <h2 className="text-xl font-bold text-green-400 mb-2">Current Subscription</h2>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-lg font-medium">{currentSubscription.planName}</p>
-                <p className="text-gray-400">{currentSubscription.creditsPerMonth} credits per month</p>
+                <p className="text-white/40">{currentSubscription.creditsPerMonth} credits per month</p>
                 {currentSubscription.subscriptionEnd && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-white/40">
                     Renews on {new Date(currentSubscription.subscriptionEnd).toLocaleDateString()}
                   </p>
                 )}
               </div>
               <Button 
                 onClick={handleManageSubscription}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#007AFF] hover:bg-[#007AFF]/90 rounded-full h-8 px-4 text-sm font-normal"
               >
                 Manage Subscription
               </Button>
             </div>
           </div>
         )}
-        
-        <div className="grid md:grid-cols-2 gap-8">
-          {(Object.keys(plans) as Array<keyof typeof plans>).map((planKey) => {
+
+        <div className="flex flex-row gap-5 max-w-none">
+          {(Object.keys(plans) as Array<keyof typeof plans>).slice(1).map((planKey) => {
             const plan = plans[planKey];
             const isCurrentPlan = currentSubscription?.subscribed && 
-              ((planKey === 'test' && currentSubscription.planName === 'Test Plan') ||
-               (planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
+              ((planKey === 'basic' && currentSubscription.planName === 'Basic Plan') ||
                (planKey === 'premium' && currentSubscription.planName === 'Premium Plan'));
+            const isPremium = planKey === 'premium';
             
             return (
               <div 
                 key={planKey}
-                className={`rounded-lg p-6 border relative ${
-                  isCurrentPlan 
-                    ? 'border-green-500 bg-[#1A1A1A]' 
-                    : selectedPlan === planKey 
-                      ? 'border-blue-500 bg-[#1A1A1A]' 
-                      : 'border-[#333] bg-[#171717]'
-                }`}
+                className={`w-full max-w-[300px] bg-[#0D0D0D] ${
+                  isPremium ? 'border border-[#007AFF]' : 'border border-[#151515]'
+                } p-4 rounded-3xl flex flex-col gap-5 box-border font-sans`}
               >
-                {isCurrentPlan && (
-                  <div className="absolute -top-3 left-6 bg-green-500 text-black px-3 py-1 rounded-full text-sm font-medium">
-                    Current Plan
-                  </div>
-                )}
-                
-                <div className="text-xl font-bold mb-2">{plan.name}</div>
-                <div className="flex items-baseline mb-6">
-                  <span className="text-3xl font-bold">${plan.monthlyPrice}</span>
-                  <span className="text-gray-400 ml-1">/month</span>
+                {/* Top horizontal stack */}
+                <div className="flex justify-between items-center w-full gap-2">
+                  <CreditCard className="w-5 h-5 opacity-40" />
+                  <span className="text-2xl font-semibold text-white/40 w-full text-left">
+                    {planKey === 'basic' ? 'Mini' : 'Pro'}
+                  </span>
+                  <span className={`${
+                    isPremium 
+                      ? 'bg-[#007AFF] text-white' 
+                      : 'bg-[#1C1C1C] text-white/40'
+                  } rounded-2xl px-[6px] py-[2px] text-xs font-medium`}>
+                    {isCurrentPlan ? 'ACTIVE' : 'Discovery'}
+                  </span>
                 </div>
-                
-                <div className="flex items-center gap-2 mb-6 bg-[#222] p-2 rounded">
-                  <CreditCard className="text-blue-400" />
-                  <div>
-                    <div className="font-bold">{plan.credits.toLocaleString()}</div>
-                    <div className="text-sm text-gray-400">credits per month</div>
-                  </div>
+
+                {/* Price horizontal stack */}
+                <div className="flex items-end gap-[6px] w-full">
+                  <span className="text-[32px] font-semibold text-white leading-none">
+                    ${plan.monthlyPrice}
+                  </span>
+                  <span className="text-sm text-white/40">/month</span>
                 </div>
-                
-                <div className="mb-6">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center mb-2">
-                      <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                      <span>{feature}</span>
+
+                {/* Plan description */}
+                <p className="text-sm text-white/40 m-0">
+                  Perfect for {planKey === 'basic' ? 'getting started with AI image generation' : 'power users who need more credits and advanced features'}.
+                </p>
+
+                {/* Divider */}
+                <div className="w-full h-px rounded bg-white/[0.07]"></div>
+
+                {/* Features vertical stack */}
+                <div className="flex flex-col gap-2 w-full">
+                  {plan.features.slice(0, 3).map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <svg className="w-[14px] h-[14px] fill-[#007AFF]" viewBox="0 0 24 24">
+                        <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.17 9.176-4.59-4.59a1 1 0 0 0-1.414 1.414l5.296 5.296a1 1 0 0 0 1.414 0l9.878-9.878z"/>
+                      </svg>
+                      <span className="text-sm text-white/40">{feature}</span>
                     </div>
                   ))}
-                  
-                  {plan.missingFeatures.map((feature) => (
-                    <div key={feature} className="flex items-center mb-2 text-gray-500">
-                      <X className="h-5 w-5 mr-2 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
                 </div>
-                
-                <Button 
-                  onClick={() => handlePlanSelect(planKey)}
-                  disabled={isCurrentPlan || isLoading}
-                  className={`w-full mb-4 ${
-                    isCurrentPlan
-                      ? 'bg-green-600 cursor-not-allowed opacity-75'
-                      : selectedPlan === planKey 
-                        ? 'bg-blue-600 hover:bg-blue-700' 
-                        : 'bg-[#2A2A2A] hover:bg-[#333]'
-                  }`}
-                >
-                  {isCurrentPlan ? 'Active' : selectedPlan === planKey ? 'Selected' : 'Select Plan'}
-                </Button>
+
+                {/* Button container */}
+                <div className="pt-8">
+                  <button 
+                    onClick={() => handlePlanSelect(planKey)}
+                    disabled={isCurrentPlan || isLoading}
+                    className={`${
+                      isCurrentPlan
+                        ? 'bg-green-600 cursor-not-allowed opacity-75'
+                        : isPremium 
+                          ? 'bg-[#007AFF] hover:opacity-90' 
+                          : 'bg-black hover:opacity-90'
+                    } text-white border-none h-[33px] rounded-full text-sm font-normal cursor-pointer w-full transition-opacity`}
+                  >
+                    {isCurrentPlan ? 'Active' : selectedPlan === planKey ? 'Selected' : 'Get Started'}
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
         
         {selectedPlan && !currentSubscription?.subscribed && (
-          <div className="mt-8 flex justify-center">
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
             <Button 
               onClick={handleSubscribe}
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg"
+              className="bg-[#007AFF] hover:bg-[#007AFF]/90 px-8 py-3 text-lg rounded-full"
             >
               {isLoading ? (
                 <>
