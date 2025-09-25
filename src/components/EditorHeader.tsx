@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Play, FrameIcon, Type, Square, Circle, Star, File, ChevronDown } from 'lucide-react';
+import { Play, FrameIcon, Type, Square, Circle, Star, File, ChevronDown, UserPlus } from 'lucide-react';
 import { IoMdArrowDropdown } from "react-icons/io";
 import { CollaboratorsDisplay } from './CollaboratorsDisplay';
 import SvgIcon from './SvgIcon';
@@ -147,6 +147,8 @@ export const EditorHeader = ({
 
   const [selectedTargetId, setSelectedTargetId] = React.useState<string | null>(null);
   const [showMenu, setShowMenu] = React.useState(false);
+  const [showInviteVideo, setShowInviteVideo] = React.useState(false);
+  const inviteRef = React.useRef<HTMLDivElement>(null);
 
   // Sync nodes and edges with WorkflowStore
   React.useEffect(() => {
@@ -413,6 +415,16 @@ export const EditorHeader = ({
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
+  // Handle click outside for invite video
+  React.useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!inviteRef.current) return;
+      if (!inviteRef.current.contains(e.target as Node)) setShowInviteVideo(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
   console.log("runnableTargets", runnableTargets)
   return (
     <header className="flex items-center justify-between h-[55px] min-h-[55px] max-h-[55px] bg-[#0d0d0d] border-b border-[#1d1d1d] z-20">
@@ -543,6 +555,30 @@ export const EditorHeader = ({
         >
           Export
         </SecondaryButton>
+        
+        {/* Invite button with video dropdown */}
+        <div className="relative" ref={inviteRef}>
+          <SecondaryButton
+            onClick={() => setShowInviteVideo(!showInviteVideo)}
+            className="whitespace-nowrap"
+            icon={UserPlus}
+          >
+            Invite
+          </SecondaryButton>
+          
+          {showInviteVideo && (
+            <div className="absolute right-0 mt-2 rounded-md bg-[#0f0f0f] border border-[#2a2a2a] shadow-lg z-50 overflow-hidden animate-scale-in">
+              <video
+                src="/invite_video.mp4"
+                autoPlay
+                loop
+                muted
+                className="w-80 max-w-none"
+                style={{ display: 'block' }}
+              />
+            </div>
+          )}
+        </div>
         
 <div className="relative" ref={menuRef}>
   <PrimaryButton
