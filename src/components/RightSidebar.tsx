@@ -3194,23 +3194,30 @@ export const RightSidebar = () => {
     );
   };
 
-  const angleOptions = ["front", "back", "right", "left", "top", "bottom"] as const;
-  type Angle = (typeof angleOptions)[number];
+  // === selectors ===
+  const perspectiveOptions = ["front", "back", "right", "left", "top", "bottom"] as const;
+  type Perspective = (typeof perspectiveOptions)[number];
 
-  const AngleSelector = React.memo(function AngleSelector({
+  const intensityOptions = ["slight", "strong"] as const;
+  type Intensity = (typeof intensityOptions)[number];
+
+  const angleLevelOptions = ["low", "even", "high"] as const;
+  type AngleLevel = (typeof angleLevelOptions)[number];
+
+  const PerspectiveSelector = React.memo(function PerspectiveSelector({
     value,
     onChange,
   }: {
-    value: Angle;
-    onChange: (v: Angle) => void;
+    value: Perspective;
+    onChange: (v: Perspective) => void;
   }) {
     return (
-      <div className="flex bg-[#1a1a1a] rounded-sm w-full h-[46px] -translate-y-4 p-0.5 border border-[#1d1d1d] grid grid-rows-2 grid-cols-3">
-        {angleOptions.map((opt) => (
+      <div className="flex bg-[#1a1a1a] rounded-md w-full h-[46px] -translate-y-4 p-0.5 border border-[#1d1d1d] grid grid-rows-2 grid-cols-3">
+        {perspectiveOptions.map((opt) => (
           <button
             key={opt}
             onClick={() => onChange(opt)}
-            className={`flex-1 h-full rounded-sm px-3 text-xs capitalize transition-all
+            className={`flex-1 h-full rounded-full px-3 text-xs capitalize transition-all
               ${value === opt ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"}`}
             title={opt}
           >
@@ -3221,6 +3228,53 @@ export const RightSidebar = () => {
     );
   });
 
+  const IntensitySelector = React.memo(function IntensitySelector({
+      value,
+      onChange,
+    }: {
+      value: Intensity;
+      onChange: (v: Intensity) => void;
+    }) {
+      return (
+        <div className="flex bg-[#1a1a1a] rounded-full w-full h-[30px] p-0.5 border border-[#1d1d1d] grid grid-cols-2">
+          {intensityOptions.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => onChange(opt)}
+              className={`flex-1 h-full rounded-full px-3 text-xs capitalize transition-all
+                ${value === opt ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"}`}
+              title={opt}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      );
+    });
+
+  const AngleLevelSelector = React.memo(function AngleLevelSelector({
+    value,
+    onChange,
+  }: {
+    value: AngleLevel;
+    onChange: (v: AngleLevel) => void;
+  }) {
+    return (
+      <div className="flex bg-[#1a1a1a] rounded-full w-full h-[30px] p-0.5 border border-[#1d1d1d] grid grid-cols-3">
+        {angleLevelOptions.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            className={`flex-1 h-full rounded-full px-3 text-xs capitalize transition-all
+              ${value === opt ? "bg-[#333333] text-white" : "text-[#9e9e9e] hover:text-white"}`}
+            title={opt}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    );
+  });
 
   const renderEngineInput = () => {
     if (!selectedNode?.data?.right_sidebar) return null;
@@ -9523,75 +9577,129 @@ export const RightSidebar = () => {
           </>
         );
 
-      case "image-to-image-reangle":
-        // Derive current selection from booleans in right_sidebar (default: 'front')
-        const { right_sidebar = {} } = selectedNode.data || {};
-        const selectedAngle: Angle =
-          (angleOptions.find((k) => right_sidebar?.[k]) as Angle) || "front";
+      case "image-to-image-reangle": {
+  const { right_sidebar = {} } = selectedNode.data || {};
 
-        const handleSelectAngle = (next: Angle) => {
-          // set the chosen angle true, all others false
-          const flags = angleOptions.reduce((acc, k) => {
-            acc[k] = k === next;
-            return acc;
-          }, {} as Record<Angle, boolean>);
+  // derive current selections from boolean maps (fallbacks provided)
+  const selectedPerspective: Perspective =
+    (perspectiveOptions.find((k) => right_sidebar?.perspectives?.[k]) as Perspective) || "front";
 
-          updateNodeData(selectedNode.id, {
-            right_sidebar: {
-              ...right_sidebar,
-              ...flags,
-            },
-          });
-        };
+  const selectedIntensity: Intensity =
+    (intensityOptions.find((k) => right_sidebar?.intensity?.[k]) as Intensity) || "slight";
 
-        return (
-          <>
-            {/* Section 1: Position (unchanged) */}
-            <PropertySection title="Position" isFirst={true}>
-              {/* ... your alignment row ... */}
-              <PropertyRow label="Location">
-                <PositionInput
-                  value={selectedNode.position?.x || 0}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      position: { ...selectedNode.position, x: value },
-                    })
-                  }
-                  label="X"
-                />
-                <PositionInput
-                  value={selectedNode.position?.y || 0}
-                  onChange={(value) =>
-                    updateNodeData(selectedNode.id, {
-                      position: { ...selectedNode.position, y: value },
-                    })
-                  }
-                  label="Y"
-                />
-              </PropertyRow>
+  const selectedAngleLevel: AngleLevel =
+    (angleLevelOptions.find((k) => right_sidebar?.angle?.[k]) as AngleLevel) || "even";
 
-              <PropertyRow label="Pin">
-                <ToggleButton
-                  options={[
-                    { label: "No", value: "false" },
-                    { label: "Yes", value: "true" },
-                  ]}
-                  value={selectedNode.data?.pin ? "true" : "false"}
-                  onChange={(value) => updateNodeData(selectedNode.id, { pin: value === "true" })}
-                />
-              </PropertyRow>
-            </PropertySection>
+  const handleSelectPerspective = (next: Perspective) => {
+    const flags = perspectiveOptions.reduce((acc, k) => {
+      acc[k] = k === next;
+      return acc;
+    }, {} as Record<Perspective, boolean>);
 
-            {/* New: Perspective selector (replaces Angle X/Y/Z) */}
-            <PropertySection title="Perspective">
-              <PropertyRow label="View">
-                <AngleSelector value={selectedAngle} onChange={handleSelectAngle} />
-              </PropertyRow>
-            </PropertySection>
+    updateNodeData(selectedNode.id, {
+      right_sidebar: {
+        ...right_sidebar,
+        perspectives: flags,
+      },
+    });
+  };
 
-            {renderNodeDesignInput()}
-          </>
-        );
+  const handleSelectIntensity = (next: Intensity) => {
+    const flags = intensityOptions.reduce((acc, k) => {
+      acc[k] = k === next;
+      return acc;
+    }, {} as Record<Intensity, boolean>);
+
+    updateNodeData(selectedNode.id, {
+      right_sidebar: {
+        ...right_sidebar,
+        intensity: flags,
+      },
+    });
+  };
+
+  const handleSelectAngleLevel = (next: AngleLevel) => {
+    const flags = angleLevelOptions.reduce((acc, k) => {
+      acc[k] = k === next;
+      return acc;
+    }, {} as Record<AngleLevel, boolean>);
+
+    updateNodeData(selectedNode.id, {
+      right_sidebar: {
+        ...right_sidebar,
+        angle: flags,
+      },
+    });
+  };
+
+  return (
+    <>
+      {/* Section 1: Position (unchanged) */}
+      <PropertySection title="Position" isFirst={true}>
+        {/* ... your alignment row ... */}
+        <PropertyRow label="Location">
+          <PositionInput
+            value={selectedNode.position?.x || 0}
+            onChange={(value) =>
+              updateNodeData(selectedNode.id, {
+                position: { ...selectedNode.position, x: value },
+              })
+            }
+            label="X"
+          />
+          <PositionInput
+            value={selectedNode.position?.y || 0}
+            onChange={(value) =>
+              updateNodeData(selectedNode.id, {
+                position: { ...selectedNode.position, y: value },
+              })
+            }
+            label="Y"
+          />
+        </PropertyRow>
+
+        <PropertyRow label="Pin">
+          <ToggleButton
+            options={[
+              { label: "No", value: "false" },
+              { label: "Yes", value: "true" },
+            ]}
+            value={selectedNode.data?.pin ? "true" : "false"}
+            onChange={(value) =>
+              updateNodeData(selectedNode.id, { pin: value === "true" })
+            }
+          />
+        </PropertyRow>
+      </PropertySection>
+
+      {/* Perspective / Intensity / Angle */}
+      <PropertySection title="Perspective">
+        <PropertyRow label="View">
+          <PerspectiveSelector
+            value={selectedPerspective}
+            onChange={handleSelectPerspective}
+          />
+        </PropertyRow>
+
+        <PropertyRow label="Intensity">
+          <IntensitySelector
+            value={selectedIntensity}
+            onChange={handleSelectIntensity}
+          />
+        </PropertyRow>
+
+        <PropertyRow label="Angle">
+          <AngleLevelSelector
+            value={selectedAngleLevel}
+            onChange={handleSelectAngleLevel}
+          />
+        </PropertyRow>
+      </PropertySection>
+
+      {renderNodeDesignInput()}
+    </>
+  );
+}
 
 
         case "image-to-image-rescene":

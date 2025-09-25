@@ -619,8 +619,12 @@ export class RunwareService {
       }];
 
       // Only add LoRA if it exists and has valid models
-      if (params.lora && params.lora.length > 0) {
-        const validLoras = params.lora.filter(lora => lora.model && lora.model.trim() !== '');
+      if (params.lora) {
+        const loraArray = Array.isArray(params.lora) ? params.lora : [params.lora];
+        const validLoras = loraArray
+          .filter(l => l && typeof l.model === "string" && l.model.trim() !== "")
+          .map(l => ({ model: l.model.trim(), weight: l.weight ?? 1.0 }));
+
         if (validLoras.length > 0) {
           message[0].lora = validLoras;
         }

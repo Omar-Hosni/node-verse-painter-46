@@ -569,12 +569,25 @@ const getDefaultDataForType = (nodeType: string): Record<string, any> => {
       creativity: 50,
     },
     "image-to-image-reangle": {
-      front: true,
+      perspectives:
+      {front: true,
       back: false,
       right: false,
       left: false,
       top: false,
       bottom: false
+      },
+      intensity:
+      {
+        slight: true,
+        strong: false
+      },
+      angle:
+      {
+        low: false,
+        even: true,
+        high: false
+      },
     },
     "image-to-image-inpainting": {
       inpaintPrompt: "",

@@ -2269,6 +2269,7 @@ export class WorkflowExecutor {
     const result = await this.runwareService.generateFluxKontext({
       positivePrompt: KONTEXT_RESCENE_PROMPT.trim(),
       referenceImages: [uploaded], // Flux Kontext expects array
+      lora: [{ model: "nover:101@1", weight: 1.2 }]
     }); // generateFluxKontext is already implemented in runwareService
     return result.imageURL;
   }
@@ -2323,45 +2324,80 @@ export class WorkflowExecutor {
 
   // Simplified Re-angle processing
   // inside WorkflowExecutor
+
   private async processReAngle(
-    node: Node,
-    inputs: Record<string, string>
-  ): Promise<string | null> {
-    const inputImage = inputs.default || Object.values(inputs)[0];
-    if (!inputImage) {
-      throw new WorkflowExecutionError(
-        "Re-angle requires an input image.",
-        WorkflowErrorType.VALIDATION_ERROR,
-        node.id,
-        undefined,
-        false
-      );
-    }
+      node: Node,
+      inputs: Record<string, string>
+    ): Promise<string | null> {
+      const inputImage = inputs.default || Object.values(inputs)[0];
+      if (!inputImage) {
+        throw new WorkflowExecutionError(
+          "Re-angle requires an input image.",
+          WorkflowErrorType.VALIDATION_ERROR,
+          node.id,
+          undefined,
+          false
+        );
+      }
 
-    // pull controls from the right sidebar
-    const rs: any = (node.data && (node.data as any).right_sidebar) || {};
-    // possible shapes: rs.direction = "front"/"back"/"left"/"right"; or booleans like rs.front = true
-    const fallbackDir = ["front","back","left","right","up","down"]
-      .find(k => rs?.[k] === true) || rs?.direction || "right";
-    const degrees = typeof rs?.degrees === "number" ? rs.degrees : 15;
+      const rs: any = (node.data && (node.data as any).right_sidebar) || {};
 
-    const isSide = fallbackDir === "left" || fallbackDir === "right";
-    // Built-in prompt (keep it short; the service has its own system prompt)
-    const prompt = isSide ? `Obtain the ${fallbackDir}-side`: `Obtain the ${fallbackDir} view`
+      // objects like: { front:true, back:false, ... }
+      const pickTrue = (o: any, fallback: string) =>
+        o && typeof o === "object" ? (Object.keys(o).find(k => o[k]) || fallback) : fallback;
 
-    // const result = await this.runwareService.generateFluxKontext({
-    //   positivePrompt: prompt,       // internal/built-in
-    //   referenceImages: [inputImage],   // singular field
-    //   // you can omit model to use the default inside the service
-    // });
+      const perspective = pickTrue(rs?.perspectives, "right"); // top|bottom|left|right|back|front
+      const intensity   = pickTrue(rs?.intensity,   "slight"); // slight|strong
+      const angleInput  = pickTrue(rs?.angle,       "even");   // low|even|high
 
-    const result = await this.runwareService.generateQwenEdit({
-      positivePrompt: prompt,       // internal/built-in
-      referenceImage: inputImage,   // singular field
-      // you can omit model to use the default inside the service
-    });
-    return result.imageURL;
+      // const prompt = isSide ? `Obtain the ${fallbackDir}-side`: `Obtain the ${fallbackDir} view`
+
+      let base = "ChangeAngle, ";
+      if (perspective === "top") {
+        base = intensity === "strong"
+          ? "tilt camera full top, camera top-bottom view, high angle"
+          : "pan camera top";
+      } else if (perspective === "bottom") {
+        base = intensity === "strong"
+          ? "tilt camera full bottom, camera bottom view, low angle"
+          : "pan camera bottom";
+      } else if (perspective === "left") {
+        base = intensity === "strong"
+          ? "rotate camera full left, side view"
+          : "pan camera subtle left";
+      } else if (perspective === "right") {
+        base = intensity === "strong"
+          ? "rotate camera full right, side view"
+          : "pan camera subtle right";
+      } else if (perspective === "back") {
+        base = intensity === "strong"
+          ? "rotate camera full back, behind view"
+          : "rotate camera subtle back, behind view";
+      } else { // front
+        base = intensity === "strong"
+          ? "rotate camera full front"
+          : "pan camera front";
+      }
+
+      // append angle only if not even; allowed on left/right/back/front (not top/bottom)
+      const addAngle =
+        angleInput !== "even" &&
+        (perspective === "left" || perspective === "right" || perspective === "back" || perspective === "front")
+          ? `, ${angleInput}-angle`
+          : "";
+
+      const prompt = `ChangeAngle, ${base}${addAngle}`;
+
+      const result = await this.runwareService.generateFluxKontext({
+        positivePrompt: prompt,
+        referenceImages: [inputImage],
+        lora: [{ model: "nover:101@2", weight: 1.1 }],
+        CFGScale: 3.5
+      });
+
+      return result.imageURL;
   }
+
 
 
   // Simplified Remix processing
