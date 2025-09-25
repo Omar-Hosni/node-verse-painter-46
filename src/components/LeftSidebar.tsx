@@ -244,12 +244,12 @@ export const LeftSidebar = ({
                             <div
                               key={option.type}
                               onClick={() => {
-                                if (option.status !== "coming-soon") setSelectedInsertNode(option);
+                                if (option.status) 
+                                  setSelectedInsertNode(option);
                               }}
                               className={`relative bg-[#151515] border border-transparent hover:border-[#007AFF] rounded-2xl 
                                           px-8 py-6 flex items-center justify-center cursor-pointer 
-                                          overflow-hidden ${option?.image_url ? "p-0" : "flex-col"} 
-                                          ${option.status === "coming-soon" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                          overflow-hidden ${option?.image_url ? "p-0" : "flex-col"}`}
                             >
                               {/* Image or icon + label */}
                               {option?.image_url ? (
@@ -274,8 +274,11 @@ export const LeftSidebar = ({
 
                               {/* Overlay for "Coming Soon" */}
                               {option.status === "coming-soon" && (
-                                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
-                                  <span className="text-white text-xs font-semibold">Coming Soon</span>
+                                <div className="absolute top-[8px] left-[8px] z-10 pointer-events-none">
+                                  <span className="inline-flex items-center rounded-full pt-[1px] pl-[4px] pr-[4px] text-[9px] font-bold
+                                                  bg-[#FFBB00]/10 border border-[#FFBB00]/20 text-gray-300">
+                                    SOON
+                                  </span>
                                 </div>
                               )}
                             </div>

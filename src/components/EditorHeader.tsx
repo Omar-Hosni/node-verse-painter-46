@@ -573,9 +573,18 @@ export const EditorHeader = ({
                 autoPlay
                 loop
                 muted
-                className="w-80 max-w-none"
+                className="w-[500px] max-w-none"
                 style={{ display: 'block' }}
               />
+              {/* <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-2xl">
+                  <span className="text-white text-xs font-semibold">Coming Soon</span>
+              </div> */}
+              <div className="absolute top-[8px] left-[8px] z-10 pointer-events-none">
+                <span className="inline-flex items-center rounded-full pt-[1px] pl-[4px] pr-[4px] text-[9px] font-bold
+                                bg-[#FFBB00]/10 border border-[#FFBB00]/20 text-gray-300">
+                  COMING SOON
+                </span>
+              </div>
             </div>
           )}
         </div>

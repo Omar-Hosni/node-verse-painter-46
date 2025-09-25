@@ -8,7 +8,8 @@ import {
   Connection,
   SelectionMode,
   Node,
-  NodeChange
+  NodeChange,
+  PanOnScrollMode
 } from '@xyflow/react';
 
 import { useCanvasStore } from '@/store/useCanvasStore';
@@ -809,7 +810,7 @@ export const Canvas: React.FC<CanvasProps> = ({ onCanvasClick }) => {
         
         /* trackpad/touchpad friendliness */
         panOnScroll
-        panOnScrollMode={"free"}
+        panOnScrollMode={PanOnScrollMode.Free}
         panOnScrollSpeed={0.7}   // tweak 0.4–1.0 to taste
         zoomOnPinch
         zoomOnScroll={false}
